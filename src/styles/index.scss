@@ -32,7 +32,7 @@ $font-family-sans-serif: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
 @import '~bootstrap/scss/bootstrap';
 
 // React Data Table css
-@import '~react-data-grid/dist/react-data-grid.css';
+// @import 'react-data-grid/dist/react-data-grid.css';
 
 // Fonts
 @import 'fonts';
@@ -40,9 +40,11 @@ $font-family-sans-serif: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
 html {
   font-size: 13px;
 }
+
 body {
   background-color: var(--gray-bg);
 }
+
 h1 {
   font-size: 1.8461538462rem;
   font-weight: normal;
@@ -51,6 +53,7 @@ h1 {
   line-height: 32px;
   margin-bottom: 2px;
 }
+
 h2 {
   font-size: 1.3846153846rem;
   font-weight: normal;
@@ -58,6 +61,7 @@ h2 {
   letter-spacing: 0;
   line-height: 24px;
 }
+
 h4 {
   font-size: 0.9230769231rem;
   font-weight: normal;
@@ -65,6 +69,7 @@ h4 {
   letter-spacing: 0;
   line-height: 16px;
 }
+
 h5 {
   font-size: 1.2307692308rem;
   font-size: 1rem;
@@ -82,6 +87,7 @@ h5 {
 .big {
   font-size: 1.25rem;
 }
+
 // UI
 .app-sections {
   min-height: calc(100vh - var(--header-height));
@@ -89,45 +95,56 @@ h5 {
   flex-direction: column;
   justify-content: space-between;
 }
+
 .alert {
   color: var(--gray-100);
   display: flex;
   align-items: center;
   height: 56px;
   border: none;
+
   &.alert-success {
     background-color: theme-color('success');
   }
+
   &.alert-secondary {
     color: var(--gray-700);
   }
+
   &.alert-warning {
     background-color: theme-color('warning');
   }
+
   &.alert-danger {
     background-color: theme-color('danger');
   }
 }
+
 .raw-btn {
   height: 40px;
 }
+
 .btn-white {
   color: theme-color('dark');
   background-color: white;
   border: none;
   border-bottom: 1px solid var(--light);
 }
+
 .raw-dropdown {
   height: 40px;
+
   .dropdown-toggle {
     text-align: left;
     height: 100%;
+
     &::after {
       right: 8px;
       bottom: calc(50% - 1px);
       position: absolute;
     }
   }
+
   .dropdown-menu {
     max-height: 40vh;
     overflow-y: auto;
@@ -136,6 +153,7 @@ h5 {
     z-index: 1030;
     box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
     border-bottom: 1px solid var(--light);
+
     .dropdown-header {
       padding: 0 8px;
       height: 24px;
@@ -143,17 +161,20 @@ h5 {
       align-items: center;
       border-bottom: 1px solid var(--light);
     }
+
     .dropdown-item {
       height: 40px;
       padding: 0 8px;
       display: flex;
       align-items: center;
+
       &:not(:last-child) {
         border-bottom: 1px solid var(--light);
       }
     }
   }
 }
+
 .raw-input-group {
   .raw-dropdown {
     button {
@@ -161,6 +182,7 @@ h5 {
     }
   }
 }
+
 .raw-select {
   height: 40px;
   color: theme-color('dark');
@@ -168,52 +190,64 @@ h5 {
   border: none;
   border-bottom: 1px solid var(--light);
 }
+
 .raw-modal {
   .modal-content {
     background-color: var(--gray-bg);
     border: none;
     border-radius: 4px;
   }
+
   .modal-footer {
     border: none;
     justify-content: flex-start;
   }
 }
+
 .truncate-160px {
   max-width: 160px;
   overflow-x: hidden;
   text-overflow: ellipsis;
 }
+
 .card {
   border-radius: 4px;
+
   &:hover {
     background-color: var(--primary-lighter);
   }
+
   &.active {
     border-color: var(--primary);
     background-color: var(--primary-lighter);
   }
 }
+
 .cursorpointer,
 .cursor-pointer {
   cursor: pointer;
 }
+
 .nowrap,
 .no-wrap {
   white-space: nowrap;
 }
+
 .text-field {
   height: 40px;
   border: none;
   border-bottom: 1px solid var(--light);
   border-radius: 4px;
+
   &::placeholder {
     color: #cecece;
   }
 }
+
 .underlined {
   border-bottom: 1px solid theme-color('primary');
 }
+
 .divider {
   width: 100%;
   border-top: 1px solid var(--gray-400);

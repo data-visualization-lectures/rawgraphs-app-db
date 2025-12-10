@@ -1,0 +1,14 @@
+[build]
+  command = "yarn build"
+  publish = "build"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NODE_OPTIONS = "--openssl-legacy-provider"
+  YARN_FLAGS = "--ignore-engines"
+
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
