@@ -105,9 +105,8 @@ function ChartSelector({ availableCharts, currentChart, setCurrentChart }) {
                     onClick={() => {
                       setCurrentChart(d)
                     }}
-                    className={`flex-row h-100 cursor-pointer ${
-                      d === currentChart ? 'active' : ''
-                    }`}
+                    className={`flex-row h-100 cursor-pointer ${d === currentChart ? 'active' : ''
+                      }`}
                   >
                     <div
                       className={`h-100 w-25 ${styles.thumbnail}`}
