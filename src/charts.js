@@ -31,7 +31,7 @@ import {
   piechart,
   voronoitreemap,
 } from '@rawgraphs/rawgraphs-charts'
-import { calendarheatmap } from '@rawgraphs/rawgraphs-calendar-heatmap'
+import { calendarHeatmap } from '@rawgraphs/rawgraphs-calendar-heatmap'
 
 // New charts, not included into first release.
 // Comment at necessity.
@@ -66,11 +66,8 @@ let charts = [
   voronoidiagram,
   chorddiagram,
   piechart,
-  voronoidiagram,
-  chorddiagram,
-  piechart,
   voronoitreemap,
-  calendarheatmap,
+  calendarHeatmap,
 ]
 
 // 日本語説明文の翻訳
