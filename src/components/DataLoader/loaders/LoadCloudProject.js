@@ -45,6 +45,12 @@ export default function LoadCloudProject({ onProjectSelected, setLoadingError })
             const jsonString = JSON.stringify(projectData);
             const project = deserializeProject(jsonString, charts);
 
+            // Fallback: If userData is missing but rawData exists (common in some RawGraphs versions/exports),
+            // populate userData to prevent hydration errors.
+            if (!project.userData && project.rawData) {
+                project.userData = project.rawData;
+            }
+
             onProjectSelected(project);
         } catch (err) {
             console.error(err);
