@@ -42,19 +42,23 @@ async function getSupabaseAndUser() {
         },
         global: {
             headers: {
-                // Authorization: `Bearer ${session.access_token}`, // TEMPORARILY DISABLED: Testing if token is invalid causing 401
+                Authorization: `Bearer ${session.access_token}`,
                 apikey: supabaseKey
             }
         }
     });
 
-    // DEBUG: Verify if the new client actually has the headers we set
-    console.log('[Debug] Created Local Client:', {
-        url: supabaseUrl,
-        keyLength: supabaseKey?.length,
-        headers: client.rest?.headers, // Check if 'apikey' is present here
-        globalHeaders: client.global?.headers // Check global config
-    });
+    // FORCE SET: Ensure the header is present on the internal REST client
+    if (client.rest && client.rest.headers && typeof client.rest.headers.set === 'function') {
+        client.rest.headers.set('apikey', supabaseKey);
+    }
+
+    // DEBUG: Verify headers by converting iterator to array (fixes 'Headers {}' display issue)
+    const headerDebug = client.rest?.headers && typeof client.rest.headers.entries === 'function'
+        ? Array.from(client.rest.headers.entries())
+        : client.rest?.headers;
+
+    console.log('[Debug] Created Local Client Headers:', headerDebug);
 
     return { supabase: client, user: session.user };
 }
