@@ -2,21 +2,56 @@
 const APP_NAME = 'rawgraphs';
 const BUCKET_NAME = 'user_projects';
 
-// Helper to get client and session
+// Helper to get a configured Supabase client and the current user
+// We perform a hybrid approach:
+// 1. Get the Session/User from the existing Global Instance (managed by dataviz-auth-client.js)
+// 2. Create a fresh Client using the Library Factory (window.Supabase) to ensure clean headers/keys for DB access
 async function getSupabaseAndUser() {
-    const supabase = window.supabase;
-    if (!supabase) {
+    // 1. Get Session from the Auth Client (Global Instance)
+    const globalAuthClient = window.supabase;
+    if (!globalAuthClient || !globalAuthClient.auth) {
         throw new Error("認証クライアントが読み込まれていません。ページをリロードしてください。");
     }
 
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session?.user) {
-        // If getting session fails, try older v1 method just in case or throw
-        // But since dataviz-auth-client uses getSession, we assume v2.
+    const { data: { session }, error: sessionError } = await globalAuthClient.auth.getSession();
+    if (sessionError || !session || !session.user) {
+        console.warn("Session check failed:", sessionError);
         throw new Error("ログインしてください。");
     }
 
-    return { supabase, user: session.user };
+    // 2. Prepare Configuration
+    // Use Access Token from the active session
+    const accessToken = session.access_token;
+
+    // Use Env Vars if available, otherwise fallback to the key found in the global instance (if any)
+    const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://vebhoeiltxspsurqoxvl.supabase.co';
+    const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || globalAuthClient.supabaseKey;
+
+    if (!supabaseUrl || !supabaseKey) {
+        throw new Error("Supabase Configuration Missing (URL or Key). Please check .env or deployment settings.");
+    }
+
+    // 3. Create a clean Client using the Library Factory
+    // window.Supabase was set in index.html to backup the library before overwrite
+    const SupabaseFactory = window.Supabase;
+
+    if (!SupabaseFactory || !SupabaseFactory.createClient) {
+        throw new Error("Supabase Library Factory not found. Check index.html loading order.");
+    }
+
+    const client = SupabaseFactory.createClient(supabaseUrl, supabaseKey, {
+        auth: {
+            persistSession: false, // We manage valid token manually via headers
+            autoRefreshToken: false,
+        },
+        global: {
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        }
+    });
+
+    return { supabase: client, user: session.user };
 }
 
 export async function getProjects() {
@@ -30,8 +65,8 @@ export async function getProjects() {
         .order('updated_at', { ascending: false });
 
     if (error) {
-        console.error('Supabase getProjects error:', error);
-        throw new Error('プロジェクト一覧の取得に失敗しました: ' + error.message);
+        console.error('Supabase getProjects error:', JSON.stringify(error));
+        throw new Error('プロジェクト一覧の取得に失敗しました: ' + (error.message || error.code));
     }
 
     return data;
@@ -41,8 +76,7 @@ export async function saveProject(projectData, name) {
     console.log('Saving project to Supabase:', name);
     const { supabase, user } = await getSupabaseAndUser();
 
-    // 1. Create (or separate Update logic later) DB Record
-    // We use INSERT. CloudSaveModal implies "Save As" / New creation mostly.
+    // 1. Create/Update DB Record
     const { data: dbData, error: dbError } = await supabase
         .from('projects')
         .insert([
@@ -52,10 +86,10 @@ export async function saveProject(projectData, name) {
                 app_name: APP_NAME
             }
         ])
-        .select(); // Required in v2 to get returned data
+        .select();
 
     if (dbError) {
-        console.error('Supabase db insert error:', dbError);
+        console.error('Supabase db insert error:', JSON.stringify(dbError));
         throw new Error('データベースへの保存に失敗しました: ' + dbError.message);
     }
 
@@ -64,10 +98,7 @@ export async function saveProject(projectData, name) {
     console.log('Project created with ID:', projectId);
 
     // 2. Upload to Storage
-    // Path: user_id/project_id.json
     const filePath = `${user.id}/${projectId}.json`;
-    // ProjectData is an Object. Convert to JSON string.
-    // Using Blob to ensure proper handling
     const blob = new Blob([JSON.stringify(projectData)], { type: 'application/json' });
 
     const { error: storageError } = await supabase.storage
@@ -78,9 +109,7 @@ export async function saveProject(projectData, name) {
         });
 
     if (storageError) {
-        console.error('Supabase storage upload error:', storageError);
-        // Potential: Delete the DB record if storage fails?
-        // For now, throw error.
+        console.error('Supabase storage upload error:', JSON.stringify(storageError));
         throw new Error('ファイルのアップロードに失敗しました: ' + storageError.message);
     }
 
@@ -91,7 +120,6 @@ export async function loadProject(id) {
     console.log('Loading project from Supabase:', id);
     const { supabase, user } = await getSupabaseAndUser();
 
-    // Path: user_id/project_id.json
     const filePath = `${user.id}/${id}.json`;
 
     const { data, error } = await supabase.storage
@@ -99,11 +127,10 @@ export async function loadProject(id) {
         .download(filePath);
 
     if (error) {
-        console.error('Supabase storage download error:', error);
+        console.error('Supabase storage download error:', JSON.stringify(error));
         throw new Error('プロジェクトデータのダウンロードに失敗しました: ' + error.message);
     }
 
-    // data is a Blob. Convert to Text then JSON.
     const text = await data.text();
     try {
         const json = JSON.parse(text);
@@ -125,11 +152,11 @@ export async function deleteProject(id) {
         .eq('id', id);
 
     if (dbError) {
-        console.error('Supabase delete error:', dbError);
+        console.error('Supabase delete error:', JSON.stringify(dbError));
         throw new Error('プロジェクトの削除に失敗しました: ' + dbError.message);
     }
 
-    // 2. Cleanup Storage (Best effort)
+    // 2. Cleanup Storage
     const filePath = `${user.id}/${id}.json`;
     const { error: storageError } = await supabase.storage
         .from(BUCKET_NAME)
