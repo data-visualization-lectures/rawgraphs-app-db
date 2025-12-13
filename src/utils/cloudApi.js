@@ -50,7 +50,7 @@ export async function getProjects() {
             headers: {
                 // Also send in header (standard), though query param is the fix
                 'apikey': supabaseKey,
-                'Authorization': `Bearer ${accessToken}`,
+                // 'Authorization': `Bearer ${accessToken}`, // Removed to avoid 401 with potential bad token (RLS is disabled)
                 'Content-Type': 'application/json'
             }
         });
@@ -89,7 +89,7 @@ export async function saveProject(projectData) {
             updated_at: now
         };
 
-        // Check if exists updates or insert? 
+        // Check if exists updates or insert?
         // PostgREST "upsert" is typically POST with Prefer: resolution=merge-duplicates OR PUT (if pk known).
         // For simplicity with Raw Fetch, we'll try POST with upsert header.
 
@@ -99,7 +99,7 @@ export async function saveProject(projectData) {
             method: 'POST',
             headers: {
                 'apikey': supabaseKey,
-                'Authorization': `Bearer ${accessToken}`,
+                // 'Authorization': `Bearer ${accessToken}`, // Removed
                 'Content-Type': 'application/json',
                 'Prefer': 'resolution=merge-duplicates,return=representation' // Upsert behavior
             },
@@ -138,7 +138,7 @@ export async function deleteProject(projectId) {
             method: 'DELETE',
             headers: {
                 'apikey': supabaseKey,
-                'Authorization': `Bearer ${accessToken}`,
+                // 'Authorization': `Bearer ${accessToken}`, // Removed
                 'Content-Type': 'application/json'
             }
         });
@@ -181,7 +181,7 @@ export async function loadProject(projectId) {
             method: 'GET',
             headers: {
                 'apikey': supabaseKey,
-                'Authorization': `Bearer ${accessToken}`,
+                // 'Authorization': `Bearer ${accessToken}`, // Removed
                 'Content-Type': 'application/json',
                 'Accept': 'application/vnd.pgrst.object+json' // Expect single object
             }
