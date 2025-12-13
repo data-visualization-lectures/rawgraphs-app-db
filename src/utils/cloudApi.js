@@ -62,12 +62,14 @@ async function getSupabaseAndUser() {
 
     // DEBUG: Try raw fetch to bypass library issues completely
     try {
-        console.log('[Debug] Attempting Raw Fetch...');
-        const rawRes = await fetch(`${supabaseUrl}/rest/v1/projects?select=*&app_name=eq.rawgraphs&order=updated_at.desc`, {
+        console.log('[Debug] Attempting Raw Fetch (Query Param Key)...');
+        const trimmedKey = supabaseKey ? supabaseKey.trim() : "";
+        // Appending apikey to query params to bypass potential header stripping
+        const rawRes = await fetch(`${supabaseUrl}/rest/v1/projects?select=*&app_name=eq.rawgraphs&order=updated_at.desc&apikey=${trimmedKey}`, {
             method: 'GET',
             headers: {
-                'apikey': supabaseKey,
-                'Authorization': `Bearer ${session.access_token}`
+                'apikey': trimmedKey,
+                'Authorization': `Bearer ${session.access_token}` // Restore Auth to check full access
             }
         });
         console.log('[Debug] Raw Fetch Status:', rawRes.status);
