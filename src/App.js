@@ -25,6 +25,8 @@ import CookieConsent from 'react-cookie-consent'
 
 // #TODO: i18n
 
+import FixedHeader from './components/FixedHeader/FixedHeader'
+
 function App() {
   const dataLoader = useDataLoader()
   const {
@@ -164,8 +166,9 @@ function App() {
 
   return (
     <div className="App">
+      <FixedHeader />
       {/* <Header menuItems={HeaderItems} /> */}
-      <div className="app-sections">
+      <div className="app-sections" style={{ marginTop: '20px' }}>
         <Section title={`1. データを読み込む`} loading={loading}>
           <DataLoader {...dataLoader} hydrateFromProject={importProject} />
         </Section>
