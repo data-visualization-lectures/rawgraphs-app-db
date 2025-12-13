@@ -60,6 +60,27 @@ async function getSupabaseAndUser() {
 
     console.log('[Debug] Created Local Client Headers:', headerDebug);
 
+    // DEBUG: Try raw fetch to bypass library issues completely
+    try {
+        console.log('[Debug] Attempting Raw Fetch...');
+        const rawRes = await fetch(`${supabaseUrl}/rest/v1/projects?select=*&app_name=eq.rawgraphs&order=updated_at.desc`, {
+            method: 'GET',
+            headers: {
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${session.access_token}`
+            }
+        });
+        console.log('[Debug] Raw Fetch Status:', rawRes.status);
+        if (rawRes.status !== 200) {
+            const rawText = await rawRes.text();
+            console.log('[Debug] Raw Fetch Body:', rawText);
+        } else {
+            console.log('[Debug] Raw Fetch Success');
+        }
+    } catch (e) {
+        console.error('[Debug] Raw Fetch Error:', e);
+    }
+
     return { supabase: client, user: session.user };
 }
 
