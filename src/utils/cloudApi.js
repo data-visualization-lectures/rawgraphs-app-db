@@ -12,7 +12,7 @@ function getAuthHeader() {
         return null;
       }
       return {
-        'Authorization': 'Bearer ' + session.access_token,
+        'Authorization': `Bearer ${session.access_token}`,
         'Content-Type': 'application/json'
       };
     */
@@ -26,20 +26,15 @@ export async function getProjects() {
         return Promise.reject(new Error('User not logged in'));
     }
 
-    // Real implementation would be:
-    // const res = await fetch(`${API_BASE_URL}?app=rawgraphs`, { headers });
-    // if (!res.ok) throw new Error(res.statusText);
-    // return res.json();
-
     return Promise.resolve([
         {
-            id: 'mock-1',
-            name: '売上分析2025 (Mock)',
+            id: 'mock-1', // Corresponds to para.rawgraphs
+            name: 'パラレル (Mock)',
             updated_at: new Date().toISOString(),
         },
         {
-            id: 'mock-2',
-            name: 'テストプロジェクト (Mock)',
+            id: 'mock-2', // Corresponds to tree.rawgraphs
+            name: 'ツリー (Mock)',
             updated_at: new Date(Date.now() - 86400000).toISOString(),
         }
     ]);
@@ -51,20 +46,6 @@ export async function saveProject(projectData, name) {
     if (!headers) {
         return Promise.reject(new Error('User not logged in'));
     }
-
-    // Real implementation:
-    // const res = await fetch(API_BASE_URL, {
-    //   method: 'POST',
-    //   headers,
-    //   body: JSON.stringify({
-    //     name,
-    //     app_name: 'rawgraphs',
-    //     data: projectData
-    //   })
-    // });
-    // if (!res.ok) throw new Error(res.statusText);
-    // return res.json();
-
     return new Promise((resolve) => {
         setTimeout(() => {
             resolve({ id: 'new-mock-id', name, updated_at: new Date().toISOString() });
@@ -72,8 +53,9 @@ export async function saveProject(projectData, name) {
     });
 }
 
-// Mock Data for "loadProject"
-const MOCK_PROJECT_DATA = {
+// Mock Data
+// mock-1: para.rawgraphs
+const MOCK_PARA_DATA = {
     "version": "1.2",
     "userInput": "Id\tSepal Length (cm)\tSepal Width (cm)\tPetal Length (cm)\tPetal Width (cm)\tSpecies\n1\t5.1\t3.5\t1.4\t0.2\tIris Setosa\n2\t4.9\t3.0\t1.4\t0.2\tIris Setosa\n3\t4.7\t3.2\t1.3\t0.2\tIris Setosa\n4\t4.6\t3.1\t1.5\t0.2\tIris Setosa\n5\t5.0\t3.6\t1.4\t0.2\tIris Setosa\n6\t5.4\t3.9\t1.7\t0.4\tIris Setosa\n7\t4.6\t3.4\t1.4\t0.3\tIris Setosa\n8\t5.0\t3.4\t1.5\t0.2\tIris Setosa\n9\t4.4\t2.9\t1.4\t0.2\tIris Setosa\n10\t4.9\t3.1\t1.5\t0.1\tIris Setosa\n11\t5.4\t3.7\t1.5\t0.2\tIris Setosa\n12\t4.8\t3.4\t1.6\t0.2\tIris Setosa\n13\t4.8\t3.0\t1.4\t0.1\tIris Setosa\n14\t4.3\t3.0\t1.1\t0.1\tIris Setosa\n15\t5.8\t4.0\t1.2\t0.2\tIris Setosa\n16\t5.7\t4.4\t1.5\t0.4\tIris Setosa\n17\t5.4\t3.9\t1.3\t0.4\tIris Setosa\n18\t5.1\t3.5\t1.4\t0.3\tIris Setosa\n19\t5.7\t3.8\t1.7\t0.3\tIris Setosa\n20\t5.1\t3.8\t1.5\t0.3\tIris Setosa\n21\t5.4\t3.4\t1.7\t0.2\tIris Setosa\n22\t5.1\t3.7\t1.5\t0.4\tIris Setosa\n23\t4.6\t3.6\t1.0\t0.2\tIris Setosa\n24\t5.1\t3.3\t1.7\t0.5\tIris Setosa\n25\t4.8\t3.4\t1.9\t0.2\tIris Setosa\n26\t5.0\t3.0\t1.6\t0.2\tIris Setosa\n27\t5.0\t3.4\t1.6\t0.4\tIris Setosa\n28\t5.2\t3.5\t1.5\t0.2\tIris Setosa\n29\t5.2\t3.4\t1.4\t0.2\tIris Setosa\n30\t4.7\t3.2\t1.6\t0.2\tIris Setosa\n31\t4.8\t3.1\t1.6\t0.2\tIris Setosa\n32\t5.4\t3.4\t1.5\t0.4\tIris Setosa\n33\t5.2\t4.1\t1.5\t0.1\tIris Setosa\n34\t5.5\t4.2\t1.4\t0.2\tIris Setosa\n35\t4.9\t3.1\t1.5\t0.1\tIris Setosa\n36\t5.0\t3.2\t1.2\t0.2\tIris Setosa\n37\t5.5\t3.5\t1.3\t0.2\tIris Setosa\n38\t4.9\t3.1\t1.5\t0.1\tIris Setosa\n39\t4.4\t3.0\t1.3\t0.2\tIris Setosa\n40\t5.1\t3.4\t1.5\t0.2\tIris Setosa\n41\t5.0\t3.5\t1.3\t0.3\tIris Setosa\n42\t4.5\t2.3\t1.3\t0.3\tIris Setosa\n43\t4.4\t3.2\t1.3\t0.2\tIris Setosa\n44\t5.0\t3.5\t1.6\t0.6\tIris Setosa\n45\t5.1\t3.8\t1.9\t0.4\tIris Setosa\n46\t4.8\t3.0\t1.4\t0.3\tIris Setosa\n47\t5.1\t3.8\t1.6\t0.2\tIris Setosa\n48\t4.6\t3.2\t1.4\t0.2\tIris Setosa\n49\t5.3\t3.7\t1.5\t0.2\tIris Setosa\n50\t5.0\t3.3\t1.4\t0.2\tIris Setosa\n51\t7.0\t3.2\t4.7\t1.4\tIris Versicolor\n52\t6.4\t3.2\t4.5\t1.5\tIris Versicolor\n53\t6.9\t3.1\t4.9\t1.5\tIris Versicolor\n54\t5.5\t2.3\t4.0\t1.3\tIris Versicolor\n55\t6.5\t2.8\t4.6\t1.5\tIris Versicolor\n56\t5.7\t2.8\t4.5\t1.3\tIris Versicolor\n57\t6.3\t3.3\t4.7\t1.6\tIris Versicolor\n58\t4.9\t2.4\t3.3\t1.0\tIris Versicolor\n59\t6.6\t2.9\t4.6\t1.3\tIris Versicolor\n60\t5.2\t2.7\t3.9\t1.4\tIris Versicolor\n61\t5.0\t2.0\t3.5\t1.0\tIris Versicolor\n62\t5.9\t3.0\t4.2\t1.5\tIris Versicolor\n63\t6.0\t2.2\t4.0\t1.0\tIris Versicolor\n64\t6.1\t2.9\t4.7\t1.4\tIris Versicolor\n65\t5.6\t2.9\t3.6\t1.3\tIris Versicolor\n66\t6.7\t3.1\t4.4\t1.4\tIris Versicolor\n67\t5.6\t3.0\t4.5\t1.5\tIris Versicolor\n68\t5.8\t2.7\t4.1\t1.0\tIris Versicolor\n69\t6.2\t2.2\t4.5\t1.5\tIris Versicolor\n70\t5.6\t2.5\t3.9\t1.1\tIris Versicolor\n71\t5.9\t3.2\t4.8\t1.8\tIris Versicolor\n72\t6.1\t2.8\t4.0\t1.3\tIris Versicolor\n73\t6.3\t2.5\t4.9\t1.5\tIris Versicolor\n74\t6.1\t2.8\t4.7\t1.2\tIris Versicolor\n75\t6.4\t2.9\t4.3\t1.3\tIris Versicolor\n76\t6.6\t3.0\t4.4\t1.4\tIris Versicolor\n77\t6.8\t2.8\t4.8\t1.4\tIris Versicolor\n78\t6.7\t3.0\t5.0\t1.7\tIris Versicolor\n79\t6.0\t2.9\t4.5\t1.5\tIris Versicolor\n80\t5.7\t2.6\t3.5\t1.0\tIris Versicolor\n81\t5.5\t2.4\t3.8\t1.1\tIris Versicolor\n82\t5.5\t2.4\t3.7\t1.0\tIris Versicolor\n83\t5.8\t2.7\t3.9\t1.2\tIris Versicolor\n84\t6.0\t2.7\t5.1\t1.6\tIris Versicolor\n85\t5.4\t3.0\t4.5\t1.5\tIris Versicolor\n86\t6.0\t3.4\t4.5\t1.6\tIris Versicolor\n87\t6.7\t3.1\t4.7\t1.5\tIris Versicolor\n88\t6.3\t2.3\t4.4\t1.3\tIris Versicolor\n89\t5.6\t3.0\t4.1\t1.3\tIris Versicolor\n90\t5.5\t2.5\t4.0\t1.3\tIris Versicolor\n91\t5.5\t2.6\t4.4\t1.2\tIris Versicolor\n92\t6.1\t3.0\t4.6\t1.4\tIris Versicolor\n93\t5.8\t2.6\t4.0\t1.2\tIris Versicolor\n94\t5.0\t2.3\t3.3\t1.0\tIris Versicolor\n95\t5.6\t2.7\t4.2\t1.3\tIris Versicolor\n96\t5.7\t3.0\t4.2\t1.2\tIris Versicolor\n97\t5.7\t2.9\t4.2\t1.3\tIris Versicolor\n98\t6.2\t2.9\t4.3\t1.3\tIris Versicolor\n99\t5.1\t2.5\t3.0\t1.1\tIris Versicolor\n100\t5.7\t2.8\t4.1\t1.3\tIris Versicolor\n101\t6.3\t3.3\t6.0\t2.5\tIris Virginica\n102\t5.8\t2.7\t5.1\t1.9\tIris Virginica\n103\t7.1\t3.0\t5.9\t2.1\tIris Virginica\n104\t6.3\t2.9\t5.6\t1.8\tIris Virginica\n105\t6.5\t3.0\t5.8\t2.2\tIris Virginica\n106\t7.6\t3.0\t6.6\t2.1\tIris Virginica\n107\t4.9\t2.5\t4.5\t1.7\tIris Virginica\n108\t7.3\t2.9\t6.3\t1.8\tIris Virginica\n109\t6.7\t2.5\t5.8\t1.8\tIris Virginica\n110\t7.2\t3.6\t6.1\t2.5\tIris Virginica\n111\t6.5\t3.2\t5.1\t2.0\tIris Virginica\n112\t6.4\t2.7\t5.3\t1.9\tIris Virginica\n113\t6.8\t3.0\t5.5\t2.1\tIris Virginica\n114\t5.7\t2.5\t5.0\t2.0\tIris Virginica\n115\t5.8\t2.8\t5.1\t2.4\tIris Virginica\n116\t6.4\t3.2\t5.3\t2.3\tIris Virginica\n117\t6.5\t3.0\t5.5\t1.8\tIris Virginica\n118\t7.7\t3.8\t6.7\t2.2\tIris Virginica\n119\t7.7\t2.6\t6.9\t2.3\tIris Virginica\n120\t6.0\t2.2\t5.0\t1.5\tIris Virginica\n121\t6.9\t3.2\t5.7\t2.3\tIris Virginica\n122\t5.6\t2.8\t4.9\t2.0\tIris Virginica\n123\t7.7\t2.8\t6.7\t2.0\tIris Virginica\n124\t6.3\t2.7\t4.9\t1.8\tIris Virginica\n125\t6.7\t3.3\t5.7\t2.1\tIris Virginica\n126\t7.2\t3.2\t6.0\t1.8\tIris Virginica\n127\t6.2\t2.8\t4.8\t1.8\tIris Virginica\n128\t6.1\t3.0\t4.9\t1.8\tIris Virginica\n129\t6.4\t2.8\t5.6\t2.1\tIris Virginica\n130\t7.2\t3.0\t5.8\t1.6\tIris Virginica\n131\t7.4\t2.8\t6.1\t1.9\tIris Virginica\n132\t7.9\t3.8\t6.4\t2.0\tIris Virginica\n133\t6.4\t2.8\t5.6\t2.2\tIris Virginica\n134\t6.3\t2.8\t5.1\t1.5\tIris Virginica\n135\t6.1\t2.6\t5.6\t1.4\tIris Virginica\n136\t7.7\t3.0\t6.1\t2.3\tIris Virginica\n137\t6.3\t3.4\t5.6\t2.4\tIris Virginica\n138\t6.4\t3.1\t5.5\t1.8\tIris Virginica\n139\t6.0\t3.0\t4.8\t1.8\tIris Virginica\n140\t6.9\t3.1\t5.4\t2.1\tIris Virginica\n141\t6.7\t3.1\t5.6\t2.4\tIris Virginica\n142\t6.9\t3.1\t5.1\t2.3\tIris Virginica\n143\t5.8\t2.7\t5.1\t1.9\tIris Virginica\n144\t6.8\t3.2\t5.9\t2.3\tIris Virginica\n145\t6.7\t3.3\t5.7\t2.5\tIris Virginica\n146\t6.7\t3.0\t5.2\t2.3\tIris Virginica\n147\t6.3\t2.5\t5.0\t1.9\tIris Virginica\n148\t6.5\t3.0\t5.2\t2.0\tIris Virginica\n149\t6.2\t3.4\t5.4\t2.3\tIris Virginica\n150\t5.9\t3.0\t5.1\t1.8\tIris Virginica\n\n\n",
     "userInputFormat": "csv",
@@ -398,6 +380,9 @@ const MOCK_PROJECT_DATA = {
     }
 };
 
+// mock-2: tree.rawgraphs
+const MOCK_TREE_DATA = { "version": "1.2", "userInput": "種,カテゴリー,品種名,頭数\r\nカイネコ,特徴遺伝子品種,スコティッシュフォールド,7982\r\nカイネコ,非血統（雑種・在来）,混血猫,6259\r\nカイネコ,特徴遺伝子品種,マンチカン,5989\r\nカイネコ,ペルシャ系ファミリー,ラグドール,5175\r\nカイネコ,ペルシャ系ファミリー,ミヌエット,4625\r\nカイネコ,北方フォレスト系,サイベリアン,4129\r\nカイネコ,自然発生・地域系,ブリティッシュショートヘア,3254\r\nカイネコ,自然発生・地域系,アメリカンショートヘア,3053\r\nカイネコ,北方フォレスト系,ノルウェージャンフォレストキャット,2990\r\nカイネコ,ペルシャ系ファミリー,ラガマフィン,1767\r\nカイネコ,ワイルドハイブリッド,ベンガル,1579\r\nカイネコ,北方フォレスト系,メインクーン,1480\r\nカイネコ,自然発生・地域系,ロシアンブルー,1333\r\nカイネコ,ペルシャ系ファミリー,エキゾチックショートヘア,1126\r\nカイネコ,ペルシャ系ファミリー,ペルシャ(チンチラ),631\r\nカイネコ,特徴遺伝子品種,アメリカンカール,534\r\nカイネコ,ペルシャ系ファミリー,ペルシャ,465\r\nカイネコ,自然発生・地域系,ソマリ,415\r\nカイネコ,ペルシャ系ファミリー,エキゾチック,373\r\nカイネコ,非血統（雑種・在来）,日本猫,359\r\nカイネコ,非血統（雑種・在来）,日本猫,600\r\nカイネコ,非血統（雑種・在来）,日本猫,9000", "userInputFormat": "csv", "dataSource": { "type": "file" }, "rawData": [["カイネコ", "特徴遺伝子品種", "スコティッシュフォールド", "7982"], ["カイネコ", "非血統（雑種・在来）", "混血猫", "6259"], ["カイネコ", "特徴遺伝子品種", "マンチカン", "5989"], ["カイネコ", "ペルシャ系ファミリー", "ラグドール", "5175"], ["カイネコ", "ペルシャ系ファミリー", "ミヌエット", "4625"], ["カイネコ", "北方フォレスト系", "サイベリアン", "4129"], ["カイネコ", "自然発生・地域系", "ブリティッシュショートヘア", "3254"], ["カイネコ", "自然発生・地域系", "アメリカンショートヘア", "3053"], ["カイネコ", "北方フォレスト系", "ノルウェージャンフォレストキャット", "2990"], ["カイネコ", "ペルシャ系ファミリー", "ラガマフィン", "1767"], ["カイネコ", "ワイルドハイブリッド", "ベンガル", "1579"], ["カイネコ", "北方フォレスト系", "メインクーン", "1480"], ["カイネコ", "自然発生・地域系", "ロシアンブルー", "1333"], ["カイネコ", "ペルシャ系ファミリー", "エキゾチックショートヘア", "1126"], ["カイネコ", "ペルシャ系ファミリー", "ペルシャ(チンチラ)", "631"], ["カイネコ", "特徴遺伝子品種", "アメリカンカール", "534"], ["カイネコ", "ペルシャ系ファミリー", "ペルシャ", "465"], ["カイネコ", "自然発生・地域系", "ソマリ", "415"], ["カイネコ", "ペルシャ系ファミリー", "エキゾチック", "373"], ["カイネコ", "非血統（雑種・在来）", "日本猫", "359"], ["カイネコ", "非血統（雑種・在来）", "日本猫", "600"], ["カイネコ", "非血統（雑種・在来）", "日本猫", "9000"]], "parseError": null, "parseOptions": { "separator": ",", "thousandsSeparator": ",", "decimalsSeparator": ".", "locale": "ja", "unstackedData": null, "unstackedColumns": null }, "dataTypes": { "種": "string", "カテゴリー": "string", "品種名": "string", "頭数": { "type": "number", "locale": "ja", "decimal": ".", "group": ",", "numerals": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] } }, "chart": "rawgraphs.lineardendrogram", "mapping": { "hierarchy": { "ids": ["1", "2", "3"], "value": ["種", "カテゴリー", "品種名"], "isValid": true, "mappedType": "string" }, "label": { "ids": ["4"], "value": ["品種名"], "isValid": true, "mappedType": "string", "config": { "aggregation": ["csvDistinct"] } }, "size": { "ids": ["5"], "value": ["頭数"], "isValid": true, "mappedType": "number", "config": { "aggregation": ["csv"] } }, "color": { "ids": ["6"], "value": ["カテゴリー"], "isValid": true, "mappedType": "string", "config": { "aggregation": ["csvDistinct"] } } }, "visualOptions": { "width": 805, "height": 600, "background": "#FFFFFF", "marginTop": 10, "marginRight": 150, "marginBottom": 10, "marginLeft": 10, "maxDiameter": 20, "showLegend": false, "legendWidth": 200, "layout": "Tree", "sortBy": "Size (descending)", "sizeOnlyLeaves": true, "colorScale": { "scaleType": "ordinal", "interpolator": "schemeCategory10", "userScaleValues": [{ "range": "#1f77b4", "domain": "ペルシャ系ファミリー" }, { "range": "#ff7f0e", "domain": "ワイルドハイブリッド" }, { "range": "#2ca02c", "domain": "北方フォレスト系" }, { "range": "#d62728", "domain": "特徴遺伝子品種" }, { "range": "#9467bd", "domain": "自然発生・地域系" }, { "range": "#8c564b", "domain": "非血統（雑種・在来）" }], "defaultColor": "#cccccc" }, "labelStyles": [], "showHierarchyLabels": true, "showLabelsOutline": false } };
+
 export async function loadProject(id) {
     console.log('Loading project:', id);
     const headers = getAuthHeader();
@@ -405,13 +390,14 @@ export async function loadProject(id) {
         return Promise.reject(new Error('User not logged in'));
     }
 
-    // Real implementation:
-    // const res = await fetch(`${API_BASE_URL}/${id}`, { headers });
-    // if (!res.ok) throw new Error(res.statusText);
-    // return res.json();
+    // Switch based on ID to select the correct mock file
+    if (id === 'mock-1') {
+        return Promise.resolve(MOCK_PARA_DATA);
+    } else if (id === 'mock-2') {
+        return Promise.resolve(MOCK_TREE_DATA);
+    }
 
-    // Return valid mock project structure
-    return Promise.resolve(MOCK_PROJECT_DATA);
+    return Promise.reject(new Error('Project not found'));
 }
 
 export async function deleteProject(id) {
