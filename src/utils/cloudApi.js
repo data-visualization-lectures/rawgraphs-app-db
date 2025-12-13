@@ -40,7 +40,7 @@ async function getSupabaseConfig() {
 export async function getProjects() {
     console.log("Fetching projects via Raw Fetch...");
     try {
-        const { supabaseUrl, supabaseKey, accessToken } = await getSupabaseConfig();
+        const { supabaseUrl, supabaseKey } = await getSupabaseConfig();
 
         // Construct URL with API Key in query param to bypass header stripping
         const endpoint = `${supabaseUrl}/rest/v1/projects?select=id,name,created_at,updated_at&app_name=eq.${APP_NAME}&order=updated_at.desc&apikey=${supabaseKey}`;
@@ -73,7 +73,7 @@ export async function getProjects() {
 export async function saveProject(projectData) {
     console.log("Saving project via Raw Fetch...");
     try {
-        const { supabaseUrl, supabaseKey, accessToken, user } = await getSupabaseConfig();
+        const { supabaseUrl, supabaseKey, user } = await getSupabaseConfig();
 
         // Use native crypto.randomUUID()
         const id = projectData.id || crypto.randomUUID();
@@ -130,7 +130,7 @@ export async function updateProject(projectId, projectData) {
 export async function deleteProject(projectId) {
     console.log("Deleting project via Raw Fetch...", projectId);
     try {
-        const { supabaseUrl, supabaseKey, accessToken } = await getSupabaseConfig();
+        const { supabaseUrl, supabaseKey } = await getSupabaseConfig();
 
         const endpoint = `${supabaseUrl}/rest/v1/projects?id=eq.${projectId}&apikey=${supabaseKey}`;
 
@@ -172,7 +172,7 @@ export async function checkUserSession() {
 export async function loadProject(projectId) {
     console.log("Loading project via Raw Fetch...", projectId);
     try {
-        const { supabaseUrl, supabaseKey, accessToken } = await getSupabaseConfig();
+        const { supabaseUrl, supabaseKey } = await getSupabaseConfig();
 
         // Fetch specifically the 'data' column
         const endpoint = `${supabaseUrl}/rest/v1/projects?select=data&id=eq.${projectId}&apikey=${supabaseKey}`;
