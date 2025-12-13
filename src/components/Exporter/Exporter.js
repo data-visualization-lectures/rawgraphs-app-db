@@ -1,5 +1,7 @@
 import React, { useCallback, useState } from 'react'
 import { InputGroup, DropdownButton, Dropdown } from 'react-bootstrap'
+import CloudSaveModal from './CloudSaveModal'
+import { BsCloudUpload } from 'react-icons/bs'
 
 function downloadBlob(url, filename) {
   // Create a new anchor element
@@ -62,10 +64,15 @@ export default function Exporter({ rawViz, exportProject }) {
     [exportProject]
   )
 
-  const exportFormats = ['svg','png','jpg','rawgraphs'];
+  const exportFormats = ['svg', 'png', 'jpg', 'rawgraphs'];
 
   const [currentFormat, setCurrentFormat] = useState('svg')
   const [currentFile, setCurrentFile] = useState('viz')
+
+  /* Cloud Save Logic */
+  const [showCloudModal, setShowCloudModal] = useState(false)
+
+  // NOTE: exportProject (prop) function returns the JS object we need to save.
 
   const downloadViz = useCallback(() => {
     switch (currentFormat) {
@@ -120,6 +127,21 @@ export default function Exporter({ rawViz, exportProject }) {
           ダウンロード
         </button>
       </div>
+      <div className="col col-sm-2">
+        <button
+          className="btn btn-outline-primary btn-block raw-btn d-flex align-items-center justify-content-center"
+          onClick={() => setShowCloudModal(true)}
+          title="クラウドに保存"
+        >
+          <BsCloudUpload className="mr-2" /> クラウド保存
+        </button>
+      </div>
+
+      <CloudSaveModal
+        show={showCloudModal}
+        onHide={() => setShowCloudModal(false)}
+        getProjectData={exportProject}
+      />
     </div>
   )
 }

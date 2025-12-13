@@ -18,6 +18,7 @@ import JsonViewer from '../JsonViewer'
 import ParsingOptions from '../ParsingOptions'
 import styles from './DataLoader.module.scss'
 import LoadProject from './loaders/LoadProject'
+import LoadCloudProject from './loaders/LoadCloudProject'
 import Paste from './loaders/Paste'
 import UploadFile from './loaders/UploadFile'
 import UrlFetch from './loaders/UrlFetch'
@@ -144,6 +145,19 @@ function DataLoader({
         />
       ),
       icon: BsFolder,
+      allowedForReplace: false,
+    },
+    {
+      id: 'cloud',
+      name: 'クラウドから開く',
+      message: 'クラウドに保存されたプロジェクトを開きます。',
+      loader: (
+        <LoadCloudProject
+          onProjectSelected={hydrateFromProject}
+          setLoadingError={setLoadingError}
+        />
+      ),
+      icon: BsCloud,
       allowedForReplace: false,
     },
   ]
