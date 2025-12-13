@@ -69,7 +69,7 @@ export async function getProjects() {
     }
 }
 
-export async function saveProject(projectData) {
+export async function saveProject(projectData, projectName) {
     console.log("Saving project via Raw Fetch (Storage + DB)...");
     try {
         const { supabaseUrl, supabaseKey, accessToken, user } = await getSupabaseConfig();
@@ -105,7 +105,7 @@ export async function saveProject(projectData) {
         const payload = {
             id,
             user_id: user.id,
-            name: projectData.name,
+            name: projectName || projectData.name || 'Untitled Project', // Use provided name
             storage_path: filePath, // Storing path instead of data
             app_name: APP_NAME,
             created_at: projectData.created_at || now,
@@ -139,8 +139,8 @@ export async function saveProject(projectData) {
     }
 }
 
-export async function updateProject(projectId, projectData) {
-    return saveProject({ ...projectData, id: projectId });
+export async function updateProject(projectId, projectData, projectName) {
+    return saveProject({ ...projectData, id: projectId }, projectName);
 }
 
 export async function deleteProject(projectId) {
