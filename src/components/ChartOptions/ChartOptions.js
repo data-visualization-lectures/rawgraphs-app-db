@@ -39,12 +39,12 @@ function getPartialMapping(mapping, dimension, repeatIndex) {
 function getPartialMappedData(mappedData, dimension, repeatIndex) {
   return Array.isArray(mappedData)
     ? mappedData.map((datum) => {
-        const value = get(datum[dimension], `[${repeatIndex}]`)
-        return {
-          ...datum,
-          [dimension]: value,
-        }
-      })
+      const value = get(datum[dimension], `[${repeatIndex}]`)
+      return {
+        ...datum,
+        [dimension]: value,
+      }
+    })
     : mappedData
 }
 
@@ -234,7 +234,7 @@ const ChartOptions = ({
     for (const option in optionsConfig) {
       const group = optionsConfig[option].group
       if (!groups.hasOwnProperty(group)) {
-        groups[group] = group === 'artboard' ? false : true
+        groups[group] = true
       }
     }
     setCollapseStatus(groups)
