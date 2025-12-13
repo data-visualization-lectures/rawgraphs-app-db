@@ -1,5 +1,3 @@
-import { Utils } from '@rawgraphs/rawgraphs-core';
-
 const APP_NAME = 'rawgraphs';
 const BUCKET_NAME = 'user_projects'; // This might become obsolete if data is stored directly in DB
 
@@ -77,7 +75,8 @@ export async function saveProject(projectData) {
     try {
         const { supabaseUrl, supabaseKey, accessToken, user } = await getSupabaseConfig();
 
-        const id = projectData.id || Utils.generateID();
+        // Use native crypto.randomUUID()
+        const id = projectData.id || crypto.randomUUID();
         const now = new Date().toISOString();
 
         const payload = {
