@@ -170,50 +170,37 @@ export async function checkUserSession() {
     }
 }
 
-export async function loadProject(id) {
-    const { data, error } = await supabase.storage
-        .from(BUCKET_NAME)
-        .download(filePath);
-
-    if (error) {
-        console.error('Supabase storage download error:', JSON.stringify(error));
-        throw new Error('プロジェクトデータのダウンロードに失敗しました: ' + error.message);
-    }
-
-    const text = await data.text();
+export async function loadProject(projectId) {
+    console.log("Loading project via Raw Fetch...", projectId);
     try {
-        const json = JSON.parse(text);
-        return json;
-    } catch (e) {
-        console.error('JSON parse error:', e);
-        throw new Error('プロジェクトデータの形式が不正です。');
+        const { supabaseUrl, supabaseKey, accessToken } = await getSupabaseConfig();
+
+        // Fetch specifically the 'data' column
+        const endpoint = `${supabaseUrl}/rest/v1/projects?select=data&id=eq.${projectId}&apikey=${supabaseKey}`;
+
+        const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.pgrst.object+json' // Expect single object
+            }
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.text();
+            console.error("Supabase loadProject error:", errorBody);
+            throw new Error(`Server responded with ${response.status}: ${errorBody}`);
+        }
+
+        const record = await response.json();
+        // The project data is stored in the 'data' JSONB column
+        // .select('data') returns { data: {...} }
+        return record.data;
+
+    } catch (error) {
+        console.error("loadProject exception:", error);
+        throw error;
     }
-}
-
-export async function deleteProject(id) {
-    console.log('Deleting project:', id);
-    const { supabase, user } = await getSupabaseAndUser();
-
-    // 1. Delete from DB
-    const { error: dbError } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', id);
-
-    if (dbError) {
-        console.error('Supabase delete error:', JSON.stringify(dbError));
-        throw new Error('プロジェクトの削除に失敗しました: ' + dbError.message);
-    }
-
-    // 2. Cleanup Storage
-    const filePath = `${user.id}/${id}.json`;
-    const { error: storageError } = await supabase.storage
-        .from(BUCKET_NAME)
-        .remove([filePath]);
-
-    if (storageError) {
-        console.warn('Storage cleanup failed (non-fatal):', storageError);
-    }
-
-    return true;
 }
