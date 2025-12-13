@@ -39,6 +39,10 @@ async function getSupabaseAndUser() {
         throw new Error("Supabase Library Factory not found. Check index.html loading order.");
     }
 
+    if (!supabaseKey) {
+        console.error("Supabase Key is undefined! Check .env or globalAuthClient.");
+    }
+
     const client = SupabaseFactory.createClient(supabaseUrl, supabaseKey, {
         auth: {
             persistSession: false, // We manage valid token manually via headers
@@ -46,7 +50,8 @@ async function getSupabaseAndUser() {
         },
         global: {
             headers: {
-                Authorization: `Bearer ${accessToken}`
+                Authorization: `Bearer ${accessToken}`,
+                apikey: supabaseKey
             }
         }
     });
