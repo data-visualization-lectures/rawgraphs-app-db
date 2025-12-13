@@ -23,9 +23,8 @@ async function getSupabaseAndUser() {
     // Use Access Token from the active session
     const accessToken = session.access_token;
 
-    // Use Env Vars if available, otherwise fallback to the key found in the global instance (if any)
-    const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://vebhoeiltxspsurqoxvl.supabase.co';
-    const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || globalAuthClient.supabaseKey;
+    const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+    const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
         throw new Error("Supabase Configuration Missing (URL or Key). Please check .env or deployment settings.");
