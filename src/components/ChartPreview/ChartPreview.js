@@ -17,7 +17,7 @@ const ChartPreview = ({
   const domRef = useRef(null)
 
   const vizOptionsDebounced = useDebounce(visualOptions, 200)
-  
+
   useEffect(() => {
     setError(null)
 
@@ -62,16 +62,14 @@ const ChartPreview = ({
     if (multivaluesVariables.length > 0) {
       let errorMessage = (
         <span>
-          Please map{' '}
-          {multivaluesVariables
+          <span className="font-weight-bold">{multivaluesVariables
             .map((d) => (
               <>
-                at least <span className="font-weight-bold">{d.minValues}</span>{' '}
-                dimensions on <span className="font-weight-bold">{d.name}</span>
+                <span className="font-weight-bold">{d.name}</span> には最低 <span className="font-weight-bold">{d.minValues}</span> つの変数
               </>
             ))
-            .reduce((prev, curr) => [prev, ' and ', curr])}
-          .
+            .reduce((prev, curr) => [prev, ' と ', curr])}</span>
+          をマッピングしてください。
         </span>
       )
       setError({ variant: 'secondary', message: errorMessage })
@@ -90,7 +88,7 @@ const ChartPreview = ({
         !mapping[variable].isValid
       ) {
         const variableObj = chart.dimensions.find((d) => d.id === variable)
-        const errorMessage = `Data-type mismatch: you can’t map ${mapping[variable].mappedType}s on ${variableObj.name}.`
+        const errorMessage = `データ型の不一致: ${variableObj.name} に ${mapping[variable].mappedType}型をマッピングすることはできません。`
         setError({ variant: 'danger', message: errorMessage })
         setRawViz(null)
         while (domRef.current.firstChild) {
@@ -122,7 +120,7 @@ const ChartPreview = ({
         setError(null)
       } catch (e) {
         console.log("chart error", e)
-        setError({ variant: 'danger', message: 'Chart error. ' + e.message })
+        setError({ variant: 'danger', message: 'チャートエラー: ' + e.message })
         setRawViz(null)
       }
     } catch (e) {
@@ -130,7 +128,7 @@ const ChartPreview = ({
         domRef.current.removeChild(domRef.current.firstChild)
       }
       console.log({ e })
-      setError({ variant: 'danger', message: 'Chart error. ' + e.message })
+      setError({ variant: 'danger', message: 'チャートエラー: ' + e.message })
       setRawViz(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
