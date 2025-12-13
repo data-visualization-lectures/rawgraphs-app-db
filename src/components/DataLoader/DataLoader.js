@@ -71,7 +71,7 @@ function DataLoader({
         />
       ),
       message:
-        'ほかのアプリやウェブサイトからデータをコピペします。表データ(TSV, CSV, DSV)かJSON形式が利用可能です。',
+        'データを貼り付けます。表データ(TSV, CSV, DSV)形式かJSON形式が利用可能です。',
       icon: BsClipboard,
       allowedForReplace: true,
     },
