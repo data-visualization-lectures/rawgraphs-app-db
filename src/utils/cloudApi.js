@@ -21,7 +21,7 @@ async function getSupabaseAndUser() {
 
 export async function getProjects() {
     console.log('Fetching projects from Supabase...');
-    const { supabase, user } = await getSupabaseAndUser();
+    const { supabase } = await getSupabaseAndUser();
 
     const { data, error } = await supabase
         .from('projects')
