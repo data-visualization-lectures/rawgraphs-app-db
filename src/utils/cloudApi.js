@@ -1,4 +1,3 @@
-
 const APP_NAME = 'rawgraphs';
 const BUCKET_NAME = 'user_projects';
 
@@ -10,6 +9,13 @@ async function getSupabaseAndUser() {
         throw new Error("認証クライアントが読み込まれていません。ページをリロードしてください。");
     }
 
+    // DEBUG: Inspect the headers and keys of the global client
+    console.log('[Debug] Global Client Keys:', {
+        supabaseKey: globalAuthClient.supabaseKey,
+        headers: globalAuthClient.rest?.headers, // headers might be in rest client or global config
+        authHeaders: globalAuthClient.auth?.headers
+    });
+
     // 2. Verify Session
     const { data: { session }, error: sessionError } = await globalAuthClient.auth.getSession();
     if (sessionError || !session || !session.user) {
@@ -18,7 +24,6 @@ async function getSupabaseAndUser() {
     }
 
     // 3. Return the global client directly
-    // The global client is already configured with the API Key and manages the User Token automatically.
     return { supabase: globalAuthClient, user: session.user };
 }
 
