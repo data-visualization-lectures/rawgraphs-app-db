@@ -1,5 +1,5 @@
 
-const API_BASE_URL = 'https://api.dataviz.jp/api/projects';
+// const API_BASE_URL = 'https://api.dataviz.jp/api/projects';
 // For local development, you might want to switch this:
 // const API_BASE_URL = 'http://localhost:3000/api/projects';
 
