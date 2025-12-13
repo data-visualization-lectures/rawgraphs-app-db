@@ -253,3 +253,12 @@ h5 {
   border-top: 1px solid var(--gray-400);
   display: inline-block;
 }
+
+// Global Header Override
+#dataviz-global-header-host {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100000;
+}
