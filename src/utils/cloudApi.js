@@ -1,5 +1,5 @@
 const APP_NAME = 'rawgraphs';
-
+const BUCKET_NAME = 'user_projects';
 
 // Helper to get configuration and session purely for Raw Fetch
 async function getSupabaseConfig() {
@@ -20,7 +20,8 @@ async function getSupabaseConfig() {
     const DEFAULT_URL = "https://vebhoeiltxspsurqoxvl.supabase.co";
     // Need explicit key for query param usage
     const globalKey = globalAuthClient.supabaseKey;
-    const DEFAULT_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlYmhvZWlsdHhzcHN1cnFveHZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzAyMjI2MTIsImV4cCI6MjA0NTc5ODYxMn0.sV-Xf6wP_m46D_q-XN0oZfK9NogDqD9xV5sS-n6J8c4";
+    // Updated to the correct key verified by direct browser access
+    const DEFAULT_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlYmhvZWlsdHhzcHN1cnFveHZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNTY4MjMsImV4cCI6MjA4MDYzMjgyM30.5uf-D07Hb0JxL39X9yQ20P-5gFc1CRMdKWhDySrNZ0E";
 
     const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || DEFAULT_URL;
     const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || globalKey || DEFAULT_KEY;
@@ -48,9 +49,7 @@ export async function getProjects() {
         const response = await fetch(endpoint, {
             method: 'GET',
             headers: {
-                // Also send in header (standard), though query param is the fix
-                'apikey': supabaseKey,
-                // 'Authorization': `Bearer ${accessToken}`, // Removed to avoid 401 with potential bad token (RLS is disabled)
+                // Rely ONLY on query param for DB access (RLS disabled)
                 'Content-Type': 'application/json'
             }
         });
@@ -71,49 +70,67 @@ export async function getProjects() {
 }
 
 export async function saveProject(projectData) {
-    console.log("Saving project via Raw Fetch...");
+    console.log("Saving project via Raw Fetch (Storage + DB)...");
     try {
-        const { supabaseUrl, supabaseKey, user } = await getSupabaseConfig();
+        const { supabaseUrl, supabaseKey, accessToken, user } = await getSupabaseConfig();
 
         // Use native crypto.randomUUID()
         const id = projectData.id || crypto.randomUUID();
         const now = new Date().toISOString();
+        const filePath = `${user.id}/${id}.json`;
 
+        // 1. Upload JSON to Storage
+        console.log("Uploading to Storage:", filePath);
+        const storageEndpoint = `${supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${filePath}?apikey=${supabaseKey}`;
+
+        const storageResponse = await fetch(storageEndpoint, {
+            method: 'POST',
+            headers: {
+                // Storage needs Auth
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+                'x-upsert': 'true' // Allow overwriting
+            },
+            body: JSON.stringify(projectData)
+        });
+
+        if (!storageResponse.ok) {
+            const errorBody = await storageResponse.text();
+            console.error("Supabase Storage upload error:", errorBody);
+            throw new Error(`Storage upload failed with ${storageResponse.status}: ${errorBody}`);
+        }
+
+        // 2. Insert/Update Metadata in DB
+        console.log("Saving Metadata to DB...");
         const payload = {
             id,
             user_id: user.id,
             name: projectData.name,
-            data: projectData, // The JSON data
+            storage_path: filePath, // Storing path instead of data
             app_name: APP_NAME,
             created_at: projectData.created_at || now,
             updated_at: now
         };
 
-        // Check if exists updates or insert?
-        // PostgREST "upsert" is typically POST with Prefer: resolution=merge-duplicates OR PUT (if pk known).
-        // For simplicity with Raw Fetch, we'll try POST with upsert header.
+        const dbEndpoint = `${supabaseUrl}/rest/v1/projects?apikey=${supabaseKey}`;
 
-        const endpoint = `${supabaseUrl}/rest/v1/projects?apikey=${supabaseKey}`;
-
-        const response = await fetch(endpoint, {
+        const dbResponse = await fetch(dbEndpoint, {
             method: 'POST',
             headers: {
-                'apikey': supabaseKey,
-                // 'Authorization': `Bearer ${accessToken}`, // Removed
+                // DB access via Anon Key (RLS disabled)
                 'Content-Type': 'application/json',
-                'Prefer': 'resolution=merge-duplicates,return=representation' // Upsert behavior
+                'Prefer': 'resolution=merge-duplicates,return=representation'
             },
             body: JSON.stringify(payload)
         });
 
-        if (!response.ok) {
-            const errorBody = await response.text();
-            console.error("Supabase saveProject error:", errorBody);
-            throw new Error(`Server responded with ${response.status}: ${errorBody}`);
+        if (!dbResponse.ok) {
+            const errorBody = await dbResponse.text();
+            console.error("Supabase DB save error:", errorBody);
+            throw new Error(`DB save failed with ${dbResponse.status}: ${errorBody}`);
         }
 
-        const data = await response.json();
-        // data is array of inserted rows
+        const data = await dbResponse.json();
         return data && data.length > 0 ? data[0] : null;
 
     } catch (error) {
@@ -123,30 +140,62 @@ export async function saveProject(projectData) {
 }
 
 export async function updateProject(projectId, projectData) {
-    // Alias for saveProject since we use upsert
     return saveProject({ ...projectData, id: projectId });
 }
 
 export async function deleteProject(projectId) {
-    console.log("Deleting project via Raw Fetch...", projectId);
+    console.log("Deleting project via Raw Fetch (DB + Storage)...", projectId);
     try {
-        const { supabaseUrl, supabaseKey } = await getSupabaseConfig();
+        const { supabaseUrl, supabaseKey, accessToken } = await getSupabaseConfig();
 
-        const endpoint = `${supabaseUrl}/rest/v1/projects?id=eq.${projectId}&apikey=${supabaseKey}`;
+        // 1. Get storage_path from DB first (or construct it if standard)
+        // Ideally we should fetch the path, but standard naming is {user_id}/{id}.json.
+        // Let's try to delete from DB first.
 
-        const response = await fetch(endpoint, {
+        // We actually need the user_id to construct the path, or fetch the record.
+        // Let's fetch the record to be safe.
+        const fetchEndpoint = `${supabaseUrl}/rest/v1/projects?select=storage_path&id=eq.${projectId}&apikey=${supabaseKey}`;
+        const fetchRes = await fetch(fetchEndpoint, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        let storagePath = null;
+        if (fetchRes.ok) {
+            const rows = await fetchRes.json();
+            if (rows.length > 0) storagePath = rows[0].storage_path;
+        }
+
+        // 2. Delete from DB
+        const dbEndpoint = `${supabaseUrl}/rest/v1/projects?id=eq.${projectId}&apikey=${supabaseKey}`;
+        const dbResponse = await fetch(dbEndpoint, {
             method: 'DELETE',
             headers: {
-                'apikey': supabaseKey,
-                // 'Authorization': `Bearer ${accessToken}`, // Removed
                 'Content-Type': 'application/json'
             }
         });
 
-        if (!response.ok) {
-            const errorBody = await response.text();
-            console.error("Supabase deleteProject error:", errorBody);
-            throw new Error(`Server responded with ${response.status}: ${errorBody}`);
+        if (!dbResponse.ok) {
+            throw new Error(`DB delete failed with ${dbResponse.status}`);
+        }
+
+        // 3. Delete from Storage if path known
+        if (storagePath) {
+            console.log("Deleting from Storage:", storagePath);
+            const storageEndpoint = `${supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${storagePath}?apikey=${supabaseKey}`;
+            // Storage DELETE usually requires specific format or different endpoint for bulk delete, 
+            // but single DELETE is DELETE /object/{bucket}/{wildcard}
+
+            const storageResponse = await fetch(storageEndpoint, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+
+            if (!storageResponse.ok) {
+                console.warn("Storage delete failed (non-fatal):", await storageResponse.text());
+            }
         }
 
         return true;
@@ -158,7 +207,6 @@ export async function deleteProject(projectId) {
 }
 
 export async function checkUserSession() {
-    // Only verify session existence
     try {
         const globalAuthClient = window.supabase;
         if (!globalAuthClient) return null;
@@ -170,33 +218,47 @@ export async function checkUserSession() {
 }
 
 export async function loadProject(projectId) {
-    console.log("Loading project via Raw Fetch...", projectId);
+    console.log("Loading project via Raw Fetch (Storage)...", projectId);
     try {
-        const { supabaseUrl, supabaseKey } = await getSupabaseConfig();
+        const { supabaseUrl, supabaseKey, accessToken } = await getSupabaseConfig();
 
-        // Fetch specifically the 'data' column
-        const endpoint = `${supabaseUrl}/rest/v1/projects?select=data&id=eq.${projectId}&apikey=${supabaseKey}`;
+        // 1. Get storage_path from DB
+        const dbEndpoint = `${supabaseUrl}/rest/v1/projects?select=storage_path&id=eq.${projectId}&apikey=${supabaseKey}`;
+        const dbResponse = await fetch(dbEndpoint, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
 
-        const response = await fetch(endpoint, {
+        if (!dbResponse.ok) {
+            throw new Error(`DB load failed with ${dbResponse.status}`);
+        }
+
+        const rows = await dbResponse.json();
+        if (!rows.length) throw new Error("Project not found in DB");
+
+        const storagePath = rows[0].storage_path;
+
+        // 2. Download from Storage
+        // Use GET /storage/v1/object/{bucket}/{path} for public, but for private we need Auth.
+        // For private download, the endpoint is same but with Auth header.
+
+        const storageEndpoint = `${supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${storagePath}?apikey=${supabaseKey}`;
+
+        const storageResponse = await fetch(storageEndpoint, {
             method: 'GET',
             headers: {
-                'apikey': supabaseKey,
-                // 'Authorization': `Bearer ${accessToken}`, // Removed
-                'Content-Type': 'application/json',
-                'Accept': 'application/vnd.pgrst.object+json' // Expect single object
+                'Authorization': `Bearer ${accessToken}`
             }
         });
 
-        if (!response.ok) {
-            const errorBody = await response.text();
-            console.error("Supabase loadProject error:", errorBody);
-            throw new Error(`Server responded with ${response.status}: ${errorBody}`);
+        if (!storageResponse.ok) {
+            const errorBody = await storageResponse.text();
+            console.error("Supabase loadProject storage error:", errorBody);
+            throw new Error(`Storage download failed with ${storageResponse.status}: ${errorBody}`);
         }
 
-        const record = await response.json();
-        // The project data is stored in the 'data' JSONB column
-        // .select('data') returns { data: {...} }
-        return record.data;
+        const json = await storageResponse.json();
+        return json;
 
     } catch (error) {
         console.error("loadProject exception:", error);
