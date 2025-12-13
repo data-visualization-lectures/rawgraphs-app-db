@@ -1,5 +1,5 @@
 const APP_NAME = 'rawgraphs';
-const BUCKET_NAME = 'user_projects'; // This might become obsolete if data is stored directly in DB
+
 
 // Helper to get configuration and session purely for Raw Fetch
 async function getSupabaseConfig() {
