@@ -1,9 +1,10 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Table, Spinner, Alert } from 'react-bootstrap';
 import { BsCloudDownload, BsTrash } from 'react-icons/bs';
 import { getProjects, loadProject, deleteProject } from '../../../utils/cloudApi';
 import dayjs from 'dayjs';
+import { deserializeProject } from '@rawgraphs/rawgraphs-core';
+import charts from '../../../charts';  // Import available charts configuration
 
 export default function LoadCloudProject({ onProjectSelected, setLoadingError }) {
     const [projects, setProjects] = useState([]);
@@ -33,10 +34,22 @@ export default function LoadCloudProject({ onProjectSelected, setLoadingError })
         setLoading(true);
         try {
             const projectData = await loadProject(id);
-            onProjectSelected(projectData);
+
+            // cloudApi returns the JSON object directly.
+            // We need to pass it through deserializeProject to ensure it's fully hydrated
+            // and compatible with the app's state (handling migrations, chart definitions etc).
+            // deserializeProject expects a string usually (from file reader), so we stringify it first if it's an object.
+            // OR if deserializeProject accepts object, we can try. But LoadProject.js pases a string.
+            // Let's mimic LoadProject.js behavior: Stringify then Deserialize.
+
+            const jsonString = JSON.stringify(projectData);
+            const project = deserializeProject(jsonString, charts);
+
+            onProjectSelected(project);
         } catch (err) {
             console.error(err);
             setError('プロジェクトの読み込みに失敗しました。');
+            setLoadingError(err.message);
         } finally {
             setLoading(false);
         }
