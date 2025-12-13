@@ -3,18 +3,11 @@ const BUCKET_NAME = 'user_projects';
 
 // Helper to get a configured Supabase client and the current user
 async function getSupabaseAndUser() {
-    // 1. Get the Global Instance (managed by dataviz-auth-client.js)
+    // 1. Get the Global Instance
     const globalAuthClient = window.supabase;
     if (!globalAuthClient || !globalAuthClient.auth) {
         throw new Error("認証クライアントが読み込まれていません。ページをリロードしてください。");
     }
-
-    // DEBUG: Inspect the headers and keys of the global client
-    console.log('[Debug] Global Client Keys:', {
-        supabaseKey: globalAuthClient.supabaseKey,
-        headers: globalAuthClient.rest?.headers, // headers might be in rest client or global config
-        authHeaders: globalAuthClient.auth?.headers
-    });
 
     // 2. Verify Session
     const { data: { session }, error: sessionError } = await globalAuthClient.auth.getSession();
@@ -23,8 +16,47 @@ async function getSupabaseAndUser() {
         throw new Error("ログインしてください。");
     }
 
-    // 3. Return the global client directly
-    return { supabase: globalAuthClient, user: session.user };
+    // 3. Prepare Configuration
+    // Use the key found in the global client (which we confirmed is correct in logs) or fallback
+    const DEFAULT_URL = "https://vebhoeiltxspsurqoxvl.supabase.co";
+    const DEFAULT_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlYmhvZWlsdHhzcHN1cnFveHZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzAyMjI2MTIsImV4cCI6MjA0NTc5ODYxMn0.sV-Xf6wP_m46D_q-XN0oZfK9NogDqD9xV5sS-n6J8c4";
+
+    // Priority: Env Var > Global Client Key > Hardcoded Default
+    const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || DEFAULT_URL;
+    const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || globalAuthClient.supabaseKey || DEFAULT_KEY;
+
+    // 4. Create a fresh Client using the Library Factory
+    // This is necessary because globalAuthClient.rest.headers was found to be empty in logs.
+    const SupabaseLibrary = window.Supabase;
+
+    if (!SupabaseLibrary || !SupabaseLibrary.createClient) {
+        console.error("Supabase Library Factory not found. Falling back to global instance (likely to fail).");
+        return { supabase: globalAuthClient, user: session.user };
+    }
+
+    // Create a client specifically for this request with explicit headers
+    const client = SupabaseLibrary.createClient(supabaseUrl, supabaseKey, {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false, // Session is managed by global client
+        },
+        global: {
+            headers: {
+                // Authorization: `Bearer ${session.access_token}`, // TEMPORARILY DISABLED: Testing if token is invalid causing 401
+                apikey: supabaseKey
+            }
+        }
+    });
+
+    // DEBUG: Verify if the new client actually has the headers we set
+    console.log('[Debug] Created Local Client:', {
+        url: supabaseUrl,
+        keyLength: supabaseKey?.length,
+        headers: client.rest?.headers, // Check if 'apikey' is present here
+        globalHeaders: client.global?.headers // Check global config
+    });
+
+    return { supabase: client, user: session.user };
 }
 
 export async function getProjects() {
