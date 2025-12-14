@@ -12,7 +12,7 @@ export default function Footer(props) {
       <Container className={styles.footer}>
         <Row>
           <Col xs={12}>
-            <p className="Xsmall">
+            <p className="Xsmall" style={{ marginBottom: 0 }}>
               RAWGraphs is designed and developed by{' '}
               <a
                 href="http://densitydesign.org/"
@@ -46,6 +46,6 @@ export default function Footer(props) {
           </Col>
         </Row>
       </Container>
-    </Container>
+    </Container >
   )
 }
