@@ -11,7 +11,7 @@ export default function Footer(props) {
     <Container fluid style={{ backgroundColor: 'var(--dark)' }}>
       <Container className={styles.footer}>
         <Row>
-          <Col xs={6} sm={{ span: 5, order: 1 }} lg={{ span: 3, order: 1 }}>
+          <Col xs={12}>
             <p className="Xsmall">
               RAWGraphs is designed and developed by{' '}
               <a
@@ -43,26 +43,6 @@ export default function Footer(props) {
                 (Apache License 2.0)
               </a>
             </p>
-          </Col>
-          <Col xs={6} sm={{ span: 5, order: 3 }} lg={{ span: 3, order: 1 }}>
-            <p className="Xsmall"></p>
-          </Col>
-          {/* <Col xs={6} sm={{span:5, order:3}} lg={{span:3,order:1}}><p className="Xsmall">This <span title={commitHash}>version</span> is intended to be available only for the backers of the crowdfunding campaign.</p></Col> */}
-          <Col
-            xs={6}
-            sm={{ span: 6, offset: 1, order: 2 }}
-            md={{ span: 3 }}
-            lg={{ offset: 0 }}
-            xl={{ span: 2, offset: 2 }}
-          >&nbsp;
-          </Col>
-          <Col
-            xs={6}
-            sm={{ span: 6, offset: 1, order: 4 }}
-            md={{ span: 2 }}
-            lg={{ offset: 0 }}
-            xl={{ span: 2, offset: 0 }}
-          >&nbsp;
           </Col>
         </Row>
       </Container>
