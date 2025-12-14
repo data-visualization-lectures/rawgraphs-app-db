@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Modal, Button, Form, Alert, Spinner } from 'react-bootstrap';
 import { saveProject } from '../../utils/cloudApi';
 
-export default function CloudSaveModal({ show, onHide, getProjectData }) {
+export default function CloudSaveModal({ show, onHide, getProjectData, getThumbnailBlob }) {
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -16,7 +16,8 @@ export default function CloudSaveModal({ show, onHide, getProjectData }) {
         setError(null);
         try {
             const projectData = getProjectData(); // This should return the JSON
-            await saveProject(projectData, name);
+            const thumbnailBlob = await getThumbnailBlob(); // Generate Thumbnail
+            await saveProject(projectData, name, thumbnailBlob);
             setSuccess(true);
             setTimeout(() => {
                 setSuccess(false);

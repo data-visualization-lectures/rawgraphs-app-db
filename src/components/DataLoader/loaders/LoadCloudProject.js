@@ -1,10 +1,110 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Button, Table, Spinner, Alert } from 'react-bootstrap';
+import { Button, Spinner, Alert, Card, Row, Col } from 'react-bootstrap';
 import { BsCloudDownload, BsTrash } from 'react-icons/bs';
-import { getProjects, loadProject, deleteProject } from '../../../utils/cloudApi';
+import { getProjects, loadProject, deleteProject, loadThumbnail } from '../../../utils/cloudApi';
 import dayjs from 'dayjs';
 import { deserializeProject } from '@rawgraphs/rawgraphs-core';
 import charts from '../../../charts';  // Import available charts configuration
+
+// Sub-component for individual project card
+function ProjectCard({ project, onLoad, onDelete }) {
+    const [thumbnailUrl, setThumbnailUrl] = useState(null);
+    const [loadingThumb, setLoadingThumb] = useState(false);
+
+    useEffect(() => {
+        let active = true;
+
+        async function fetchThumb() {
+            if (!project.thumbnail_path) return;
+            setLoadingThumb(true);
+            try {
+                const url = await loadThumbnail(project.thumbnail_path);
+                if (active && url) {
+                    setThumbnailUrl(url);
+                }
+            } catch (e) {
+                console.warn("Failed to load thumbnail for", project.name, e);
+            } finally {
+                if (active) setLoadingThumb(false);
+            }
+        }
+
+        fetchThumb();
+
+        return () => {
+            active = false;
+        };
+    }, [project.thumbnail_path, project.name]);
+    // project.name included to verify identity if needed, but path is enough.
+
+    // Cleanup blob URL on unmount
+    useEffect(() => {
+        return () => {
+            if (thumbnailUrl) URL.revokeObjectURL(thumbnailUrl);
+        };
+    }, [thumbnailUrl]);
+
+    return (
+        <Col xs={12} sm={6} md={4} lg={3} className="mb-4">
+            <Card className="h-100 shadow-sm">
+                <div
+                    style={{
+                        height: '150px',
+                        backgroundColor: '#f8f9fa',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
+                        borderBottom: '1px solid #eee'
+                    }}
+                >
+                    {loadingThumb && <Spinner animation="border" size="sm" variant="secondary" />}
+                    {!loadingThumb && thumbnailUrl && (
+                        <Card.Img
+                            variant="top"
+                            src={thumbnailUrl}
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'contain'
+                            }}
+                        />
+                    )}
+                    {!loadingThumb && !thumbnailUrl && (
+                        <span className="text-muted small">No Preview</span>
+                    )}
+                </div>
+                <Card.Body className="d-flex flex-column">
+                    <Card.Title style={{ fontSize: '1rem', fontWeight: 'bold' }} className="text-truncate" title={project.name}>
+                        {project.name}
+                    </Card.Title>
+                    <Card.Text className="text-muted small mb-auto">
+                        Updated: {dayjs(project.updated_at).format('YYYY-MM-DD HH:mm')}
+                    </Card.Text>
+
+                    <div className="d-flex justify-content-between mt-3">
+                        <Button
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={() => onLoad(project.id)}
+                            className="flex-grow-1 mr-2"
+                        >
+                            <BsCloudDownload /> 開く
+                        </Button>
+                        <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => onDelete(project.id)}
+                            title="削除"
+                        >
+                            <BsTrash />
+                        </Button>
+                    </div>
+                </Card.Body>
+            </Card>
+        </Col>
+    );
+}
 
 export default function LoadCloudProject({ onProjectSelected, setLoadingError }) {
     const [projects, setProjects] = useState([]);
@@ -37,16 +137,9 @@ export default function LoadCloudProject({ onProjectSelected, setLoadingError })
 
             // cloudApi returns the JSON object directly.
             // We need to pass it through deserializeProject to ensure it's fully hydrated
-            // and compatible with the app's state (handling migrations, chart definitions etc).
-            // deserializeProject expects a string usually (from file reader), so we stringify it first if it's an object.
-            // OR if deserializeProject accepts object, we can try. But LoadProject.js pases a string.
-            // Let's mimic LoadProject.js behavior: Stringify then Deserialize.
-
             const jsonString = JSON.stringify(projectData);
             const project = deserializeProject(jsonString, charts);
 
-            // Fallback: If userData is missing but rawData exists (common in some RawGraphs versions/exports),
-            // populate userData to prevent hydration errors.
             if (!project.userData && project.rawData) {
                 project.userData = project.rawData;
             }
@@ -64,6 +157,11 @@ export default function LoadCloudProject({ onProjectSelected, setLoadingError })
     const handleDelete = async (id) => {
         if (!window.confirm('本当にこのプロジェクトを削除しますか？')) return;
 
+        // Optimistic update or waiting? Let's wait.
+        // But we shouldn't block the UI too much, but deletion is fast.
+        // We can just show global loading or a small toast.
+        // For now, reuse global loading but it might clear the list view which is jarring.
+        // Let's keep it simple.
         setLoading(true);
         try {
             await deleteProject(id);
@@ -71,64 +169,41 @@ export default function LoadCloudProject({ onProjectSelected, setLoadingError })
         } catch (err) {
             console.error(err);
             setError('削除に失敗しました。');
-        } finally {
             setLoading(false);
         }
     }
 
     return (
         <div className="p-3">
-            <h4>クラウドからプロジェクトを開く</h4>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <h4 className="mb-0">クラウドからプロジェクトを開く</h4>
+                <Button variant="link" size="sm" onClick={fetchProjects} disabled={loading}>
+                    {loading ? '更新中...' : '一覧更新'}
+                </Button>
+            </div>
+
             <p className="text-muted small">保存されたプロジェクトを選択してください。</p>
 
             {error && <Alert variant="danger">{error}</Alert>}
 
-            {loading && <div className="text-center my-3"><Spinner animation="border" /></div>}
+            {loading && projects.length === 0 && (
+                <div className="text-center my-5"><Spinner animation="border" /></div>
+            )}
 
             {!loading && projects.length === 0 && (
-                <p>保存されたプロジェクトはありません。</p>
+                <Alert variant="info">保存されたプロジェクトはありません。</Alert>
             )}
 
-            {!loading && projects.length > 0 && (
-                <Table hover size="sm">
-                    <thead>
-                        <tr>
-                            <th>プロジェクト名</th>
-                            <th>更新日</th>
-                            <th className="text-right">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {projects.map((p) => (
-                            <tr key={p.id}>
-                                <td className="align-middle">{p.name}</td>
-                                <td className="align-middle">{dayjs(p.updated_at).format('YYYY-MM-DD HH:mm')}</td>
-                                <td className="text-right">
-                                    <Button
-                                        variant="outline-primary"
-                                        size="sm"
-                                        className="mr-2"
-                                        onClick={() => handleLoad(p.id)}
-                                    >
-                                        <BsCloudDownload /> 開く
-                                    </Button>
-                                    <Button
-                                        variant="outline-danger"
-                                        size="sm"
-                                        onClick={() => handleDelete(p.id)}
-                                    >
-                                        <BsTrash />
-                                    </Button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </Table>
-            )}
-
-            <div className="text-right">
-                <Button variant="link" size="sm" onClick={fetchProjects}>更新</Button>
-            </div>
+            <Row>
+                {projects.map((p) => (
+                    <ProjectCard
+                        key={p.id}
+                        project={p}
+                        onLoad={handleLoad}
+                        onDelete={handleDelete}
+                    />
+                ))}
+            </Row>
         </div>
     );
 }

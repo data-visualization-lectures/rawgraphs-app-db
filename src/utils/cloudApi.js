@@ -44,7 +44,7 @@ export async function getProjects() {
         const { supabaseUrl, supabaseKey } = await getSupabaseConfig();
 
         // Construct URL with API Key in query param to bypass header stripping
-        const endpoint = `${supabaseUrl}/rest/v1/projects?select=id,name,created_at,updated_at&app_name=eq.${APP_NAME}&order=updated_at.desc&apikey=${supabaseKey}`;
+        const endpoint = `${supabaseUrl}/rest/v1/projects?select=id,name,created_at,updated_at,thumbnail_path&app_name=eq.${APP_NAME}&order=updated_at.desc&apikey=${supabaseKey}`;
 
         const response = await fetch(endpoint, {
             method: 'GET',
@@ -69,7 +69,7 @@ export async function getProjects() {
     }
 }
 
-export async function saveProject(projectData, projectName) {
+export async function saveProject(projectData, projectName, thumbnailBlob = null) {
     console.log("Saving project via Raw Fetch (Storage + DB)...");
     try {
         const { supabaseUrl, supabaseKey, accessToken, user } = await getSupabaseConfig();
@@ -77,16 +77,16 @@ export async function saveProject(projectData, projectName) {
         // Use native crypto.randomUUID()
         const id = projectData.id || crypto.randomUUID();
         const now = new Date().toISOString();
-        const filePath = `${user.id}/${id}.json`;
+        const jsonFilePath = `${user.id}/${id}.json`;
+        const thumbFilePath = `${user.id}/${id}.png`;
 
         // 1. Upload JSON to Storage
-        console.log("Uploading to Storage:", filePath);
-        const storageEndpoint = `${supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${filePath}?apikey=${supabaseKey}`;
+        console.log("Uploading JSON to Storage:", jsonFilePath);
+        const jsonStorageEndpoint = `${supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${jsonFilePath}?apikey=${supabaseKey}`;
 
-        const storageResponse = await fetch(storageEndpoint, {
+        const jsonResponse = await fetch(jsonStorageEndpoint, {
             method: 'POST',
             headers: {
-                // Storage needs Auth
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
                 'x-upsert': 'true' // Allow overwriting
@@ -94,19 +94,42 @@ export async function saveProject(projectData, projectName) {
             body: JSON.stringify(projectData)
         });
 
-        if (!storageResponse.ok) {
-            const errorBody = await storageResponse.text();
-            console.error("Supabase Storage upload error:", errorBody);
-            throw new Error(`Storage upload failed with ${storageResponse.status}: ${errorBody}`);
+        if (!jsonResponse.ok) {
+            const errorBody = await jsonResponse.text();
+            console.error("Supabase Storage JSON upload error:", errorBody);
+            throw new Error(`Storage upload failed with ${jsonResponse.status}: ${errorBody}`);
         }
 
-        // 2. Insert/Update Metadata in DB
+        // 2. Upload Thumbnail to Storage (if provided)
+        if (thumbnailBlob) {
+            console.log("Uploading Thumbnail to Storage:", thumbFilePath);
+            const thumbStorageEndpoint = `${supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${thumbFilePath}?apikey=${supabaseKey}`;
+            const thumbResponse = await fetch(thumbStorageEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'image/png', // Explicitly set for PNG
+                    'x-upsert': 'true'
+                },
+                body: thumbnailBlob
+            });
+
+            if (!thumbResponse.ok) {
+                // Non-fatal error for thumbnail? Or fatal? Let's make it warnings for now to avoid blocking Save if image fails.
+                const errorBody = await thumbResponse.text();
+                console.warn("Supabase Storage Thumbnail upload error:", errorBody);
+                // proceeding...
+            }
+        }
+
+        // 3. Insert/Update Metadata in DB
         console.log("Saving Metadata to DB...");
         const payload = {
             id,
             user_id: user.id,
             name: projectName || projectData.name || 'Untitled Project', // Use provided name
-            storage_path: filePath, // Storing path instead of data
+            storage_path: jsonFilePath, // Storing path instead of data
+            thumbnail_path: thumbnailBlob ? thumbFilePath : null,
             app_name: APP_NAME,
             created_at: projectData.created_at || now,
             updated_at: now
@@ -139,8 +162,8 @@ export async function saveProject(projectData, projectName) {
     }
 }
 
-export async function updateProject(projectId, projectData, projectName) {
-    return saveProject({ ...projectData, id: projectId }, projectName);
+export async function updateProject(projectId, projectData, projectName, thumbnailBlob) {
+    return saveProject({ ...projectData, id: projectId }, projectName, thumbnailBlob);
 }
 
 export async function deleteProject(projectId) {
@@ -148,22 +171,21 @@ export async function deleteProject(projectId) {
     try {
         const { supabaseUrl, supabaseKey, accessToken } = await getSupabaseConfig();
 
-        // 1. Get storage_path from DB first (or construct it if standard)
-        // Ideally we should fetch the path, but standard naming is {user_id}/{id}.json.
-        // Let's try to delete from DB first.
-
-        // We actually need the user_id to construct the path, or fetch the record.
-        // Let's fetch the record to be safe.
-        const fetchEndpoint = `${supabaseUrl}/rest/v1/projects?select=storage_path&id=eq.${projectId}&apikey=${supabaseKey}`;
+        // 1. Get storage_path and thumbnail_path from DB first
+        const fetchEndpoint = `${supabaseUrl}/rest/v1/projects?select=storage_path,thumbnail_path&id=eq.${projectId}&apikey=${supabaseKey}`;
         const fetchRes = await fetch(fetchEndpoint, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         });
 
         let storagePath = null;
+        let thumbnailPath = null;
         if (fetchRes.ok) {
             const rows = await fetchRes.json();
-            if (rows.length > 0) storagePath = rows[0].storage_path;
+            if (rows.length > 0) {
+                storagePath = rows[0].storage_path;
+                thumbnailPath = rows[0].thumbnail_path;
+            }
         }
 
         // 2. Delete from DB
@@ -179,12 +201,14 @@ export async function deleteProject(projectId) {
             throw new Error(`DB delete failed with ${dbResponse.status}`);
         }
 
-        // 3. Delete from Storage if path known
-        if (storagePath) {
-            console.log("Deleting from Storage:", storagePath);
-            const storageEndpoint = `${supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${storagePath}?apikey=${supabaseKey}`;
-            // Storage DELETE usually requires specific format or different endpoint for bulk delete, 
-            // but single DELETE is DELETE /object/{bucket}/{wildcard}
+        // 3. Delete from Storage 
+        const pathsToDelete = [];
+        if (storagePath) pathsToDelete.push(storagePath);
+        if (thumbnailPath) pathsToDelete.push(thumbnailPath);
+
+        for (const path of pathsToDelete) {
+            console.log("Deleting from Storage:", path);
+            const storageEndpoint = `${supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${path}?apikey=${supabaseKey}`;
 
             const storageResponse = await fetch(storageEndpoint, {
                 method: 'DELETE',
@@ -194,7 +218,7 @@ export async function deleteProject(projectId) {
             });
 
             if (!storageResponse.ok) {
-                console.warn("Storage delete failed (non-fatal):", await storageResponse.text());
+                console.warn(`Storage delete failed for ${path} (non-fatal):`, await storageResponse.text());
             }
         }
 
@@ -213,6 +237,36 @@ export async function checkUserSession() {
         const { data } = await globalAuthClient.auth.getSession();
         return data.session?.user || null;
     } catch {
+        return null;
+    }
+}
+
+export async function loadThumbnail(path) {
+    console.log("Loading thumbnail...", path);
+    if (!path) return null;
+
+    try {
+        const { supabaseUrl, supabaseKey, accessToken } = await getSupabaseConfig();
+        const storageEndpoint = `${supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${path}?apikey=${supabaseKey}`;
+
+        const storageResponse = await fetch(storageEndpoint, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        if (!storageResponse.ok) {
+            // If 404, just return null (no image)
+            if (storageResponse.status === 404) return null;
+            throw new Error(`Thumbnail load failed: ${storageResponse.status}`);
+        }
+
+        const blob = await storageResponse.blob();
+        return URL.createObjectURL(blob);
+
+    } catch (err) {
+        console.warn("loadThumbnail error:", err);
         return null;
     }
 }

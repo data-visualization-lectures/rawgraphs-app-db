@@ -72,7 +72,44 @@ export default function Exporter({ rawViz, exportProject }) {
   /* Cloud Save Logic */
   const [showCloudModal, setShowCloudModal] = useState(false)
 
-  // NOTE: exportProject (prop) function returns the JS object we need to save.
+  // Function to generate a thumbnail Blob (PNG) from the current visualization
+  const getThumbnailBlob = useCallback(() => {
+    return new Promise((resolve, reject) => {
+      try {
+        const svgString = new XMLSerializer().serializeToString(rawViz._node.firstChild)
+        const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
+        const URL = window.URL || window.webkitURL || window
+        const url = URL.createObjectURL(svgBlob)
+
+        const canvas = document.createElement('canvas')
+        // Use the native dimensions of the SVG
+        canvas.width = rawViz._node.firstChild.clientWidth
+        canvas.height = rawViz._node.firstChild.clientHeight
+        const ctx = canvas.getContext('2d')
+
+        const img = new Image()
+        img.onload = function () {
+          ctx.drawImage(img, 0, 0)
+          canvas.toBlob((blob) => {
+            URL.revokeObjectURL(url)
+            if (blob) {
+              resolve(blob)
+            } else {
+              reject(new Error('Canvas toBlob failed'))
+            }
+          }, 'image/png')
+        }
+        img.onerror = (e) => {
+          URL.revokeObjectURL(url)
+          reject(e)
+        }
+        img.src = url
+      } catch (err) {
+        reject(err)
+      }
+    })
+  }, [rawViz])
+
 
   const downloadViz = useCallback(() => {
     switch (currentFormat) {
@@ -141,6 +178,7 @@ export default function Exporter({ rawViz, exportProject }) {
         show={showCloudModal}
         onHide={() => setShowCloudModal(false)}
         getProjectData={exportProject}
+        getThumbnailBlob={getThumbnailBlob}
       />
     </div>
   )
