@@ -179,7 +179,7 @@ function DataMapping({ dataTypes, dimensions, mapping, setMapping }, ref) {
     <DndProvider backend={HTML5Backend}>
       <Row>
         <Col xs={3}>
-          <h5 className="text-uppercase">ディメンション</h5>
+          <h5 className="text-uppercase">データ変数</h5>
           {map(dataTypes, (dataType, columnName) => {
             return (
               <ColumnCard
