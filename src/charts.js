@@ -110,7 +110,7 @@ const chartDescriptions = {
 const dimensionTranslations = {
   'x': 'X軸',
   'y': 'Y軸',
-  'xValue': 'X軸',
+  'xValue': 'X軸（xValue）',
   'size': 'サイズ (大きさ)',
   'color': '色',
   'label': 'ラベル',
@@ -128,7 +128,7 @@ const dimensionTranslations = {
   'startDate': '開始日',
   'endDate': '終了日',
   'groups': 'グループ',
-  'connectedBy': '接続キー',
+  'connectedBy': '接続キー（connectedBy）',
   'value': '値',
   'weight': '重み',
   'dimensions': '次元 (Dimensions)',
