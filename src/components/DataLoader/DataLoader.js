@@ -86,7 +86,7 @@ function DataLoader({
           setLoadingError={setLoadingError}
         />
       ),
-      message: '表データ(TSV, CSV, DSV)かJSONをアップロードできます',
+      message: '表データ(TSV, CSV, DSV)形式かJSON形式をアップロードします。',
       icon: BsUpload,
       allowedForReplace: true,
     },
@@ -106,7 +106,7 @@ function DataLoader({
     {
       id: 'sparql',
       name: 'SPARQLクエリ',
-      message: 'SparQLクエリとしてデータを読み込む',
+      message: 'SparQLクエリとしてデータを読み込みます。',
       loader: (
         <SparqlFetch
           userInput={userInput}
@@ -136,8 +136,8 @@ function DataLoader({
     },
     {
       id: 'project',
-      name: 'プロジェクトを開く',
-      message: '.rawgraphsプロジェクトファイルを読み込む.',
+      name: 'ローカルから開く',
+      message: 'ローカルに保存されたプロジェクト・ファイル（.rawgraphs）をアップロードします。',
       loader: (
         <LoadProject
           onProjectSelected={hydrateFromProject}
@@ -149,8 +149,8 @@ function DataLoader({
     },
     {
       id: 'cloud',
-      name: 'クラウドから開く',
-      message: 'クラウドに保存されたプロジェクトを開きます。',
+      name: 'サーバから開く',
+      message: 'サーバに保存されたプロジェクト・ファイルを開きます。',
       loader: (
         <LoadCloudProject
           onProjectSelected={hydrateFromProject}
