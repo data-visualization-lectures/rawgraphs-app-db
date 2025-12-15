@@ -106,19 +106,67 @@ const chartDescriptions = {
   'rawgraphs.calendarheatmap': 'カレンダーの日付に合わせてデータを色の濃淡で表示するチャートです。1年間全体を見渡して、特定の時期や曜日による傾向やパターン（シーズナリティ）を見つけるのに適しています。GitHubのコントリビューショングラフのように、日々の活動量などを可視化時によく使われます。'
 }
 
-// チャートの説明文のみを日本語に上書き（名前は変更しない）
+// チャート変数の日本語翻訳定義
+const dimensionTranslations = {
+  'x': 'X軸',
+  'y': 'Y軸',
+  'xValue': 'X軸',
+  'size': 'サイズ (大きさ)',
+  'color': '色',
+  'label': 'ラベル',
+  'series': 'シリーズ (系列)',
+  'bars': 'バー (Bars)',
+  'stacks': 'X軸 (Stacks)',
+  'steps': 'ステップ (Steps)',
+  'arcs': 'アーク (Arcs)',
+  'lines': 'ライン (Lines)',
+  'streams': 'ストリーム (Streams)',
+  'hierarchy': '階層 (Hierarchy)',
+  'source': 'ソース (始点)',
+  'target': 'ターゲット (終点)',
+  'date': '日付',
+  'startDate': '開始日',
+  'endDate': '終了日',
+  'groups': 'グループ',
+  'connectedBy': '接続キー',
+  'value': '値',
+  'weight': '重み',
+  'dimensions': '次元 (Dimensions)',
+  'axes': '軸 (Axes)',
+  'sets': 'セット (Sets)',
+}
+
+// チャートの説明文と変数を日本語に上書き
 charts = charts.map(chart => {
+  let newChart = { ...chart }
+
+  // 説明文の翻訳
   const description = chartDescriptions[chart.metadata.id]
   if (description) {
-    return {
-      ...chart,
+    newChart = {
+      ...newChart,
       metadata: {
-        ...chart.metadata,
+        ...newChart.metadata,
         description: description
       }
     }
   }
-  return chart
+
+  // 変数名の翻訳
+  if (newChart.dimensions) {
+    newChart = {
+      ...newChart,
+      dimensions: newChart.dimensions.map(dim => {
+        const trans = dimensionTranslations[dim.id]
+        if (trans) {
+          return { ...dim, name: trans }
+        }
+        return dim
+      })
+    }
+  }
+
+  return newChart
 })
 
 export default charts
