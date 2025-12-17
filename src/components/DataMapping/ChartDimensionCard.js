@@ -58,11 +58,11 @@ const ChartDimensionCard = ({
           mappedType: columnDataType,
           config: dimension.aggregation
             ? {
-                aggregation: [
-                  ...(get(mapping, 'config.aggregation') || []),
-                  defaulAggregation,
-                ],
-              }
+              aggregation: [
+                ...(get(mapping, 'config.aggregation') || []),
+                defaulAggregation,
+              ],
+            }
             : undefined,
         })
       } else if (item.dimensionId !== dimension.id) {
@@ -179,12 +179,12 @@ const ChartDimensionCard = ({
           value: arrayInsert(mapping.value ?? [], index, item.id),
           config: dimension.aggregation
             ? {
-                aggregation: arrayInsert(
-                  get(mapping, 'config.aggregation', []),
-                  index,
-                  defaulAggregation
-                ),
-              }
+              aggregation: arrayInsert(
+                get(mapping, 'config.aggregation', []),
+                index,
+                defaulAggregation
+              ),
+            }
             : undefined,
         },
         true
@@ -231,7 +231,7 @@ const ChartDimensionCard = ({
           const columnDataType = getTypeName(dataTypes[columnId])
           const relatedAggregation = dimension.aggregation
             ? aggregationsMappedHere[i] ||
-              getDefaultDimensionAggregation(dimension, columnDataType)
+            getDefaultDimensionAggregation(dimension, columnDataType)
             : undefined
           const isValid =
             dimension.validTypes?.length === 0 ||

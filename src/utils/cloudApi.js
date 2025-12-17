@@ -319,3 +319,22 @@ export async function loadProject(projectId) {
         throw error;
     }
 }
+
+export async function fetchProjectFromAuthApi(projectId) {
+    const endpoint = `https://auth.dataviz.jp/api/projects/${projectId}`;
+    console.log(`Fetching project from Auth API: ${endpoint}`);
+
+    const response = await fetch(endpoint, {
+        method: 'GET',
+        credentials: 'include', // Important: Include cookies for auth
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to load project: ${response.status}`);
+    }
+    return await response.json();
+}
+

@@ -25,6 +25,8 @@ import CookieConsent from 'react-cookie-consent'
 
 // #TODO: i18n
 
+import { fetchProjectFromAuthApi } from './utils/cloudApi'
+
 import FixedHeader from './components/FixedHeader/FixedHeader'
 
 function App() {
@@ -156,6 +158,36 @@ function App() {
     },
     [hydrateFromSavedProject]
   )
+
+
+  // Handle project loading from URL query param (integration with auth.dataviz.jp)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const projectId = params.get('project_id')
+
+    if (projectId) {
+      console.log('Found project_id in URL:', projectId)
+
+      fetchProjectFromAuthApi(projectId)
+        .then((projectData) => {
+          console.log('Project data loaded:', projectData)
+          importProject(projectData)
+
+          // Remove query param from URL
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+          )
+        })
+        .catch((err) => {
+          console.error('Project Load Error:', err)
+          alert(
+            'プロジェクトの読み込みに失敗しました。ログイン状態を確認してください。'
+          )
+        })
+    }
+  }, [importProject])
 
   //setting initial chart and related options
   useEffect(() => {
