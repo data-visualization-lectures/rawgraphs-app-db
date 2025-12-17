@@ -18,7 +18,10 @@ import ChartPreviewWithOptions from './components/ChartPreviewWIthOptions'
 import Exporter from './components/Exporter'
 import get from 'lodash/get'
 import usePrevious from './hooks/usePrevious'
-import { serializeProject } from '@rawgraphs/rawgraphs-core'
+import {
+  serializeProject,
+  deserializeProject,
+} from '@rawgraphs/rawgraphs-core'
 import useDataLoader from './hooks/useDataLoader'
 import isPlainObject from 'lodash/isPlainObject'
 import CookieConsent from 'react-cookie-consent'
@@ -171,7 +174,13 @@ function App() {
       fetchProjectFromAuthApi(projectId)
         .then((projectData) => {
           console.log('Project data loaded:', projectData)
-          importProject(projectData)
+          // We need to deserialize the project to link the chart string to the actual chart object
+          // deserializeProject expects a string, so we stringify the object first
+          const project = deserializeProject(
+            JSON.stringify(projectData),
+            charts
+          )
+          importProject(project)
 
           // Remove query param from URL
           window.history.replaceState(
