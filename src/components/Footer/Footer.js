@@ -13,35 +13,8 @@ export default function Footer(props) {
         <Row>
           <Col xs={12}>
             <p className="Xsmall" style={{ marginBottom: 0 }}>
-              RAWGraphs is designed and developed by{' '}
-              <a
-                href="http://densitydesign.org/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                DensityDesign
-              </a>
-              ,{' '}
-              <a
-                href="https://calib.ro/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Calibro
-              </a>{' '}
-              and{' '}
-              <a
-                href="https://inmagik.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Inmagik
-              </a>
-              .
-              <br />© 2013-2021{' '}
-              <a href="https://raw.github.com/rawgraphs/rawgraphs-app/master/LICENSE">
-                (Apache License 2.0)
-              </a>
+              RAWGraphs is designed and developed by DensityDesign, Calibro and Inmagik.<br />
+              © 2013-2021 Apache License 2.0
             </p>
           </Col>
         </Row>
