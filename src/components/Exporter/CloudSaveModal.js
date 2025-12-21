@@ -1,10 +1,22 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Alert, Spinner } from 'react-bootstrap';
 import { saveProject } from '../../utils/cloudApi';
 
+function getDefaultName() {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
 export default function CloudSaveModal({ show, onHide, getProjectData, getThumbnailBlob }) {
     const [name, setName] = useState('');
+
+    useEffect(() => {
+        if (show) {
+            setName(getDefaultName());
+        }
+    }, [show]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
