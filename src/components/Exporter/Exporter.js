@@ -168,9 +168,9 @@ export default function Exporter({ rawViz, exportProject }) {
         <button
           className="btn btn-outline-primary btn-block raw-btn d-flex align-items-center justify-content-center"
           onClick={() => setShowCloudModal(true)}
-          title="クラウドに保存"
+          title="サーバに保存"
         >
-          <BsCloudUpload className="mr-2" /> クラウド保存
+          <BsCloudUpload className="mr-2" /> サーバに保存
         </button>
       </div>
 

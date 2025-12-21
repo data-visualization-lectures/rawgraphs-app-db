@@ -176,13 +176,13 @@ export default function LoadCloudProject({ onProjectSelected, setLoadingError })
     return (
         <div className="p-3">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <h4 className="mb-0">クラウドからプロジェクトを開く</h4>
+                <h4 className="mb-0">サーバからプロジェクトを開く</h4>
                 <Button variant="link" size="sm" onClick={fetchProjects} disabled={loading}>
                     {loading ? '更新中...' : '一覧更新'}
                 </Button>
             </div>
 
-            <p className="text-muted small">保存されたプロジェクトを選択してください。</p>
+            <p className="text-muted small">プロジェクトを選択してください。</p>
 
             {error && <Alert variant="danger">{error}</Alert>}
 
