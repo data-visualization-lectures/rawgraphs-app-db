@@ -18,7 +18,7 @@ function ProjectCard({ project, onLoad, onDelete }) {
             if (!project.thumbnail_path) return;
             setLoadingThumb(true);
             try {
-                const url = await loadThumbnail(project.thumbnail_path);
+                const url = await loadThumbnail(project.id);
                 if (active && url) {
                     setThumbnailUrl(url);
                 }
