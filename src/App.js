@@ -28,7 +28,7 @@ import CookieConsent from 'react-cookie-consent'
 
 // #TODO: i18n
 
-import { fetchProjectFromAuthApi } from './utils/cloudApi'
+import { loadProject } from './utils/cloudApi'
 
 import FixedHeader from './components/FixedHeader/FixedHeader'
 
@@ -171,7 +171,7 @@ function App() {
     if (projectId) {
       console.log('Found project_id in URL:', projectId)
 
-      fetchProjectFromAuthApi(projectId)
+      loadProject(projectId)
         .then((projectData) => {
           console.log('Project data loaded:', projectData)
           // We need to deserialize the project to link the chart string to the actual chart object
