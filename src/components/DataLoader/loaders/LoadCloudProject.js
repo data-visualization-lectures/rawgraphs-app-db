@@ -34,7 +34,7 @@ function ProjectCard({ project, onLoad, onDelete }) {
         return () => {
             active = false;
         };
-    }, [project.thumbnail_path, project.name]);
+    }, [project.thumbnail_path, project.name, project.id]);
     // project.name included to verify identity if needed, but path is enough.
 
     // Cleanup blob URL on unmount
