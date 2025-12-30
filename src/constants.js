@@ -100,10 +100,10 @@ export const AGGREGATIONS_LABELS = {
   "median": "中央値（Median）",
   "max": "最大値（Max）",
   "min": "最小値（Min）",
-  "countDistinct": "行数：ユニーク値のみ（Count unique）",
+  "countDistinct": "行数：固有値のみ（Count unique）",
   "sum": "合計（Sum）",
   "csv": "CSV",
-  "csvDistinct": "CSV：ユニーク値のみ",
+  "csvDistinct": "CSV：固有値のみ",
 }
 
 export const SCALES_LABELS = {
