@@ -3,7 +3,7 @@ const APP_NAME = 'rawgraphs';
 
 // Helper to get Auth Token
 async function getAuthToken() {
-    const globalAuthClient = window.supabase;
+    const globalAuthClient = window.datavizSupabase || window.supabase;
     if (!globalAuthClient || !globalAuthClient.auth) {
         throw new Error("認証クライアントが読み込まれていません。");
     }
@@ -17,7 +17,7 @@ async function getAuthToken() {
 // Helper for API requests
 async function fetchApi(endpoint, options = {}) {
     const token = await getAuthToken();
-    
+
     // Merge headers
     const headers = {
         'Authorization': `Bearer ${token}`,
@@ -174,7 +174,7 @@ export async function loadThumbnail(projectId) {
         const response = await fetchApi(`/projects/${projectId}/thumbnail`, {
             method: 'GET'
         });
-        
+
         const blob = await response.blob();
         return URL.createObjectURL(blob);
 
@@ -186,8 +186,8 @@ export async function loadThumbnail(projectId) {
 
 export async function checkUserSession() {
     try {
-        const globalAuthClient = window.supabase;
-        if (!globalAuthClient) return null;
+        const globalAuthClient = window.datavizSupabase || window.supabase;
+        if (!globalAuthClient || !globalAuthClient.auth) return null;
         const { data } = await globalAuthClient.auth.getSession();
         return data.session?.user || null;
     } catch {
