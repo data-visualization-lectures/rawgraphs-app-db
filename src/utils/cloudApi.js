@@ -1,4 +1,4 @@
-const API_BASE = 'https://api.dataviz.jp/api';
+const API_BASE = (window.datavizApiUrl || 'https://api.dataviz.jp') + '/api';
 const APP_NAME = 'rawgraphs';
 
 // Helper to get Auth Token
