@@ -1,4 +1,4 @@
-Id	Sepal Length (cm)	Sepal Width (cm)	Petal Length (cm)	Petal Width (cm)	Species
+ID	がく片の長さ (cm)	がく片の幅 (cm)	花びらの長さ (cm)	花びらの幅 (cm)	種
 1	5.1	3.5	1.4	0.2	Iris Setosa
 2	4.9	3.0	1.4	0.2	Iris Setosa
 3	4.7	3.2	1.3	0.2	Iris Setosa

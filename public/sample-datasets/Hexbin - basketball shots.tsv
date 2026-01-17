@@ -1,4 +1,4 @@
-Action type	Shot type	Shot zone	Shot distance	X	Y	SHOT_MADE_FLAG
+アクションタイプ	シュートタイプ	シュートゾーン	シュート距離	X	Y	シュート成功フラグ
 Running Dunk Shot	2PT Field Goal	Restricted Area	1	7	8	1
 Running Dunk Shot	2PT Field Goal	Restricted Area	1	1	11	1
 Driving Floating Bank Jump Shot	2PT Field Goal	In The Paint (Non-RA)	6	-4	61	0

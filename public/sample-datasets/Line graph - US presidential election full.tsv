@@ -1,4 +1,4 @@
-year	state	state_po	state_fips	state_cen	state_ic	office	candidate	party	main parties	writein	candidatevotes	totalvotes	version
+年	州	州略称	FIPSコード	CENコード	ICコード	役職	候補者	政党	主要政党	記名投票	得票数	総得票数	バージョン
 1976	Alabama	AL	1	63	41	US President	Carter, Jimmy	democrat	democrat	FALSE	659170	1182850	20171015
 1980	Alabama	AL	1	63	41	US President	Carter, Jimmy	democrat	democrat	FALSE	636730	1341929	20171015
 1984	Alabama	AL	1	63	41	US President	Mondale, Walter	democrat	democrat	FALSE	551899	1441713	20171015

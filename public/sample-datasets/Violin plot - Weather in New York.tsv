@@ -1,4 +1,4 @@
-location	date	precipitation	temp_max	temp_min	wind	weather
+場所	日付	降水量	最高気温	最低気温	風速	天気
 New York	2012-01-01	1.8	10	3.3	5.1	rain
 New York	2012-01-02	0	10	0.6	8.7	sun
 New York	2012-01-03	0	0.6	-8.9	8.2	sun
