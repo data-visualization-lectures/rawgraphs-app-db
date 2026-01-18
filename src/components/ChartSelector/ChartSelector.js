@@ -30,6 +30,9 @@ function ChartSelector({ availableCharts, currentChart, setCurrentChart }) {
     [availableCharts, currentChart, setCurrentChart]
   )
 
+  const currentChartName =
+    currentChart?.metadata.displayName || currentChart?.metadata.name
+
   return (
     <>
       <Row>
@@ -64,9 +67,9 @@ function ChartSelector({ availableCharts, currentChart, setCurrentChart }) {
           {currentChart && (
             <Card className={styles.currentChart}>
               <Card.Img variant="top" src={currentChart.metadata.thumbnail} />
-              <Card.Body>
+                <Card.Body>
                 <Card.Title className="m-0">
-                  <h2 className="m-0">{currentChart.metadata.name}</h2>
+                  <h2 className="m-0">{currentChartName}</h2>
                 </Card.Title>
                 <Card.Subtitle className="m-0">
                   <h4 className="mb-2">{currentChart.metadata.category}</h4>
@@ -115,7 +118,7 @@ function ChartSelector({ availableCharts, currentChart, setCurrentChart }) {
                     <Card.Body className="w-75 px-2 py-3">
                       <Card.Title className="m-0">
                         <h2 className="m-0" style={{ whiteSpace: 'nowrap' }}>
-                          {d.metadata.name}
+                          {d.metadata.displayName || d.metadata.name}
                         </h2>
                       </Card.Title>
                       <Card.Subtitle className="m-0">

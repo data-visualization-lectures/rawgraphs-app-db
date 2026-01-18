@@ -106,6 +106,10 @@ const chartDescriptions = {
   'rawgraphs.calendarheatmap': 'カレンダーの日付に合わせてデータを色の濃淡で表示するチャートです。1年間全体を見渡して、特定の時期や曜日による傾向やパターン（シーズナリティ）を見つけるのに適しています。GitHubのコントリビューショングラフのように、日々の活動量などを可視化時によく使われます。'
 }
 
+const chartNameOverrides = {
+  'rawgraphs.streamgraph': 'Streamgraph',
+}
+
 // チャート変数の日本語翻訳定義
 const dimensionTranslations = {
   'x': 'X軸',
@@ -148,6 +152,17 @@ charts = charts.map(chart => {
       metadata: {
         ...newChart.metadata,
         description: description
+      }
+    }
+  }
+
+  const nameOverride = chartNameOverrides[chart.metadata.id]
+  if (nameOverride) {
+    newChart = {
+      ...newChart,
+      metadata: {
+        ...newChart.metadata,
+        displayName: nameOverride
       }
     }
   }
