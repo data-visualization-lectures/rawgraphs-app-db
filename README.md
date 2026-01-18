@@ -28,6 +28,7 @@ yarn build
 ### ローカルで確認
 
 npx serve -s build
+http://localhost:3000/?auth_debug
 
 
 ### デプロイ
