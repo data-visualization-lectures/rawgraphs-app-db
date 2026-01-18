@@ -17,4 +17,12 @@
     font-weight: bold;
     line-height: 1;
     font-family: sans-serif;
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    display: block;
+    height: 24px;
+    width: auto;
 }
