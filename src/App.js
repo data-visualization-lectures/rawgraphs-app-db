@@ -29,8 +29,10 @@ import CookieConsent from 'react-cookie-consent'
 // #TODO: i18n
 
 import { loadProject } from './utils/cloudApi'
+import LoadCloudProject from './components/DataLoader/loaders/LoadCloudProject'
+import { Modal, Tab, Tabs } from 'react-bootstrap'
 
-import FixedHeader from './components/FixedHeader/FixedHeader'
+// import FixedHeader from './components/FixedHeader/FixedHeader'
 
 function App() {
   const dataLoader = useDataLoader()
@@ -198,6 +200,97 @@ function App() {
     }
   }, [importProject])
 
+  // Save Project to File Logic
+  const saveProjectToFile = useCallback(() => {
+    const project = exportProject()
+    const str = JSON.stringify(project)
+    const blob = new Blob([str], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'project.rawgraphs'
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [exportProject])
+
+  // Load Project Modal State
+  const [showLoadModal, setShowLoadModal] = useState(false)
+  const [loadingError, setLoadingError] = useState(null)
+
+  // Load Project from File Logic
+  const fileInputRef = useRef(null)
+
+  const handleFileLoad = useCallback((e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const projectData = JSON.parse(event.target.result)
+        const project = deserializeProject(
+          JSON.stringify(projectData),
+          charts
+        )
+        importProject(project)
+        // Reset input value to allow reloading the same file
+        e.target.value = ''
+      } catch (err) {
+        console.error('Error loading project:', err)
+        const header = document.querySelector('dataviz-tool-header')
+        if (header && typeof header.showMessage === 'function') {
+          header.showMessage('プロジェクトの読み込みに失敗しました。', 'error')
+        } else {
+          alert('プロジェクトの読み込みに失敗しました。')
+        }
+      }
+    }
+    reader.readAsText(file)
+  }, [importProject])
+
+  const loadProjectFromFile = useCallback(() => {
+    setShowLoadModal(true)
+  }, [])
+
+  // Configure Tool Header
+  useEffect(() => {
+    const configureHeader = () => {
+      const header = document.querySelector('dataviz-tool-header')
+      if (header) {
+        if (typeof header.setConfig === 'function') {
+          header.setConfig({
+            backgroundColor: '#06c26c',
+            logo: {
+              type: 'image',
+              src: '/logo_rawgraphs.png',
+              href: '/' // Or appropriate link
+            },
+            buttons: [
+              {
+                id: 'load-project-btn',
+                label: 'プロジェクトの読込',
+                action: loadProjectFromFile,
+                align: 'right'
+              },
+              {
+                id: 'save-project-btn',
+                label: 'プロジェクトの保存',
+                action: saveProjectToFile,
+                align: 'right'
+              }
+            ]
+          })
+        }
+      }
+    }
+
+    if (customElements.get('dataviz-tool-header')) {
+      configureHeader()
+    } else {
+      customElements.whenDefined('dataviz-tool-header').then(configureHeader)
+    }
+  }, [loadProjectFromFile, saveProjectToFile])
+
   //setting initial chart and related options
   useEffect(() => {
     setCurrentChart(charts[0])
@@ -207,9 +300,17 @@ function App() {
 
   return (
     <div className="App">
-      <FixedHeader />
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        accept=".rawgraphs,.json"
+        onChange={handleFileLoad}
+      />
+      {/* <FixedHeader /> */}
       {/* <Header menuItems={HeaderItems} /> */}
-      <div className="app-sections" style={{ marginTop: '108px' }}>
+      <div className="app-sections" style={{ marginTop: '48px' }}>
         <Section title={`1. データを読み込む`} loading={loading}>
           <DataLoader {...dataLoader} hydrateFromProject={importProject} />
         </Section>
@@ -279,6 +380,42 @@ function App() {
         </CookieConsent>
       </div>
       <ScreenSizeAlert />
+
+      {/* Load Project Modal */}
+      <Modal show={showLoadModal} onHide={() => setShowLoadModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>プロジェクトを読み込む</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Tabs defaultActiveKey="file" id="load-project-tabs">
+            <Tab eventKey="file" title="ファイルから">
+              <div className="p-3">
+                <p>ローカルに保存されたプロジェクト・ファイル（.rawgraphs）を選択してください。</p>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    if (fileInputRef.current) {
+                      fileInputRef.current.click()
+                      setShowLoadModal(false)
+                    }
+                  }}
+                >
+                  ファイルを選択
+                </button>
+              </div>
+            </Tab>
+            <Tab eventKey="cloud" title="サーバから">
+              <LoadCloudProject
+                onProjectSelected={(project) => {
+                  importProject(project)
+                  setShowLoadModal(false)
+                }}
+                setLoadingError={setLoadingError}
+              />
+            </Tab>
+          </Tabs>
+        </Modal.Body>
+      </Modal>
     </div>
   )
 }
