@@ -31,6 +31,7 @@ import CookieConsent from 'react-cookie-consent'
 import { loadProject } from './utils/cloudApi'
 import LoadCloudProject from './components/DataLoader/loaders/LoadCloudProject'
 import { Modal, Tab, Tabs } from 'react-bootstrap'
+import CloudSaveModal from './components/Exporter/CloudSaveModal'
 
 // import FixedHeader from './components/FixedHeader/FixedHeader'
 
@@ -200,18 +201,55 @@ function App() {
     }
   }, [importProject])
 
-  // Save Project to File Logic
-  const saveProjectToFile = useCallback(() => {
-    const project = exportProject()
-    const str = JSON.stringify(project)
-    const blob = new Blob([str], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'project.rawgraphs'
-    a.click()
-    URL.revokeObjectURL(url)
-  }, [exportProject])
+
+
+  // Cloud Save Logic
+  const [showCloudSaveModal, setShowCloudSaveModal] = useState(false)
+
+  const getThumbnailBlob = useCallback(() => {
+    return new Promise((resolve, reject) => {
+      if (!rawViz || !rawViz._node || !rawViz._node.firstChild) {
+        resolve(null) // No chart rendered, so no thumbnail
+        return
+      }
+      try {
+        const svgString = new XMLSerializer().serializeToString(
+          rawViz._node.firstChild
+        )
+        const svgBlob = new Blob([svgString], {
+          type: 'image/svg+xml;charset=utf-8',
+        })
+        const URL = window.URL || window.webkitURL || window
+        const url = URL.createObjectURL(svgBlob)
+
+        const canvas = document.createElement('canvas')
+        // Use the native dimensions of the SVG
+        canvas.width = rawViz._node.firstChild.clientWidth
+        canvas.height = rawViz._node.firstChild.clientHeight
+        const ctx = canvas.getContext('2d')
+
+        const img = new Image()
+        img.onload = function () {
+          ctx.drawImage(img, 0, 0)
+          canvas.toBlob((blob) => {
+            URL.revokeObjectURL(url)
+            if (blob) {
+              resolve(blob)
+            } else {
+              reject(new Error('Canvas toBlob failed'))
+            }
+          }, 'image/png')
+        }
+        img.onerror = (e) => {
+          URL.revokeObjectURL(url)
+          reject(e)
+        }
+        img.src = url
+      } catch (err) {
+        reject(err)
+      }
+    })
+  }, [rawViz])
 
   // Load Project Modal State
   const [showLoadModal, setShowLoadModal] = useState(false)
@@ -275,7 +313,7 @@ function App() {
               {
                 id: 'save-project-btn',
                 label: 'プロジェクトの保存',
-                action: saveProjectToFile,
+                action: () => setShowCloudSaveModal(true),
                 align: 'right'
               }
             ]
@@ -289,7 +327,7 @@ function App() {
     } else {
       customElements.whenDefined('dataviz-tool-header').then(configureHeader)
     }
-  }, [loadProjectFromFile, saveProjectToFile])
+  }, [loadProjectFromFile])
 
   //setting initial chart and related options
   useEffect(() => {
@@ -423,6 +461,13 @@ function App() {
           </Tabs>
         </Modal.Body>
       </Modal>
+
+      <CloudSaveModal
+        show={showCloudSaveModal}
+        onHide={() => setShowCloudSaveModal(false)}
+        getProjectData={exportProject}
+        getThumbnailBlob={getThumbnailBlob}
+      />
     </div>
   )
 }
