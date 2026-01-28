@@ -412,6 +412,13 @@ function App() {
                 }}
                 setLoadingError={setLoadingError}
               />
+              {loadingError && (
+                <div className="alert alert-danger mt-2">
+                  {typeof loadingError === 'string'
+                    ? loadingError
+                    : loadingError.message || 'Error loading project'}
+                </div>
+              )}
             </Tab>
           </Tabs>
         </Modal.Body>
