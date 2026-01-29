@@ -348,7 +348,7 @@ function App() {
       />
       {/* <FixedHeader /> */}
       {/* <Header menuItems={HeaderItems} /> */}
-      <div className="app-sections" style={{ marginTop: '48px' }}>
+      <div className="app-sections" style={{ marginTop: '96px' }}>
         <Section title={`1. データを読み込む`} loading={loading}>
           <DataLoader {...dataLoader} hydrateFromProject={importProject} />
         </Section>
