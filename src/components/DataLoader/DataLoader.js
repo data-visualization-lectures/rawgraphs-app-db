@@ -18,7 +18,7 @@ import JsonViewer from '../JsonViewer'
 import ParsingOptions from '../ParsingOptions'
 import styles from './DataLoader.module.scss'
 import LoadProject from './loaders/LoadProject'
-import LoadCloudProject from './loaders/LoadCloudProject'
+
 import Paste from './loaders/Paste'
 import UploadFile from './loaders/UploadFile'
 import UrlFetch from './loaders/UrlFetch'
@@ -147,19 +147,7 @@ function DataLoader({
       icon: BsFolder,
       allowedForReplace: false,
     },
-    {
-      id: 'cloud',
-      name: 'サーバから開く',
-      message: 'サーバに保存されたプロジェクト・ファイルを開きます。',
-      loader: (
-        <LoadCloudProject
-          onProjectSelected={hydrateFromProject}
-          setLoadingError={setLoadingError}
-        />
-      ),
-      icon: BsCloud,
-      allowedForReplace: false,
-    },
+
   ]
   const [optionIndex, setOptionIndex] = useState(0)
   const selectedOption = options[optionIndex]
