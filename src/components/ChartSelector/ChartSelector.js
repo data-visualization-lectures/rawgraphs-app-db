@@ -67,7 +67,7 @@ function ChartSelector({ availableCharts, currentChart, setCurrentChart }) {
           {currentChart && (
             <Card className={styles.currentChart}>
               <Card.Img variant="top" src={currentChart.metadata.thumbnail} />
-                <Card.Body>
+              <Card.Body>
                 <Card.Title className="m-0">
                   <h2 className="m-0">{currentChartName}</h2>
                 </Card.Title>
@@ -75,16 +75,7 @@ function ChartSelector({ availableCharts, currentChart, setCurrentChart }) {
                   <h4 className="mb-2">{currentChart.metadata.category}</h4>
                 </Card.Subtitle>
                 <Card.Text>{currentChart.metadata.description}</Card.Text>
-                <Card.Link
-                  className={classNames({
-                    [styles.disabled]: !currentChart.metadata.code,
-                    underlined: true,
-                  })}
-                  href={currentChart.metadata.code}
-                  target="_blank"
-                >
-                  <BsLink color="black" /> Code
-                </Card.Link>
+
                 <Card.Link
                   className={classNames({
                     [styles.disabled]: !currentChart.metadata.tutorial,
