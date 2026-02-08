@@ -33,6 +33,7 @@ import {
 } from '@rawgraphs/rawgraphs-charts'
 import { calendarHeatmap } from '@rawgraphs/rawgraphs-calendar-heatmap'
 import histogram from './custom_charts/histogram'
+import mosaic from './custom_charts/mosaic'
 
 // New charts, not included into first release.
 // Comment at necessity.
@@ -48,6 +49,7 @@ let charts = [
   bumpchart,
   calendarHeatmap,
   histogram,
+  mosaic,
   chorddiagram,
   circlepacking,
   circularDendrogram,
@@ -106,7 +108,8 @@ const chartDescriptions = {
   'rawgraphs.piechart': '全体に対する各部分の割合を扇形の面積で表すチャートです。円全体を100%とし、各項目の構成比率を扇形の中心角の大きさで表現します。カテゴリーごとのシェアや比率を一目で比較するのに最も一般的なグラフです。',
   'rawgraphs.voronoitreemap': 'ツリー構造のあるデータを、多角形の領域分割（ボロノイ分割）で表すチャートです。通常のツリーマップのような四角形ではなく、有機的な形の多角形で領域を分割し、その面積で値の大きさを表します。階層構造を持ちながらも、より柔軟で自然な見た目の分割表現が可能です。',
   'rawgraphs.calendarheatmap': 'カレンダーの日付に合わせてデータを色の濃淡で表示するチャートです。1年間全体を見渡して、特定の時期や曜日による傾向やパターン（シーズナリティ）を見つけるのに適しています。GitHubのコントリビューショングラフのように、日々の活動量などを可視化時によく使われます。',
-  'rawgraphs.histogram': 'データの分布（度数分布）を棒グラフで表すチャートです。連続する数値を一定の範囲（ビン）に区切り、各範囲に含まれるデータの個数を棒の高さで示します。データのばらつきや偏り、集中している値の範囲などが一目でわかります。'
+  'rawgraphs.histogram': 'データの分布（度数分布）を棒グラフで表すチャートです。連続する数値を一定の範囲（ビン）に区切り、各範囲に含まれるデータの個数を棒の高さで示します。データのばらつきや偏り、集中している値の範囲などが一目でわかります。',
+  'rawgraphs.mosaic': 'モザイクプロット（またはマリメッコチャート）は、カテゴリのデータを2次元の面積で可視化するグラフです。列（カラム）の幅はカテゴリ全体の合計値を表し、各セグメントの高さはそのカテゴリ内での割合（構成比）を表します。全体の中での各要素の規模感と構成比を同時に把握するのに適しています。'
 }
 
 const chartNameOverrides = {
@@ -141,6 +144,8 @@ const dimensionTranslations = {
   'dimensions': '次元 (Dimensions)',
   'axes': '軸 (Axes)',
   'sets': 'セット (Sets)',
+  'column': '列 (Column)',
+  'row': '行 (Row)',
 }
 
 // チャートの説明文と変数を日本語に上書き
