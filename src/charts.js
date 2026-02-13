@@ -214,6 +214,12 @@ charts = charts.map(chart => {
     newChart = {
       ...newChart,
       dimensions: newChart.dimensions.map(dim => {
+        // Beeswarm plotの場合、seriesを「グループ」と翻訳
+        if (chart.metadata.id === 'rawgraphs.beeswarm' && dim.id === 'series') {
+          return { ...dim, name: 'グループ (Groups)' }
+        }
+
+        // その他のチャートは通常の翻訳テーブルを使用
         const trans = dimensionTranslations[dim.id]
         if (trans) {
           return { ...dim, name: trans }
