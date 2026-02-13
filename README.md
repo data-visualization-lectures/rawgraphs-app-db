@@ -30,8 +30,13 @@ yarn build
 npx serve -s build
 npx serve -s build -l 9000
 
+export NODE_OPTIONS=--openssl-legacy-provider && npm start
+
+リダイレクトを回避するために /?auth_debug を追加してください。
+
 http://localhost:3000/?auth_debug
 http://localhost:9000/?auth_debug
+http://192.168.43.107:9000/?auth_debug
 
 ### デプロイ
 
