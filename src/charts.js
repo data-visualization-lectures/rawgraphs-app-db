@@ -34,6 +34,7 @@ import {
 import { calendarHeatmap } from '@rawgraphs/rawgraphs-calendar-heatmap'
 import histogram from './custom_charts/histogram'
 import mosaic from './custom_charts/mosaic'
+import spiral from './custom_charts/spiral'
 
 // New charts, not included into first release.
 // Comment at necessity.
@@ -50,6 +51,7 @@ let charts = [
   calendarHeatmap,
   histogram,
   mosaic,
+  spiral,
   chorddiagram,
   circlepacking,
   circularDendrogram,
@@ -110,6 +112,7 @@ const chartDescriptions = {
   'rawgraphs.calendarheatmap': 'カレンダーの日付に合わせてデータを色の濃淡で表示するチャートです。1年間全体を見渡して、特定の時期や曜日による傾向やパターン（シーズナリティ）を見つけるのに適しています。GitHubのコントリビューショングラフのように、日々の活動量などを可視化時によく使われます。',
   'rawgraphs.histogram': 'データの分布（度数分布）を棒グラフで表すチャートです。連続する数値を一定の範囲（ビン）に区切り、各範囲に含まれるデータの個数を棒の高さで示します。データのばらつきや偏り、集中している値の範囲などが一目でわかります。',
   'rawgraphs.mosaic': 'モザイクプロット（またはマリメッコチャート）は、カテゴリのデータを2次元の面積で可視化するグラフです。列（カラム）の幅はカテゴリ全体の合計値を表し、各セグメントの高さはそのカテゴリ内での割合（構成比）を表します。全体の中での各要素の規模感と構成比を同時に把握するのに適しています。',
+  'rawgraphs.spiral': '時系列データを極座標系にプロットするチャートです。中心からの角度が時間（月など）を、中心からの距離（半径）が値の大きさを表します。気温の変化など、周期的なデータの推移や上昇トレンドを視覚的に捉えるのに適しています。',
 }
 
 const chartNameOverrides = {
@@ -148,6 +151,7 @@ const chartNameOverrides = {
   'rawgraphs.voronoitreemap': 'ボロノイ・ツリーマップ',
   'rawgraphs.histogram': 'ヒストグラム',
   'rawgraphs.mosaic': 'モザイクプロット',
+  'rawgraphs.spiral': 'スパイラル・チャート',
 }
 
 // チャート変数の日本語翻訳定義

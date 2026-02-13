@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_レイヤー_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 320.31 320.31">
+  <!-- Generator: Adobe Illustrator 29.8.2, SVG Export Plug-In . SVG Version: 2.1.1 Build 3)  -->
+  <defs>
+    <style>
+      .st0 {
+        stroke: #69bda9;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 10px;
+      }
+
+      .st0, .st1 {
+        fill: none;
+      }
+
+      .st1 {
+        stroke: #000;
+        stroke-dasharray: 2.4 2.4;
+        stroke-width: .8px;
+      }
+    </style>
+  </defs>
+  <circle class="st1" cx="168.73" cy="163.67" r="121.54"/>
+  <circle class="st1" cx="168.73" cy="163.67" r="60.07"/>
+  <path class="st1" d="M168.73,300.67V19.65"/>
+  <path class="st1" d="M28.22,163.67h281.02"/>
+  <path class="st0" d="M168.65,75.83l43.7,11.07,41.95,32.05,12.82,50.11-19.23,46.03-33.55,37.91-46.27-5.28-48.36-2.33-39.04-27.97-9.32-48.36,29.13-40.2,16.9-43.7,49.52,33.21,29.13.58,20.98,20.39,15.73,29.71-25.64,21.56-13.84,27.25-26.36,1.88-27.97-1.75-13.4-26.22-23.89-21.56,32.05-23.89,8.74-18.06,35.54,16.31"/>
+</svg>
