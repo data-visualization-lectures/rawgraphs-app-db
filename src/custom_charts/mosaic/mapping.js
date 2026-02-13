@@ -1,4 +1,4 @@
-import * as d3 from 'd3'
+
 
 export const mapData = function (data, mapping, dataTypes, dimensions) {
     const columnDim = dimensions.find((d) => d.id === 'column')

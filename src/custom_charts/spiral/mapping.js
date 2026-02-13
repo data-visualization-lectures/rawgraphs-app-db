@@ -1,5 +1,5 @@
 import * as d3 from 'd3'
-import { getDimensionAggregator } from '@rawgraphs/rawgraphs-core'
+import { } from '@rawgraphs/rawgraphs-core'
 
 export const mapData = function (data, mapping, dataTypes, dimensions) {
     // 1. Definition of Aggregators
@@ -25,7 +25,7 @@ export const mapData = function (data, mapping, dataTypes, dimensions) {
     const valueColsRaw = mapping.value.value
     const valueCols = Array.isArray(valueColsRaw) ? valueColsRaw : [valueColsRaw].filter(Boolean)
 
-    const result = d3.rollups(
+    d3.rollups(
         data,
         (v) => {
             // v is array of rows for this (Series, Date) group.

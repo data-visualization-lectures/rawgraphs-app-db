@@ -11,7 +11,6 @@ export default function render(
     const {
         width,
         height,
-        background,
         marginTop,
         marginRight,
         marginBottom,

@@ -24,7 +24,7 @@ function renderSmallMultiples(svgNode, data, visualOptions, mapping, styles) {
         height,
         background,
         strokeWidth,
-        color: colorScale,
+
         columnsNumber,
         sortSeriesBy,
         showSeriesLabels,
