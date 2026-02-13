@@ -219,6 +219,11 @@ charts = charts.map(chart => {
           return { ...dim, name: 'グループ (Groups)' }
         }
 
+        // Line chartの場合、linesを「ファセット分割」と翻訳
+        if (chart.metadata.id === 'rawgraphs.linechart' && dim.id === 'lines') {
+          return { ...dim, name: 'ファセット分割 (Facets)' }
+        }
+
         // その他のチャートは通常の翻訳テーブルを使用
         const trans = dimensionTranslations[dim.id]
         if (trans) {
