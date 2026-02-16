@@ -113,15 +113,49 @@ export const SCALES_LABELS = {
 }
 
 export const COLOR_SCHEMES_LABELS = {
+  // Sequential (既存)
   "interpolateBlues": "Blue sequential",
   "interpolateGreens": "Green sequential",
   "interpolateReds": "Red sequential",
+  // Sequential (追加)
+  "interpolateViridis": "Viridis",
+  "interpolateCividis": "Cividis",
+  "interpolateBuGn": "BuGn",
+  "interpolateBuPu": "BuPu",
+  "interpolateGnBu": "GnBu",
+  "interpolateOrRd": "OrRd",
+  "interpolatePuBu": "PuBu",
+  "interpolatePuBuGn": "PuBuGn",
+  "interpolatePuRd": "PuRd",
+  "interpolateRdPu": "RdPu",
+  "interpolateYlGn": "YlGn",
+  "interpolateYlGnBu": "YlGnBu",
+  "interpolateYlOrBr": "YlOrBr",
+  "interpolateYlOrRd": "YlOrRd",
+  // Diverging (既存)
   "interpolateRdBu": "RdBu diverging",
   "interpolateBrBG": "BrBG diverging",
   "interpolatePiYG": "PiYG diverging",
+  // Diverging (追加)
+  "interpolatePRGn": "PRGn",
+  "interpolatePuOr": "PuOr",
+  "interpolateRdGy": "RdGy",
+  "interpolateRdYlBu": "RdYlBu",
+  "interpolateRdYlGn": "RdYlGn",
+  // Ordinal (既存)
   "schemeCategory10": "Categorical 10",
   "interpolateTurbo": "Turbo discrete",
-  "interpolateSpectral": "Spectral discrete"
+  "interpolateSpectral": "Spectral discrete",
+  // Ordinal (追加)
+  "schemeAccent": "Accent",
+  "schemeDark2": "Dark2",
+  "schemePaired": "Paired",
+  "schemePastel1": "Pastel1",
+  "schemePastel2": "Pastel2",
+  "schemeSet1": "Set1",
+  "schemeSet2": "Set2",
+  "schemeSet3": "Set3",
+  "schemeTableau10": "Tableau10",
 }
 
 export const CHART_CATEGORY_LABELS = {

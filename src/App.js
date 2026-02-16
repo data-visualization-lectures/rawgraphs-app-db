@@ -1,3 +1,4 @@
+import './utils/extendColorPresets'
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import {
   getOptionsConfig,
