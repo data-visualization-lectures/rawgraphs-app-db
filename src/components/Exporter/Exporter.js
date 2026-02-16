@@ -1,7 +1,5 @@
 import React, { useCallback, useState } from 'react'
 import { InputGroup, DropdownButton, Dropdown } from 'react-bootstrap'
-import CloudSaveModal from './CloudSaveModal'
-import { BsCloudUpload } from 'react-icons/bs'
 
 function downloadBlob(url, filename) {
   // Create a new anchor element
@@ -69,48 +67,6 @@ export default function Exporter({ rawViz, exportProject }) {
   const [currentFormat, setCurrentFormat] = useState('svg')
   const [currentFile, setCurrentFile] = useState('viz')
 
-  /* Cloud Save Logic */
-  const [showCloudModal, setShowCloudModal] = useState(false)
-
-  // Function to generate a thumbnail Blob (PNG) from the current visualization
-  const getThumbnailBlob = useCallback(() => {
-    return new Promise((resolve, reject) => {
-      try {
-        const svgString = new XMLSerializer().serializeToString(rawViz._node.firstChild)
-        const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
-        const URL = window.URL || window.webkitURL || window
-        const url = URL.createObjectURL(svgBlob)
-
-        const canvas = document.createElement('canvas')
-        // Use the native dimensions of the SVG
-        canvas.width = rawViz._node.firstChild.clientWidth
-        canvas.height = rawViz._node.firstChild.clientHeight
-        const ctx = canvas.getContext('2d')
-
-        const img = new Image()
-        img.onload = function () {
-          ctx.drawImage(img, 0, 0)
-          canvas.toBlob((blob) => {
-            URL.revokeObjectURL(url)
-            if (blob) {
-              resolve(blob)
-            } else {
-              reject(new Error('Canvas toBlob failed'))
-            }
-          }, 'image/png')
-        }
-        img.onerror = (e) => {
-          URL.revokeObjectURL(url)
-          reject(e)
-        }
-        img.src = url
-      } catch (err) {
-        reject(err)
-      }
-    })
-  }, [rawViz])
-
-
   const downloadViz = useCallback(() => {
     switch (currentFormat) {
       case 'svg':
@@ -164,22 +120,6 @@ export default function Exporter({ rawViz, exportProject }) {
           ダウンロード
         </button>
       </div>
-      <div className="col col-sm-2">
-        <button
-          className="btn btn-outline-primary btn-block raw-btn d-flex align-items-center justify-content-center"
-          onClick={() => setShowCloudModal(true)}
-          title="サーバに保存"
-        >
-          <BsCloudUpload className="mr-2" /> サーバに保存
-        </button>
-      </div>
-
-      <CloudSaveModal
-        show={showCloudModal}
-        onHide={() => setShowCloudModal(false)}
-        getProjectData={exportProject}
-        getThumbnailBlob={getThumbnailBlob}
-      />
     </div>
   )
 }
