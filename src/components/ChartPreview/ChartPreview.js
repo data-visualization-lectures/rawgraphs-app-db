@@ -3,6 +3,49 @@ import { chart as rawChart } from '@rawgraphs/rawgraphs-core'
 import useDebounce from '../../hooks/useDebounce'
 import WarningMessage from '../WarningMessage'
 
+// 既知の英語エラーメッセージを日本語に変換するマップ
+const ERROR_MESSAGE_MAP = [
+  // --- rawgraphs-charts ---
+  {
+    pattern: /Paddings are too high, decrase them in the "chart" options panel/i,
+    ja: 'パディングの値が大きすぎます。「チャート」オプションパネルで値を小さくしてください。',
+  },
+
+  // --- rawgraphs-core: プロジェクト読み込み ---
+  {
+    pattern: /Selected project is not valid/i,
+    ja: '選択されたプロジェクトファイルが無効です。',
+  },
+  {
+    pattern: /Invalid version number, please use a suitable deserializer/i,
+    ja: 'バージョン番号が無効です。対応したデシリアライザを使用してください。',
+  },
+  {
+    pattern: /Unknown chart!/i,
+    ja: '不明なチャートタイプです。',
+  },
+  {
+    pattern: /No serializer found for version (.+)/i,
+    ja: (m) => `バージョン ${m[1]} に対応するシリアライザが見つかりません。`,
+  },
+  {
+    pattern: /Can't open your project\. Invalid file/i,
+    ja: 'プロジェクトを開けませんでした。ファイルが無効です。',
+  },
+  {
+    pattern: /Can't open your project\. (.+)/i,
+    ja: (m) => `プロジェクトを開けませんでした。${m[1]}`,
+  },
+]
+
+function translateErrorMessage(msg) {
+  for (const { pattern, ja } of ERROR_MESSAGE_MAP) {
+    const m = msg.match(pattern)
+    if (m) return typeof ja === 'function' ? ja(m) : ja
+  }
+  return msg
+}
+
 const ChartPreview = ({
   chart,
   dataset: data,
@@ -120,7 +163,7 @@ const ChartPreview = ({
         setError(null)
       } catch (e) {
         console.log("chart error", e)
-        setError({ variant: 'danger', message: 'チャートエラー: ' + e.message })
+        setError({ variant: 'danger', message: 'チャートエラー: ' + translateErrorMessage(e.message) })
         setRawViz(null)
       }
     } catch (e) {
@@ -128,7 +171,7 @@ const ChartPreview = ({
         domRef.current.removeChild(domRef.current.firstChild)
       }
       console.log({ e })
-      setError({ variant: 'danger', message: 'チャートエラー: ' + e.message })
+      setError({ variant: 'danger', message: 'チャートエラー: ' + translateErrorMessage(e.message) })
       setRawViz(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
