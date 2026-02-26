@@ -31,7 +31,7 @@ import CookieConsent from 'react-cookie-consent'
 
 import { loadProject } from './utils/cloudApi'
 import LoadCloudProject from './components/DataLoader/loaders/LoadCloudProject'
-import { Modal, Tab, Tabs } from 'react-bootstrap'
+import { Modal } from 'react-bootstrap'
 import CloudSaveModal from './components/Exporter/CloudSaveModal'
 
 // import FixedHeader from './components/FixedHeader/FixedHeader'
@@ -426,40 +426,20 @@ function App() {
           <Modal.Title>プロジェクトを読み込む</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Tabs defaultActiveKey="file" id="load-project-tabs">
-            <Tab eventKey="file" title="ファイルから">
-              <div className="p-3">
-                <p>ローカルに保存されたプロジェクト・ファイル（.rawgraphs）を選択してください。</p>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => {
-                    if (fileInputRef.current) {
-                      fileInputRef.current.click()
-                      setShowLoadModal(false)
-                    }
-                  }}
-                >
-                  ファイルを選択
-                </button>
-              </div>
-            </Tab>
-            <Tab eventKey="cloud" title="サーバから">
-              <LoadCloudProject
-                onProjectSelected={(project) => {
-                  importProject(project)
-                  setShowLoadModal(false)
-                }}
-                setLoadingError={setLoadingError}
-              />
-              {loadingError && (
-                <div className="alert alert-danger mt-2">
-                  {typeof loadingError === 'string'
-                    ? loadingError
-                    : loadingError.message || 'Error loading project'}
-                </div>
-              )}
-            </Tab>
-          </Tabs>
+          <LoadCloudProject
+            onProjectSelected={(project) => {
+              importProject(project)
+              setShowLoadModal(false)
+            }}
+            setLoadingError={setLoadingError}
+          />
+          {loadingError && (
+            <div className="alert alert-danger mt-2">
+              {typeof loadingError === 'string'
+                ? loadingError
+                : loadingError.message || 'Error loading project'}
+            </div>
+          )}
         </Modal.Body>
       </Modal>
 
