@@ -10,7 +10,7 @@ function downloadBlob(url, filename) {
   return a
 }
 
-export default function Exporter({ rawViz, exportProject }) {
+export default function Exporter({ rawViz }) {
   const downloadSvg = useCallback(
     (filename) => {
       var svgString = new XMLSerializer().serializeToString(
@@ -49,19 +49,6 @@ export default function Exporter({ rawViz, exportProject }) {
     [rawViz]
   )
 
-  const downloadProject = useCallback(
-    filename => {
-      const project = exportProject()
-      const str = JSON.stringify(project)
-      const blob = new Blob([str], { type: 'application/json' })
-      const DOMURL = window.URL || window.webkitURL || window
-      const url = DOMURL.createObjectURL(blob)
-      downloadBlob(url, filename)
-      DOMURL.revokeObjectURL(url)
-    },
-    [exportProject]
-  )
-
   const exportFormats = ['svg', 'png', 'jpg'];
 
   const [currentFormat, setCurrentFormat] = useState('svg')
@@ -81,7 +68,7 @@ export default function Exporter({ rawViz, exportProject }) {
       default:
         break
     }
-  }, [currentFile, currentFormat, downloadImage, downloadProject, downloadSvg])
+  }, [currentFile, currentFormat, downloadImage, downloadSvg])
 
   return (
     <div className="row">

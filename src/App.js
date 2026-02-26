@@ -389,7 +389,7 @@ function App() {
         )}
         {data && currentChart && rawViz && (
           <Section title="5. 書き出す">
-            <Exporter rawViz={rawViz} exportProject={exportProject} />
+            <Exporter rawViz={rawViz} />
           </Section>
         )}
         <Footer />
