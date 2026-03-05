@@ -94,22 +94,22 @@ export const separatorsList = Object.keys(separatorsLabels)
 
 export const DefaultSeparator = ","
 
-export const AGGREGATIONS_LABELS = {
-  "count": "行数（Count）",
-  "mean": "平均値（Average）",
-  "median": "中央値（Median）",
-  "max": "最大値（Max）",
-  "min": "最小値（Min）",
-  "countDistinct": "行数：固有値のみ（Count unique）",
-  "sum": "合計（Sum）",
-  "csv": "CSV",
-  "csvDistinct": "CSV：固有値のみ",
+export const AGGREGATIONS_KEYS = {
+  "count": "aggregation.count",
+  "mean": "aggregation.mean",
+  "median": "aggregation.median",
+  "max": "aggregation.max",
+  "min": "aggregation.min",
+  "countDistinct": "aggregation.countDistinct",
+  "sum": "aggregation.sum",
+  "csv": "aggregation.csv",
+  "csvDistinct": "aggregation.csvDistinct",
 }
 
-export const SCALES_LABELS = {
-  "sequential": "定量的（Sequential）",
-  "diverging": "分岐的（Diverging）",
-  "ordinal": "定性的（Ordinal）"
+export const SCALES_KEYS = {
+  "sequential": "scale.sequential",
+  "diverging": "scale.diverging",
+  "ordinal": "scale.ordinal"
 }
 
 export const COLOR_SCHEMES_LABELS = {
@@ -158,14 +158,14 @@ export const COLOR_SCHEMES_LABELS = {
   "schemeTableau10": "Tableau10",
 }
 
-export const CHART_CATEGORY_LABELS = {
-  "correlations": "相関",
-  "distributions": "分布",
-  "hierarchies": "ツリー",
-  "networks": "ネットワーク",
-  "proportions": "比率",
-  "time series": "時系列",
-  "Dispersions": "空間的分布",
-  "Correlations": "空間的分布",
-  "time chunks": "時間の区間"
+export const CHART_CATEGORY_KEYS = {
+  "correlations": "chartCategory.correlations",
+  "distributions": "chartCategory.distributions",
+  "hierarchies": "chartCategory.hierarchies",
+  "networks": "chartCategory.networks",
+  "proportions": "chartCategory.proportions",
+  "time series": "chartCategory.time series",
+  "Dispersions": "chartCategory.Dispersions",
+  "Correlations": "chartCategory.Correlations",
+  "time chunks": "chartCategory.time chunks"
 }

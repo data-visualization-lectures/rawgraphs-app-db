@@ -2,12 +2,14 @@ import React, { useCallback } from 'react'
 import { Button } from 'react-bootstrap'
 import { useDropzone } from 'react-dropzone'
 import classNames from 'classnames'
+import { useTranslation } from 'react-i18next'
 import S from './UploadFile.module.scss'
 
 export default function UploadFile({
   setUserInput,
   setLoadingError,
 }) {
+  const { t } = useTranslation()
   const onDrop = useCallback(
     (acceptedFiles) => {
       const reader = new FileReader()
@@ -41,13 +43,13 @@ export default function UploadFile({
       {...getRootProps()}
     >
       <input {...getInputProps()} />
-      <span>ファイルをこちらにドラッグするか</span>
-      <span>OSのダイアログを開いてファイルを</span>
+      <span>{t('uploadFile.drag')}</span>
+      <span>{t('uploadFile.dialog')}</span>
       <Button className={S['browse-button']} color="primary">
-        ブラウズ
+        {t('uploadFile.browse')}
       </Button>
-      {isDragAccept && <p>すべてのファイルが受け付けられました</p>}
-      {isDragReject && <p>いくつかのファイルは拒否されました</p>}
+      {isDragAccept && <p>{t('uploadFile.accepted')}</p>}
+      {isDragReject && <p>{t('uploadFile.rejected')}</p>}
     </div>
   )
 }

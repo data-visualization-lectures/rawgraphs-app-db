@@ -6,6 +6,7 @@ import React, {
   useState,
 } from 'react'
 import { Row, Col } from 'react-bootstrap'
+import { useTranslation } from 'react-i18next'
 import map from 'lodash/map'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { DndProvider } from 'react-dnd'
@@ -90,6 +91,7 @@ function handleReplaceLocalMapping(
 }
 
 function DataMapping({ dataTypes, dimensions, mapping, setMapping }, ref) {
+  const { t } = useTranslation()
   const [localMappding, setLocalMapping] = useState(mapping)
 
   const updateMapping = useCallback(
@@ -179,7 +181,7 @@ function DataMapping({ dataTypes, dimensions, mapping, setMapping }, ref) {
     <DndProvider backend={HTML5Backend}>
       <Row>
         <Col xs={3}>
-          <h5 className="text-uppercase">データ変数</h5>
+          <h5 className="text-uppercase">{t('dataMapping.dataVariables')}</h5>
           {map(dataTypes, (dataType, columnName) => {
             return (
               <ColumnCard
@@ -193,7 +195,7 @@ function DataMapping({ dataTypes, dimensions, mapping, setMapping }, ref) {
           })}
         </Col>
         <Col>
-          <h5 className="text-uppercase">チャート変数</h5>
+          <h5 className="text-uppercase">{t('dataMapping.chartVariables')}</h5>
           <Row
             className="sticky-top"
             style={{ top: 'calc(var(--header-height) + 16px)' }}

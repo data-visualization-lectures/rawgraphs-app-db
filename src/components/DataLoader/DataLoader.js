@@ -1,6 +1,7 @@
 import { get } from 'lodash'
 import React, { useCallback, useState } from 'react'
 import { Col, Row } from 'react-bootstrap'
+import { useTranslation } from 'react-i18next'
 import {
   BsArrowCounterclockwise,
   BsArrowRepeat,
@@ -59,11 +60,12 @@ function DataLoader({
   replaceRequiresConfirmation,
   hydrateFromProject,
 }) {
+  const { t } = useTranslation()
   const [loadingError, setLoadingError] = useState()
   const options = [
     {
       id: 'paste',
-      name: 'データを貼り付ける',
+      name: t('dataLoader.paste.name'),
       loader: (
         <Paste
           userInput={userInput}
@@ -71,14 +73,13 @@ function DataLoader({
           setLoadingError={setLoadingError}
         />
       ),
-      message:
-        'データを貼り付けます。表データ(TSV, CSV, DSV)形式かJSON形式が利用可能です。',
+      message: t('dataLoader.paste.message'),
       icon: BsClipboard,
       allowedForReplace: true,
     },
     {
       id: 'upload',
-      name: 'データをアップロードする',
+      name: t('dataLoader.upload.name'),
       loader: (
         <UploadFile
           userInput={userInput}
@@ -86,13 +87,13 @@ function DataLoader({
           setLoadingError={setLoadingError}
         />
       ),
-      message: '表データ(TSV, CSV, DSV)形式かJSON形式をアップロードします。',
+      message: t('dataLoader.upload.message'),
       icon: BsUpload,
       allowedForReplace: true,
     },
     {
       id: 'samples',
-      name: 'サンプルデータを使う',
+      name: t('dataLoader.samples.name'),
       message: '',
       loader: (
         <DataSamples
@@ -105,8 +106,8 @@ function DataLoader({
     },
     {
       id: 'sparql',
-      name: 'SPARQLクエリ',
-      message: 'SparQLクエリとしてデータを読み込みます。',
+      name: t('dataLoader.sparql.name'),
+      message: t('dataLoader.sparql.message'),
       loader: (
         <SparqlFetch
           userInput={userInput}
@@ -120,9 +121,8 @@ function DataLoader({
     },
     {
       id: 'url',
-      name: 'URLから',
-      message:
-        'データを示すURLから読み込む(例：Dropboxのリンクや、公開されているAPIなど)。CORSが有効になっていれば利用可能です。',
+      name: t('dataLoader.url.name'),
+      message: t('dataLoader.url.message'),
       loader: (
         <UrlFetch
           userInput={userInput}
@@ -136,8 +136,8 @@ function DataLoader({
     },
     {
       id: 'project',
-      name: 'ローカルから開く',
-      message: 'ローカルに保存されたプロジェクト・ファイル（.rawgraphs）をアップロードします。',
+      name: t('dataLoader.project.name'),
+      message: t('dataLoader.project.message'),
       loader: (
         <LoadProject
           onProjectSelected={hydrateFromProject}
@@ -202,29 +202,33 @@ function DataLoader({
     const column = Object.keys(errors[0].error)[0]
     return (
       <span>
-        <span className="font-weight-bold">{row} 行目</span>の<span className="font-weight-bold">{column} 列</span>を確認してください。{' '}
+        <span className="font-weight-bold">{row} {t('dataLoader.error.rowUnit', { defaultValue: '行目' })}</span>
+        {t('dataLoader.error.of', { defaultValue: 'の' })}
+        <span className="font-weight-bold">{column} {t('dataLoader.error.colUnit', { defaultValue: '列' })}</span>
+        {t('dataLoader.error.check', { defaultValue: 'を確認してください。' })}{' '}
         {errors.length === 2 && (
           <>
             {' '}
-            {' '}
-            <span className="font-weight-bold">{errors[1].row + 1}</span>行目にも別の問題があります。{' '}
+            <span className="font-weight-bold">{errors[1].row + 1}</span>
+            {t('dataLoader.error.anotherRow', { defaultValue: '行目にも別の問題があります。' })}{' '}
           </>
         )}
         {errors.length > 2 && (
           <>
             {' '}
-            {' '}
-            他 <span className="font-weight-bold">{errors.length - 1}</span> 行に問題があります。
+            {t('dataLoader.error.otherPrefix', { defaultValue: '他 ' })}
+            <span className="font-weight-bold">{errors.length - 1}</span>
+            {t('dataLoader.error.otherSuffix', { defaultValue: ' 行に問題があります。' })}
             {' '}
           </>
         )}
         {successRows > 0 && (
           <>
-            残りの{' '}
+            {t('dataLoader.error.remainingPrefix', { defaultValue: '残りの ' })}
             <span className="font-weight-bold">
-              {successRows} 行
+              {successRows} {t('dataLoader.error.remainingUnit', { defaultValue: '行' })}
             </span>{' '}
-            は正常に読み込めました。
+            {t('dataLoader.error.remainingSuffix', { defaultValue: 'は正常に読み込めました。' })}
           </>
         )}
       </span>
@@ -287,7 +291,7 @@ function DataLoader({
                   onClick={reloadRAW}
                 >
                   <BsArrowRepeat className="mr-2" />
-                  <h4 className="m-0 d-inline-block">{'Reset'}</h4>
+                  <h4 className="m-0 d-inline-block">{t('dataLoader.resetEn')}</h4>
                 </div>
 
                 <div
@@ -296,7 +300,7 @@ function DataLoader({
                     cancelDataReplace()
                   }}
                 >
-                  <h4 className="m-0 d-inline-block">{'Cancel'}</h4>
+                  <h4 className="m-0 d-inline-block">{t('dataLoader.cancel')}</h4>
                 </div>
               </>
             )}
@@ -332,7 +336,7 @@ function DataLoader({
               onClick={reloadRAW}
             >
               <BsArrowRepeat className="mr-2" />
-              <h4 className="m-0 d-inline-block">{'リセット'}</h4>
+              <h4 className="m-0 d-inline-block">{t('dataLoader.reset')}</h4>
             </div>
 
             <div
@@ -343,7 +347,7 @@ function DataLoader({
               }}
             >
               <BsArrowCounterclockwise className="mr-2" />
-              <h4 className="m-0 d-inline-block">{'データを変更する'}</h4>
+              <h4 className="m-0 d-inline-block">{t('dataLoader.replaceData')}</h4>
             </div>
           </Col>
         )}
@@ -358,11 +362,11 @@ function DataLoader({
                   message={
                     <span>
                       <span className="font-weight-bold">
-                        {data.dataset.length} 行
+                        {data.dataset.length} {t('dataLoader.success.rows', { defaultValue: '行' })}
                       </span>{' '}
                       (
                       {data.dataset.length * Object.keys(data.dataTypes).length}{' '}
-                      セル) のデータが上手く取り込めました。それではチャートを選んでいきましょう！
+                      {t('dataLoader.success.cells', { defaultValue: 'セル' })}) {t('dataLoader.success.body', { defaultValue: 'のデータが上手く取り込めました。それではチャートを選んでいきましょう！' })}
                     </span>
                   }
                 />

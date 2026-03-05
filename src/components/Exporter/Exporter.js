@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { InputGroup, DropdownButton, Dropdown } from 'react-bootstrap'
 
 function downloadBlob(url, filename) {
@@ -11,6 +12,7 @@ function downloadBlob(url, filename) {
 }
 
 export default function Exporter({ rawViz }) {
+  const { t } = useTranslation()
   const downloadSvg = useCallback(
     (filename) => {
       var svgString = new XMLSerializer().serializeToString(
@@ -101,7 +103,7 @@ export default function Exporter({ rawViz }) {
 
       <div className="col col-sm-2">
         <button className="btn btn-primary btn-block raw-btn" onClick={downloadViz}>
-          ダウンロード
+          {t('exporter.download')}
         </button>
       </div>
     </div>

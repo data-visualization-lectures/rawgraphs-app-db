@@ -26,8 +26,7 @@ import {
 import useDataLoader from './hooks/useDataLoader'
 import isPlainObject from 'lodash/isPlainObject'
 import CookieConsent from 'react-cookie-consent'
-
-// #TODO: i18n
+import { useTranslation } from 'react-i18next'
 
 import { loadProject } from './utils/cloudApi'
 import LoadCloudProject from './components/DataLoader/loaders/LoadCloudProject'
@@ -37,6 +36,7 @@ import CloudSaveModal from './components/Exporter/CloudSaveModal'
 // import FixedHeader from './components/FixedHeader/FixedHeader'
 
 function App() {
+  const { t } = useTranslation()
   const dataLoader = useDataLoader()
   const {
     userInput,
@@ -195,9 +195,7 @@ function App() {
         })
         .catch((err) => {
           console.error('Project Load Error:', err)
-          alert(
-            'プロジェクトの読み込みに失敗しました。ログイン状態を確認してください。'
-          )
+          alert(t('app.projectLoadError'))
         })
     }
   }, [importProject])
@@ -278,9 +276,9 @@ function App() {
         console.error('Error loading project:', err)
         const header = document.querySelector('dataviz-tool-header')
         if (header && typeof header.showMessage === 'function') {
-          header.showMessage('プロジェクトの読み込みに失敗しました。', 'error')
+          header.showMessage(t('app.projectLoadFailed'), 'error')
         } else {
-          alert('プロジェクトの読み込みに失敗しました。')
+          alert(t('app.projectLoadFailed'))
         }
       }
     }
@@ -307,13 +305,13 @@ function App() {
             buttons: [
               {
                 id: 'load-project-btn',
-                label: 'プロジェクトの読込',
+                label: t('app.loadProject'),
                 action: loadProjectFromFile,
                 align: 'right'
               },
               {
                 id: 'save-project-btn',
-                label: 'プロジェクトの保存',
+                label: t('app.saveProject'),
                 action: () => setShowCloudSaveModal(true),
                 align: 'right'
               }
@@ -328,7 +326,7 @@ function App() {
     } else {
       customElements.whenDefined('dataviz-tool-header').then(configureHeader)
     }
-  }, [loadProjectFromFile])
+  }, [loadProjectFromFile, t])
 
   //setting initial chart and related options
   useEffect(() => {
@@ -350,11 +348,11 @@ function App() {
       {/* <FixedHeader /> */}
       {/* <Header menuItems={HeaderItems} /> */}
       <div className="app-sections" style={{ marginTop: '96px' }}>
-        <Section title={`1. データを読み込む`} loading={loading}>
+        <Section title={t('app.section1')} loading={loading}>
           <DataLoader {...dataLoader} hydrateFromProject={importProject} />
         </Section>
         {data && (
-          <Section title="2. チャートを選ぶ">
+          <Section title={t('app.section2')}>
             <ChartSelector
               availableCharts={charts}
               currentChart={currentChart}
@@ -363,7 +361,7 @@ function App() {
           </Section>
         )}
         {data && currentChart && (
-          <Section title={`3. マッピングする`} loading={mappingLoading}>
+          <Section title={t('app.section3')} loading={mappingLoading}>
             <DataMapping
               ref={dataMappingRef}
               dimensions={currentChart.dimensions}
@@ -374,7 +372,7 @@ function App() {
           </Section>
         )}
         {data && currentChart && (
-          <Section title="4. カスタマイズする">
+          <Section title={t('app.section4')}>
             <ChartPreviewWithOptions
               chart={currentChart}
               dataset={data.dataset}
@@ -388,14 +386,14 @@ function App() {
           </Section>
         )}
         {data && currentChart && rawViz && (
-          <Section title="5. 書き出す">
+          <Section title={t('app.section5')}>
             <Exporter rawViz={rawViz} />
           </Section>
         )}
         <Footer />
         <CookieConsent
           location="bottom"
-          buttonText="了解しました"
+          buttonText={t('app.cookie.accept')}
           style={{ background: '#f5f5f5', color: '#646467' }}
           buttonStyle={{
             background: '#646467',
@@ -407,14 +405,14 @@ function App() {
           buttonClasses="btn btn-default btn-grey"
           acceptOnScroll={true}
         >
-          本サイトでは、Google Analyticsを使用して閲覧データを匿名で収集しています。{' '}
+          {t('app.cookie.message')}{' '}
           <a
             href="https://rawgraphs.io/privacy/"
             target="_blank"
             rel="noopener noreferrer"
             className="ml-2 text-body border-bottom border-dark"
           >
-            Learn More
+            {t('app.cookie.learnMore')}
           </a>
         </CookieConsent>
       </div>
@@ -423,7 +421,7 @@ function App() {
       {/* Load Project Modal */}
       <Modal show={showLoadModal} onHide={() => setShowLoadModal(false)} size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>プロジェクトを読み込む</Modal.Title>
+          <Modal.Title>{t('app.loadProjectModal')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <LoadCloudProject
@@ -437,7 +435,7 @@ function App() {
             <div className="alert alert-danger mt-2">
               {typeof loadingError === 'string'
                 ? loadingError
-                : loadingError.message || 'Error loading project'}
+                : loadingError.message || t('app.errorLoadingProject')}
             </div>
           )}
         </Modal.Body>

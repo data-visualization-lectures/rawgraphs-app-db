@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Row, Col, Button } from 'react-bootstrap'
 import SeparatorSelector from './SeparatorSelector'
 import ThousandsSeparatorSelector from './ThousandsSeparatorSelector'
@@ -17,12 +18,13 @@ const dataRefreshWorkers = {
   "sparql": fetchDataFromSparql
 }
 
-const dataRefreshCaptions = {
-  "url": "Refresh data from url",
-  "sparql": "Refresh data from query"
+const dataRefreshCaptionKeys = {
+  "url": "parsing.refreshUrl",
+  "sparql": "parsing.refreshSparql"
 }
 
 export default function ParsingOptions(props) {
+  const { t } = useTranslation()
   const refreshData = async () => {
     const dataRefreshImpl = dataRefreshWorkers[get(props.dataSource, "type", "")]
     const data = await dataRefreshImpl(props.dataSource)
@@ -32,24 +34,24 @@ export default function ParsingOptions(props) {
   return (
     <Row>
       <Col className={styles.parsingOptions}>
-        <b>データの解釈</b>
+        <b>{t('parsing.interpretation')}</b>
 
         {props.userDataType === 'csv' && (
           <SeparatorSelector
-            title="ファイル形式としての区切り記号"
+            title={t('parsing.separator')}
             value={props.separator}
             onChange={(nextSeparator) => props.setSeparator(nextSeparator)}
           />
         )}
         <ThousandsSeparatorSelector
-          title="3桁ごとの区切り記号"
+          title={t('parsing.thousands')}
           value={props.thousandsSeparator}
           onChange={(nextSeparator) =>
             props.setThousandsSeparator(nextSeparator)
           }
         />
         <DecimalsSeparatorSelector
-          title="小数点以下の区切り記号"
+          title={t('parsing.decimals')}
           value={props.decimalsSeparator}
           onChange={(nextSeparator) =>
             props.setDecimalsSeparator(nextSeparator)
@@ -57,7 +59,7 @@ export default function ParsingOptions(props) {
         />
 
         <DateLocaleSelector
-          title="日付時刻のロケール"
+          title={t('parsing.dateLocale')}
           value={props.locale}
           onChange={(nextLocale) => props.setLocale(nextLocale)}
         />
@@ -69,16 +71,16 @@ export default function ParsingOptions(props) {
             onClick={() => refreshData()}
           >
             <BsArrowRepeat className="mr-2" />
-            {get(dataRefreshCaptions, get(props.dataSource, 'type', ''), "Refresh data")}
+            {t(get(dataRefreshCaptionKeys, get(props.dataSource, 'type', ''), 'parsing.refreshDefault'))}
           </Button>
         )}
 
         <div className="divider mb-3 mt-0" />
 
-        <b>データの変換</b>
+        <b>{t('parsing.transformation')}</b>
 
         <StackSelector
-          title="スタック"
+          title={t('parsing.stack')}
           value={props.stackDimension}
           list={props.dimensions}
           onChange={(nextStackDimension) =>

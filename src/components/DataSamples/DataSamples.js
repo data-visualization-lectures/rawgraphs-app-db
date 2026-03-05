@@ -1,10 +1,11 @@
 import React from 'react'
 import { Row, Col, Card } from 'react-bootstrap'
+import { useTranslation } from 'react-i18next'
 import styles from './DataSamples.module.scss'
 
 const samplesList = [
   {
-    name: 'ニューヨークでのヘイト犯罪',
+    nameKey: 'sample.hateCrimesNY',
     category: 'Alluvial Diagram',
     url: './sample-datasets/Alluvial diagram - Hate crimes in New York.tsv',
     delimiter: '\t',
@@ -13,7 +14,7 @@ const samplesList = [
       'https://data.cityofnewyork.us/Public-Safety/NYPD-Hate-Crimes/bqiq-cu78',
   },
   {
-    name: 'ラニスター対スタルクの関係',
+    nameKey: 'sample.lannisterStark',
     category: 'Arc diagrams',
     url:
       './sample-datasets/Arc diagrams - Lannister vs Starck relationships.tsv',
@@ -22,7 +23,7 @@ const samplesList = [
     sourceURL: 'https://www.kaggle.com/theobreid/got-data',
   },
   {
-    name: 'EU 消費者物価指数',
+    nameKey: 'sample.euConsumerPrice',
     category: 'Horizon Graph',
     url: './sample-datasets/Horizon Graph - EU Index of consumer prices.tsv',
     delimiter: '\t',
@@ -32,7 +33,7 @@ const samplesList = [
   },
 
   {
-    name: 'ニューヨークの職業別平均賃金',
+    nameKey: 'sample.nyMeanWages',
     category: 'Beeswarm plot',
     url: './sample-datasets/Beeswarm plot - NY mean wages.tsv',
     delimiter: '\t',
@@ -42,7 +43,7 @@ const samplesList = [
   },
 
   {
-    name: '第二次世界大戦中のパリの気温',
+    nameKey: 'sample.parisTempWW2',
     category: 'Contour plot',
     url:
       './sample-datasets/Contour plot - Mean temperature in Paris 1944-1945.tsv',
@@ -53,7 +54,7 @@ const samplesList = [
   },
 
   {
-    name: '史上最高の興行収入を記録した映画',
+    nameKey: 'sample.topGrossingMovies',
     category: 'Bubble chart',
     url: './sample-datasets/Bubble Chart - TOP 50 Groossing Movies.tsv',
     delimiter: '\t',
@@ -63,7 +64,7 @@ const samplesList = [
   },
 
   {
-    name: 'ミラノに住む外国人',
+    nameKey: 'sample.foreignResidentsMilan',
     category: 'Bumpchart',
     url: './sample-datasets/Bump chart - Foreign residents in Milan.tsv',
     delimiter: '\t',
@@ -73,7 +74,7 @@ const samplesList = [
   },
 
   {
-    name: '大陸ごとの最も人口の多い都市',
+    nameKey: 'sample.mostPopulatedCities',
     category: 'Circle packing',
     url: './sample-datasets/Circle Packing - Most populated cities.tsv',
     delimiter: '\t',
@@ -83,7 +84,7 @@ const samplesList = [
   },
 
   {
-    name: 'コービー・ブライアントのシュート',
+    nameKey: 'sample.kobeShots',
     category: 'Hexagonal Binning, Voronoi diagram',
     url: './sample-datasets/Hexbin - basketball shots.tsv',
     delimiter: '\t',
@@ -92,7 +93,7 @@ const samplesList = [
   },
 
   {
-    name: '楽器別オーケストレーション',
+    nameKey: 'sample.orchestra',
     category: 'Treemap',
     url: './sample-datasets/Treemap - Orchestra.tsv',
     delimiter: '\t',
@@ -102,7 +103,7 @@ const samplesList = [
   },
 
   {
-    name: 'イタリアの首相と大統領',
+    nameKey: 'sample.italianPMs',
     category: 'Gantt chart',
     url: './sample-datasets/Gantt chart - Italian PMs and presidents.tsv',
     delimiter: '\t',
@@ -112,7 +113,7 @@ const samplesList = [
   },
 
   {
-    name: '音楽フォーマットごとの収益',
+    nameKey: 'sample.musicFormatRevenues',
     category: 'Line chart',
     url: './sample-datasets/Line chart - RIAA Music format revenues.tsv',
     delimiter: '\t',
@@ -121,7 +122,7 @@ const samplesList = [
   },
 
   {
-    name: '英国のエネルギーフロー（2050年）',
+    nameKey: 'sample.ukEnergyFlows',
     category: 'Sankey diagram',
     url: './sample-datasets/Sankey diagram - Energy flows.tsv',
     delimiter: '\t',
@@ -131,7 +132,7 @@ const samplesList = [
   },
 
   {
-    name: 'ワインの香りと周波数',
+    nameKey: 'sample.wineAromas',
     category: 'Sunburst Diagram',
     url: './sample-datasets/Sunburst - Wine Aromas.tsv',
     delimiter: '\t',
@@ -140,7 +141,7 @@ const samplesList = [
   },
 
   {
-    name: '幸福度指数',
+    nameKey: 'sample.happinessIndex',
     category: 'Multiset Barchart',
     url: './sample-datasets/Multiset Barchart - Happiness Index.tsv',
     delimiter: '\t',
@@ -149,7 +150,7 @@ const samplesList = [
   },
 
   {
-    name: 'GDPの部門別構成',
+    nameKey: 'sample.gdpSectors',
     category: 'Stacked barchart',
     url: './sample-datasets/Stacked barchart - GDP sector composition.tsv',
     delimiter: '\t',
@@ -159,7 +160,7 @@ const samplesList = [
   },
 
   {
-    name: 'ネコ科の分類（ネコとその仲間たち）',
+    nameKey: 'sample.felidaeClassification',
     category: 'Dendrogram, Circular dendrogram',
     url: './sample-datasets/Dendrogram - Felidae classification.tsv',
     delimiter: '\t',
@@ -168,7 +169,7 @@ const samplesList = [
   },
 
   {
-    name: 'アヤメの花',
+    nameKey: 'sample.irisFlowers',
     category: 'Convex hull, Parallel Coordinates',
     url: './sample-datasets/Convex hull - Iris flowers.tsv',
     delimiter: '\t',
@@ -177,7 +178,7 @@ const samplesList = [
   },
 
   {
-    name: '言語別の文字の頻度',
+    nameKey: 'sample.letterFrequencies',
     category: 'Matrix plot (Heatmap)',
     url: './sample-datasets/Matrix Plot - Letters frequencies by language.tsv',
     delimiter: '\t',
@@ -186,7 +187,7 @@ const samplesList = [
   },
 
   {
-    name: 'FIFA選手統計',
+    nameKey: 'sample.fifaPlayers',
     category: 'Radar Chart',
     url: './sample-datasets/Radar Chart - Fifa players.tsv',
     delimiter: '\t',
@@ -195,7 +196,7 @@ const samplesList = [
   },
 
   {
-    name: 'オリンピック メダル',
+    nameKey: 'sample.olympicsMedals',
     category: 'Streamgraph',
     url: './sample-datasets/Streamgraph - Olympics Medals.tsv',
     delimiter: '\t',
@@ -204,7 +205,7 @@ const samplesList = [
   },
 
   {
-    name: 'ニューヨークの天気（2012-2015年）',
+    nameKey: 'sample.nyWeather',
     category: 'Violin plot, Boxplot',
     url: './sample-datasets/Violin plot - Weather in New York.tsv',
     delimiter: '\t',
@@ -214,31 +215,23 @@ const samplesList = [
   },
 
   {
-    name: 'Netflixオリジナルシリーズ2013/2017年',
+    nameKey: 'sample.netflixOriginals',
     category: 'Bar chart',
     url: './sample-datasets/Bar chart - Netflix Original Series.tsv',
     delimiter: '\t',
     sourceName: 'M. Schroyer via Data World',
     sourceURL: 'https://data.world/mattschroyer/netflix-original-series',
   },
-
-  // {
-  //   name: '',
-  //   category: '',
-  //   url: './sample-datasets/',
-  //   delimiter: '\t',
-  //   sourceName: '',
-  //   sourceURL: '',
-  // },
 ]
 export default function DataSamples({ onSampleReady, setLoadingError }) {
+  const { t } = useTranslation()
   const select = async (sample) => {
     const { delimiter, url } = sample
     let response
     try {
       response = await fetch(url)
     } catch (e) {
-      setLoadingError('Loading error. ' + e.message)
+      setLoadingError(t('sample.loadingError') + e.message)
       return
     }
     const text = await response.text()
@@ -249,7 +242,7 @@ export default function DataSamples({ onSampleReady, setLoadingError }) {
     <Row>
       {samplesList
         // sort by category name
-        .sort((a, b) => a.name.localeCompare(b.name))
+        .sort((a, b) => t(a.nameKey).localeCompare(t(b.nameKey)))
         .map((d, i) => {
           return (
             <Col xs={6} lg={4} xl={3} key={i} style={{ marginBottom: 15 }}>
@@ -261,7 +254,7 @@ export default function DataSamples({ onSampleReady, setLoadingError }) {
                   className="d-flex flex-column"
                 >
                   <Card.Title className="">
-                    <h2 className="">{d.name}</h2>
+                    <h2 className="">{t(d.nameKey)}</h2>
                     <h4 className="m-0">{d.category}</h4>
                   </Card.Title>
                 </Card.Body>

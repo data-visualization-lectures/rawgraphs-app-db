@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import useWindowSize from '../../hooks/useWindowSize'
 import { Modal, Button } from 'react-bootstrap'
 
@@ -6,6 +7,7 @@ import { Modal, Button } from 'react-bootstrap'
 // import styles from './ScreenSizeAlert.module.scss'
 
 function ScreenSizeAlert() {
+  const { t } = useTranslation()
   const size = useWindowSize()
   const [showModal, setShowModal] = useState(size.width < 992)
   const [modalWasClosed, setModalWasClosed] = useState(false)
@@ -37,17 +39,17 @@ function ScreenSizeAlert() {
           <span role="img" aria-label="Party icon">
             🎉
           </span>{' '}
-          RAWGraphsへようこそ！
+          {t('screenSizeAlert.title')}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <p className="big">RAWGraphs 2.0は、より大きな画面向けに設計されています。</p>
-        <p>ブラウザ・ウィンドウのサイズを変更してご利用ください。</p>
-        <p>タッチ・デバイスはまだ完全にはサポートされていません。</p>
+        <p className="big">{t('screenSizeAlert.body1')}</p>
+        <p>{t('screenSizeAlert.body2')}</p>
+        <p>{t('screenSizeAlert.body3')}</p>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="primary" onClick={handleClose}>
-          わかりました
+          {t('screenSizeAlert.ok')}
         </Button>
       </Modal.Footer>
     </Modal>

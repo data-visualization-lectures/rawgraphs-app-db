@@ -1,47 +1,46 @@
 import React, { useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { chart as rawChart } from '@rawgraphs/rawgraphs-core'
 import useDebounce from '../../hooks/useDebounce'
 import WarningMessage from '../WarningMessage'
 
-// 既知の英語エラーメッセージを日本語に変換するマップ
 const ERROR_MESSAGE_MAP = [
-  // --- rawgraphs-charts ---
   {
     pattern: /Paddings are too high, decrase them in the "chart" options panel/i,
-    ja: 'パディングの値が大きすぎます。「チャート」オプションパネルで値を小さくしてください。',
+    key: 'chartPreview.error.paddingsTooHigh',
   },
-
-  // --- rawgraphs-core: プロジェクト読み込み ---
   {
     pattern: /Selected project is not valid/i,
-    ja: '選択されたプロジェクトファイルが無効です。',
+    key: 'chartPreview.error.invalidProject',
   },
   {
     pattern: /Invalid version number, please use a suitable deserializer/i,
-    ja: 'バージョン番号が無効です。対応したデシリアライザを使用してください。',
+    key: 'chartPreview.error.invalidVersion',
   },
   {
     pattern: /Unknown chart!/i,
-    ja: '不明なチャートタイプです。',
+    key: 'chartPreview.error.unknownChart',
   },
   {
     pattern: /No serializer found for version (.+)/i,
-    ja: (m) => `バージョン ${m[1]} に対応するシリアライザが見つかりません。`,
+    key: 'chartPreview.error.noSerializer',
+    params: (m) => ({ version: m[1] }),
   },
   {
     pattern: /Can't open your project\. Invalid file/i,
-    ja: 'プロジェクトを開けませんでした。ファイルが無効です。',
+    key: 'chartPreview.error.cantOpenInvalid',
   },
   {
     pattern: /Can't open your project\. (.+)/i,
-    ja: (m) => `プロジェクトを開けませんでした。${m[1]}`,
+    key: 'chartPreview.error.cantOpen',
+    params: (m) => ({ detail: m[1] }),
   },
 ]
 
-function translateErrorMessage(msg) {
-  for (const { pattern, ja } of ERROR_MESSAGE_MAP) {
+function translateErrorMessage(msg, t) {
+  for (const { pattern, key, params } of ERROR_MESSAGE_MAP) {
     const m = msg.match(pattern)
-    if (m) return typeof ja === 'function' ? ja(m) : ja
+    if (m) return t(key, params ? params(m) : {})
   }
   return msg
 }
@@ -57,6 +56,7 @@ const ChartPreview = ({
   setRawViz,
   mappedData,
 }) => {
+  const { t } = useTranslation()
   const domRef = useRef(null)
 
   const vizOptionsDebounced = useDebounce(visualOptions, 200)
@@ -80,10 +80,10 @@ const ChartPreview = ({
     if (requiredVariables.length > 0) {
       let errorMessage = (
         <span>
-          チャート変数が必要です。{' '}
+          {t('chartPreview.requiredVars')}{' '}
           {requiredVariables
             .map((d, i) => <span key={i} className="font-weight-bold">{d.name}</span>)
-            .reduce((prev, curr) => [prev, ' and ', curr])} のマッピングをしてください。
+            .reduce((prev, curr) => [prev, ' and ', curr])}{t('chartPreview.pleaseMap')}
         </span>
       )
       setError({ variant: 'secondary', message: errorMessage })
@@ -108,11 +108,11 @@ const ChartPreview = ({
           <span className="font-weight-bold">{multivaluesVariables
             .map((d) => (
               <>
-                <span className="font-weight-bold">{d.name}</span> には最低 <span className="font-weight-bold">{d.minValues}</span> つの変数
+                <span className="font-weight-bold">{d.name}</span>{t('chartPreview.minValues')}<span className="font-weight-bold">{d.minValues}</span>{t('chartPreview.minValuesUnit')}
               </>
             ))
-            .reduce((prev, curr) => [prev, ' と ', curr])}</span>
-          をマッピングしてください。
+            .reduce((prev, curr) => [prev, ' & ', curr])}</span>
+          {t('chartPreview.pleaseMapMulti')}
         </span>
       )
       setError({ variant: 'secondary', message: errorMessage })
@@ -131,7 +131,7 @@ const ChartPreview = ({
         !mapping[variable].isValid
       ) {
         const variableObj = chart.dimensions.find((d) => d.id === variable)
-        const errorMessage = `データ型の不一致: ${variableObj.name} に ${mapping[variable].mappedType}型をマッピングすることはできません。`
+        const errorMessage = t('chartPreview.typeMismatch', { name: variableObj.name, type: mapping[variable].mappedType })
         setError({ variant: 'danger', message: errorMessage })
         setRawViz(null)
         while (domRef.current.firstChild) {
@@ -163,7 +163,7 @@ const ChartPreview = ({
         setError(null)
       } catch (e) {
         console.log("chart error", e)
-        setError({ variant: 'danger', message: 'チャートエラー: ' + translateErrorMessage(e.message) })
+        setError({ variant: 'danger', message: t('chartPreview.chartError') + translateErrorMessage(e.message, t) })
         setRawViz(null)
       }
     } catch (e) {
@@ -171,7 +171,7 @@ const ChartPreview = ({
         domRef.current.removeChild(domRef.current.firstChild)
       }
       console.log({ e })
-      setError({ variant: 'danger', message: 'チャートエラー: ' + translateErrorMessage(e.message) })
+      setError({ variant: 'danger', message: t('chartPreview.chartError') + translateErrorMessage(e.message, t) })
       setRawViz(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

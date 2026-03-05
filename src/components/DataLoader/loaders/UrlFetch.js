@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import classNames from 'classnames'
+import { useTranslation } from 'react-i18next'
 import S from './UrlFetch.module.scss'
 
 export async function fetchData(source) {
@@ -9,6 +10,7 @@ export async function fetchData(source) {
 }
 
 export default function UrlFetch({ userInput, setUserInput, setLoadingError }) {
+  const { t } = useTranslation()
   const [url, setUrl] = useState('')
 
   const fetchUrl = async (url) => {
@@ -19,7 +21,7 @@ export default function UrlFetch({ userInput, setUserInput, setLoadingError }) {
       setUserInput(data, source)
       setLoadingError(null)
     } catch (e) {
-      setLoadingError("読み込みエラー: " + e.message)
+      setLoadingError(t('urlFetch.error') + e.message)
     }
   }
   return (

@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import DataTypeIcon from './DataTypeIcon'
 import RequiredIcon from './RequiredIcon'
 import { Col } from 'react-bootstrap'
@@ -34,6 +35,7 @@ const ChartDimensionCard = ({
   replaceDimension,
   localMappding,
 }) => {
+  const { t } = useTranslation()
   const [{ isOver }, drop] = useDrop({
     accept: ['column', 'card'],
     collect: (monitor) => ({
@@ -272,13 +274,13 @@ const ChartDimensionCard = ({
             })}
             ref={drop}
           >
-            {!dimension.multiple && 'データ変数をここへドロップしてください'}
+            {!dimension.multiple && t('dataMapping.dropSingle')}
             {dimension.multiple &&
               columnsMappedHere.length === 0 &&
-              'データ変数をここへドロップしてください'}
+              t('dataMapping.dropMultipleEmpty')}
             {dimension.multiple &&
               columnsMappedHere.length > 0 &&
-              '別のデータ変数をここへドロップしてください'}
+              t('dataMapping.dropMultipleMore')}
           </div>
         )}
       </div>

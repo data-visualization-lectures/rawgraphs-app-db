@@ -3,17 +3,21 @@ import classNames from 'classnames'
 import { Row, Col, Card, Dropdown } from 'react-bootstrap'
 import { BsLink } from 'react-icons/bs'
 import uniq from 'lodash/uniq'
-import { CHART_CATEGORY_LABELS } from '../../constants'
+import { useTranslation } from 'react-i18next'
+import { CHART_CATEGORY_KEYS } from '../../constants'
 import styles from './ChartSelector.module.scss'
 
+const ALL_CHARTS_FILTER = '__all__'
+
 function filterCharts(charts, filter) {
-  return filter === '全てのチャート'
+  return filter === ALL_CHARTS_FILTER
     ? charts
     : charts.filter((d) => d.metadata.categories.indexOf(filter) !== -1)
 }
 
 function ChartSelector({ availableCharts, currentChart, setCurrentChart }) {
-  const [filter, setFilter] = useState('全てのチャート')
+  const { t } = useTranslation()
+  const [filter, setFilter] = useState(ALL_CHARTS_FILTER)
 
   const charts = useMemo(() => {
     return filterCharts(availableCharts, filter)
@@ -37,24 +41,24 @@ function ChartSelector({ availableCharts, currentChart, setCurrentChart }) {
     <>
       <Row>
         <Col className="text-right">
-          絞り込む
+          {t('chartSelector.filter')}
           <Dropdown className="d-inline-block ml-2 raw-dropdown">
             <Dropdown.Toggle variant="white" className="pr-5">
-              {CHART_CATEGORY_LABELS[filter] || filter}
+              {filter === ALL_CHARTS_FILTER ? t('chartSelector.allCharts') : (CHART_CATEGORY_KEYS[filter] ? t(CHART_CATEGORY_KEYS[filter]) : filter)}
             </Dropdown.Toggle>
             <Dropdown.Menu>
               <Dropdown.Item
-                key={'全てのチャート'}
-                onClick={() => handleFilterChange('全てのチャート')}
+                key={ALL_CHARTS_FILTER}
+                onClick={() => handleFilterChange(ALL_CHARTS_FILTER)}
               >
-                全てのチャート
+                {t('chartSelector.allCharts')}
               </Dropdown.Item>
               {uniq(
                 availableCharts.map((d) => d.metadata.categories).flat()
               ).map((d) => {
                 return (
                   <Dropdown.Item key={d} onClick={() => handleFilterChange(d)}>
-                    {CHART_CATEGORY_LABELS[d] || d.charAt(0).toUpperCase() + d.slice(1)}
+                    {CHART_CATEGORY_KEYS[d] ? t(CHART_CATEGORY_KEYS[d]) : d.charAt(0).toUpperCase() + d.slice(1)}
                   </Dropdown.Item>
                 )
               })}
@@ -115,7 +119,7 @@ function ChartSelector({ availableCharts, currentChart, setCurrentChart }) {
                       <Card.Subtitle className="m-0">
                         <h4 className="m-0">
                           {d.metadata.categories
-                            .map((cat) => CHART_CATEGORY_LABELS[cat] || cat.charAt(0).toUpperCase() + cat.slice(1))
+                            .map((cat) => CHART_CATEGORY_KEYS[cat] ? t(CHART_CATEGORY_KEYS[cat]) : cat.charAt(0).toUpperCase() + cat.slice(1))
                             .join(', ')}
                         </h4>
                       </Card.Subtitle>

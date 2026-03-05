@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Spinner, Alert, Card, Row, Col } from 'react-bootstrap';
 import { BsCloudDownload, BsTrash } from 'react-icons/bs';
 import { getProjects, loadProject, deleteProject, loadThumbnail } from '../../../utils/cloudApi';
@@ -7,7 +8,7 @@ import { deserializeProject } from '@rawgraphs/rawgraphs-core';
 import charts from '../../../charts';  // Import available charts configuration
 
 // Sub-component for individual project card
-function ProjectCard({ project, onLoad, onDelete }) {
+function ProjectCard({ project, onLoad, onDelete, t }) {
     const [thumbnailUrl, setThumbnailUrl] = useState(null);
     const [loadingThumb, setLoadingThumb] = useState(false);
 
@@ -71,7 +72,7 @@ function ProjectCard({ project, onLoad, onDelete }) {
                         />
                     )}
                     {!loadingThumb && !thumbnailUrl && (
-                        <span className="text-muted small">No Preview</span>
+                        <span className="text-muted small">{t('loadCloud.noPreview')}</span>
                     )}
                 </div>
                 <Card.Body className="d-flex flex-column">
@@ -89,13 +90,13 @@ function ProjectCard({ project, onLoad, onDelete }) {
                             onClick={() => onLoad(project.id)}
                             className="flex-grow-1 mr-2"
                         >
-                            <BsCloudDownload /> 開く
+                            <BsCloudDownload /> {t('loadCloud.open')}
                         </Button>
                         <Button
                             variant="outline-danger"
                             size="sm"
                             onClick={() => onDelete(project.id)}
-                            title="削除"
+                            title={t('loadCloud.delete')}
                         >
                             <BsTrash />
                         </Button>
@@ -107,6 +108,7 @@ function ProjectCard({ project, onLoad, onDelete }) {
 }
 
 export default function LoadCloudProject({ onProjectSelected, setLoadingError }) {
+    const { t } = useTranslation();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -119,7 +121,7 @@ export default function LoadCloudProject({ onProjectSelected, setLoadingError })
             setProjects(data);
         } catch (err) {
             console.error(err);
-            setError('プロジェクト一覧の取得に失敗しました。ログイン状態を確認してください。');
+            setError(t('loadCloud.fetchError'));
             setLoadingError(err.message);
         } finally {
             setLoading(false);
@@ -147,7 +149,7 @@ export default function LoadCloudProject({ onProjectSelected, setLoadingError })
             onProjectSelected(project);
         } catch (err) {
             console.error(err);
-            setError('プロジェクトの読み込みに失敗しました。');
+            setError(t('loadCloud.loadError'));
             setLoadingError(err.message);
         } finally {
             setLoading(false);
@@ -155,7 +157,7 @@ export default function LoadCloudProject({ onProjectSelected, setLoadingError })
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('本当にこのプロジェクトを削除しますか？')) return;
+        if (!window.confirm(t('loadCloud.deleteConfirm'))) return;
 
         // Optimistic update or waiting? Let's wait.
         // But we shouldn't block the UI too much, but deletion is fast.
@@ -168,7 +170,7 @@ export default function LoadCloudProject({ onProjectSelected, setLoadingError })
             await fetchProjects(); // Refresh list
         } catch (err) {
             console.error(err);
-            setError('削除に失敗しました。');
+            setError(t('loadCloud.deleteError'));
             setLoading(false);
         }
     }
@@ -176,13 +178,13 @@ export default function LoadCloudProject({ onProjectSelected, setLoadingError })
     return (
         <div className="p-3">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <h4 className="mb-0">サーバからプロジェクトを開く</h4>
+                <h4 className="mb-0">{t('loadCloud.title')}</h4>
                 <Button variant="link" size="sm" onClick={fetchProjects} disabled={loading}>
-                    {loading ? '更新中...' : '一覧更新'}
+                    {loading ? t('loadCloud.refreshing') : t('loadCloud.refresh')}
                 </Button>
             </div>
 
-            <p className="text-muted small">プロジェクトを選択してください。</p>
+            <p className="text-muted small">{t('loadCloud.selectPrompt')}</p>
 
             {error && <Alert variant="danger">{error}</Alert>}
 
@@ -191,7 +193,7 @@ export default function LoadCloudProject({ onProjectSelected, setLoadingError })
             )}
 
             {!loading && projects.length === 0 && (
-                <Alert variant="info">保存されたプロジェクトはありません。</Alert>
+                <Alert variant="info">{t('loadCloud.noProjects')}</Alert>
             )}
 
             <Row>
@@ -201,6 +203,7 @@ export default function LoadCloudProject({ onProjectSelected, setLoadingError })
                         project={p}
                         onLoad={handleLoad}
                         onDelete={handleDelete}
+                        t={t}
                     />
                 ))}
             </Row>

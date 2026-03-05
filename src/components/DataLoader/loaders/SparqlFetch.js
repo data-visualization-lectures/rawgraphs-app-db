@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import classNames from 'classnames'
+import { useTranslation } from 'react-i18next'
 import S from './SparqlFetch.module.scss'
 import { html, render } from 'lit-html'
 import SimpleClient from 'sparql-http-client/SimpleClient'
@@ -26,6 +27,7 @@ export default function SparqlFetch({
   setUserInput,
   setLoadingError,
 }) {
+  const { t } = useTranslation()
   const [url, setUrl] = useState('')
   const [parsedQuery, setParsedQuery] = useState(null)
 
@@ -60,9 +62,7 @@ export default function SparqlFetch({
         })
       })
       .catch((err) => {
-        setLoadingError(
-          '指定されたエンドポイントでクエリを実行できませんでした'
-        )
+        setLoadingError(t('sparql.error'))
       })
   }, [parsedQuery, setLoadingError, setUserInput, url])
 
@@ -81,7 +81,7 @@ export default function SparqlFetch({
   return (
     <>
       <div className={classNames(S['base-iri-input-here'])}>
-        <span>ベースIRIをここに書いてください</span>
+        <span>{t('sparql.baseIri')}</span>
       </div>
       <input
         className={classNames('w-100', S['url-input'])}
@@ -91,7 +91,7 @@ export default function SparqlFetch({
         }}
       />
       <div className={classNames(S['query-input-here'])}>
-        <span>クエリをここに書いてください</span>
+        <span>{t('sparql.queryHere')}</span>
       </div>
       <div ref={editorDomRef} />
       <div className="text-right">
@@ -100,7 +100,7 @@ export default function SparqlFetch({
           disabled={!parsedQuery || !url}
           onClick={onSubmit}
         >
-          クエリを実行する
+          {t('sparql.execute')}
         </button>
       </div>
     </>

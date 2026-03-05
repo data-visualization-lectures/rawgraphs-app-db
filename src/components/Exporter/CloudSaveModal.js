@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Button, Form, Alert, Spinner } from 'react-bootstrap';
 import { saveProject } from '../../utils/cloudApi';
 
@@ -10,6 +11,7 @@ function getDefaultName() {
 }
 
 export default function CloudSaveModal({ show, onHide, getProjectData, getThumbnailBlob }) {
+    const { t } = useTranslation();
     const [name, setName] = useState('');
 
     useEffect(() => {
@@ -38,7 +40,7 @@ export default function CloudSaveModal({ show, onHide, getProjectData, getThumbn
             }, 1500);
         } catch (err) {
             console.error(err);
-            setError('保存に失敗しました。ログイン状態を確認してください。');
+            setError(t('cloudSave.error'));
         } finally {
             setLoading(false);
         }
@@ -47,18 +49,18 @@ export default function CloudSaveModal({ show, onHide, getProjectData, getThumbn
     return (
         <Modal show={show} onHide={onHide} centered>
             <Modal.Header closeButton>
-                <Modal.Title>クラウドに保存</Modal.Title>
+                <Modal.Title>{t('cloudSave.title')}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 {error && <Alert variant="danger">{error}</Alert>}
-                {success && <Alert variant="success">保存しました！</Alert>}
+                {success && <Alert variant="success">{t('cloudSave.success')}</Alert>}
 
                 <Form>
                     <Form.Group>
-                        <Form.Label>プロジェクト名</Form.Label>
+                        <Form.Label>{t('cloudSave.projectName')}</Form.Label>
                         <Form.Control
                             type="text"
-                            placeholder="例: 売上分析 2025"
+                            placeholder={t('cloudSave.placeholder')}
                             value={name}
                             onChange={e => setName(e.target.value)}
                             disabled={loading || success}
@@ -68,10 +70,10 @@ export default function CloudSaveModal({ show, onHide, getProjectData, getThumbn
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={onHide} disabled={loading}>
-                    キャンセル
+                    {t('cloudSave.cancel')}
                 </Button>
                 <Button variant="primary" onClick={handleSave} disabled={loading || success || !name.trim()}>
-                    {loading ? <Spinner animation="border" size="sm" /> : '保存'}
+                    {loading ? <Spinner animation="border" size="sm" /> : t('cloudSave.save')}
                 </Button>
             </Modal.Footer>
         </Modal>
