@@ -67,7 +67,7 @@ export const visualOptions = {
 
     showLabels: {
         type: 'boolean',
-        label: 'Show Labels',
+        label: 'Show labels',
         default: true,
         group: 'labels',
     },
@@ -88,7 +88,7 @@ export const visualOptions = {
 
     color: {
         type: 'colorScale', // We want to color by category usually
-        label: 'Color Scale',
+        label: 'Color scale',
         dimension: 'color', // Use the 'color' dimension defined in mapping.js
         default: {
             scaleType: 'ordinal',

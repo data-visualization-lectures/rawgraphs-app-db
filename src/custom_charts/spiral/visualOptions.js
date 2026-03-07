@@ -1,21 +1,21 @@
 export const visualOptions = {
     maxRadius: {
         type: 'number',
-        label: 'Max Radius',
+        label: 'Max radius',
         default: 400,
         group: 'chart',
     },
 
     strokeWidth: {
         type: 'number',
-        label: 'Stroke Width',
+        label: 'Stroke width',
         default: 2,
         group: 'chart',
     },
 
     color: {
         type: 'colorScale',
-        label: 'Color Scale',
+        label: 'Color scale',
         dimension: 'series',
         default: {
             scaleType: 'ordinal',
