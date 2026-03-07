@@ -24,6 +24,27 @@ export const visualOptions = {
         group: 'artboard',
     },
 
+    showLegend: {
+        type: 'boolean',
+        label: 'Show legend',
+        default: false,
+        group: 'artboard',
+    },
+
+    legendWidth: {
+        type: 'number',
+        label: 'Legend width',
+        default: 200,
+        group: 'artboard',
+        disabled: {
+            showLegend: false,
+        },
+        container: 'width',
+        containerCondition: {
+            showLegend: true,
+        },
+    },
+
     padding: {
         type: 'number',
         label: 'Column Padding',
@@ -31,11 +52,38 @@ export const visualOptions = {
         group: 'chart',
     },
 
+    SortXAxisBy: {
+        type: 'text',
+        label: 'Sort X axis by',
+        group: 'chart',
+        options: [
+            'Name',
+            'Total value (descending)',
+            'Total value (ascending)',
+            'Original',
+        ],
+        default: 'Name',
+    },
+
     showLabels: {
         type: 'boolean',
         label: 'Show Labels',
         default: true,
         group: 'labels',
+    },
+
+    xAxisLabelRotation: {
+        type: 'text',
+        label: 'X axis label rotation',
+        default: '0',
+        group: 'chart',
+        options: [
+            { label: '0°', value: '0' },
+            { label: '15°', value: '15' },
+            { label: '30°', value: '30' },
+            { label: '45°', value: '45' },
+            { label: '60°', value: '60' },
+        ],
     },
 
     color: {

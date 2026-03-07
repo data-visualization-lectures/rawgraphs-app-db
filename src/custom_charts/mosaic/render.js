@@ -1,4 +1,5 @@
 import * as d3 from 'd3'
+import { legend } from '@rawgraphs/rawgraphs-core'
 
 export default function render(
     svgNode,
@@ -18,7 +19,13 @@ export default function render(
         color,
         padding,
         showLabels,
+        xAxisLabelRotation,
+        SortXAxisBy,
+        showLegend,
+        legendWidth,
     } = visualOptions
+
+    const rotation = Number(xAxisLabelRotation)
 
     const margin = {
         top: marginTop,
@@ -52,8 +59,17 @@ export default function render(
     )
 
     // 2. Prepare Layout Data
-    // Sort columns alphabetically by key
-    nested.sort((a, b) => d3.ascending(a[0], b[0]))
+    const columnSortings = {
+        'Name': (a, b) => d3.ascending(a[0], b[0]),
+        'Total value (descending)': (a, b) => d3.descending(
+            d3.sum(a[1], d => d[1].size), d3.sum(b[1], d => d[1].size)
+        ),
+        'Total value (ascending)': (a, b) => d3.ascending(
+            d3.sum(a[1], d => d[1].size), d3.sum(b[1], d => d[1].size)
+        ),
+        'Original': () => 0,
+    }
+    nested.sort(columnSortings[SortXAxisBy] || columnSortings['Name'])
 
     let totalSize = 0
     const columns = nested.map(([colKey, rowsMap]) => {
@@ -154,17 +170,40 @@ export default function render(
     })
 
     if (showLabels) {
-        g.selectAll('.xlabel')
+        const labels = g.selectAll('.xlabel')
             .data(xLabels)
             .join('text')
             .attr('class', 'xlabel')
             .attr('x', d => d.x)
             .attr('y', chartHeight + 15) // Below chart
-            .attr('text-anchor', 'middle')
+            .attr('text-anchor', rotation !== 0 ? 'end' : 'middle')
             .attr('font-size', '10px')
             .text(d => d.key)
             // Hide if overlap? Simple hidden logic based on width
             .style('display', d => d.width < 20 ? 'none' : null)
+
+        if (rotation !== 0) {
+            labels
+                .attr('transform', d => `rotate(${-rotation}, ${d.x}, ${chartHeight + 15})`)
+                .attr('dx', '-0.5em')
+        }
+    }
+
+    // 6. Legend
+    if (showLegend) {
+        const legendLayer = d3
+            .select(svgNode)
+            .append('g')
+            .attr('id', 'legend')
+            .attr('transform', `translate(${width},${marginTop})`)
+
+        const chartLegend = legend().legendWidth(legendWidth)
+
+        if (mapping.color.value) {
+            chartLegend.addColor(mapping.color.value, color)
+        }
+
+        legendLayer.call(chartLegend)
     }
 
 }

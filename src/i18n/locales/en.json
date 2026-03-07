@@ -77,6 +77,7 @@
   "chartOptions.Margin (left)": "Margin (left)",
   "chartOptions.Show legend": "Show legend",
   "chartOptions.Legend width": "Legend width",
+  "chartOptions.X axis label rotation": "X axis label rotation",
   "chartOptions.Color scale": "Color scale",
   "chartOptions.Label": "Label",
   "chartOptions.Show labels": "Show labels",
