@@ -1,9 +1,20 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
+import { overrideBaseOptions } from '@rawgraphs/rawgraphs-core'
 import './i18n'
 import './styles/index.scss'
 import App from './App'
 import * as serviceWorker from './serviceWorker'
+
+overrideBaseOptions({
+  width: {
+    type: 'number',
+    label: 'Width (px)',
+    default: 800,
+    container: 'width',
+    group: 'artboard',
+  },
+})
 
 ReactDOM.render(
   <React.StrictMode>
