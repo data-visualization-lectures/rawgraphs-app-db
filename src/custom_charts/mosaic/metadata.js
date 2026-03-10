@@ -3,9 +3,9 @@ import icon from './icon.svg'
 
 export const metadata = {
     id: 'rawgraphs.mosaic',
-    name: 'Mosaic Plot',
+    name: 'Mekko Chart',
     description:
-        'A Mosaic Plot (or Marimekko Chart) visualizes categorical data where the width of columns corresponds to the total value of a category, and the height of segments corresponds to the proportion within that category.',
+        'A Mekko Chart (Marimekko Chart or Mosaic Plot) visualizes categorical data where the width of columns corresponds to the total value of a category, and the height of segments corresponds to the proportion within that category.',
     categories: ['proportions'], // internal key for 'Proportions'/'比率'
     thumbnail,
     icon,
