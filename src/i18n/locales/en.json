@@ -81,6 +81,7 @@
   "chartOptions.Color scale": "Color scale",
   "chartOptions.Label": "Label",
   "chartOptions.Show labels": "Show labels",
+  "chartOptions.Auto-hide overlapping labels": "Auto-hide overlapping labels",
   "chartOptions.Show grid": "Show grid",
   "chartOptions.Stroke width": "Stroke width",
   "chartOptions.Padding": "Padding",

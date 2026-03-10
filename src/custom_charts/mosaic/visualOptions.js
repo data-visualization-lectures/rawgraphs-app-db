@@ -72,6 +72,16 @@ export const visualOptions = {
         group: 'labels',
     },
 
+    autoHideLabels: {
+        type: 'boolean',
+        label: 'Auto-hide overlapping labels',
+        default: true,
+        group: 'labels',
+        disabled: {
+            showLabels: false,
+        },
+    },
+
     xAxisLabelRotation: {
         type: 'text',
         label: 'X axis label rotation',

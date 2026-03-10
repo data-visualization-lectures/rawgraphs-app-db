@@ -21,6 +21,7 @@ export default function render(
         showLabels,
         xAxisLabelRotation,
         SortXAxisBy,
+        autoHideLabels,
         showLegend,
         legendWidth,
     } = visualOptions
@@ -180,7 +181,7 @@ export default function render(
             .attr('font-size', '10px')
             .text(d => d.key)
             // Hide if overlap? Simple hidden logic based on width
-            .style('display', d => d.width < 20 ? 'none' : null)
+            .style('display', d => (autoHideLabels && d.width < 20) ? 'none' : null)
 
         if (rotation !== 0) {
             labels

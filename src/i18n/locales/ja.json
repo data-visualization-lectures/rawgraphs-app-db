@@ -81,6 +81,7 @@
   "chartOptions.Color scale": "カラースケール",
   "chartOptions.Label": "ラベル",
   "chartOptions.Show labels": "ラベルを表示",
+  "chartOptions.Auto-hide overlapping labels": "重なるラベルを自動非表示",
   "chartOptions.Show grid": "グリッドを表示",
   "chartOptions.Stroke width": "線の太さ",
   "chartOptions.Padding": "パディング",
