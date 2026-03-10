@@ -22,6 +22,7 @@ export default function render(
         xAxisLabelRotation,
         SortXAxisBy,
         autoHideLabels,
+        labelFontSize,
         showLegend,
         legendWidth,
     } = visualOptions
@@ -178,7 +179,7 @@ export default function render(
             .attr('x', d => d.x)
             .attr('y', chartHeight + 15) // Below chart
             .attr('text-anchor', rotation !== 0 ? 'end' : 'middle')
-            .attr('font-size', '10px')
+            .attr('font-size', `${labelFontSize}px`)
             .text(d => d.key)
             // Hide if overlap? Simple hidden logic based on width
             .style('display', d => (autoHideLabels && d.width < 20) ? 'none' : null)

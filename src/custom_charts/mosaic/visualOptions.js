@@ -82,6 +82,16 @@ export const visualOptions = {
         },
     },
 
+    labelFontSize: {
+        type: 'number',
+        label: 'Label font size',
+        default: 10,
+        group: 'labels',
+        disabled: {
+            showLabels: false,
+        },
+    },
+
     xAxisLabelRotation: {
         type: 'text',
         label: 'X axis label rotation',
