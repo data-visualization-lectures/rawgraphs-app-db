@@ -61,7 +61,7 @@ export default function render(
 
     // 2. Prepare Layout Data
     const columnSortings = {
-        'Name': (a, b) => d3.ascending(a[0], b[0]),
+        'Name': (a, b) => String(a[0]).localeCompare(String(b[0]), undefined, { numeric: true }),
         'Total value (descending)': (a, b) => d3.descending(
             d3.sum(a[1], d => d[1].size), d3.sum(b[1], d => d[1].size)
         ),
