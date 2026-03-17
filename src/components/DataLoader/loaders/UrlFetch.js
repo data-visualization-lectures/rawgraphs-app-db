@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import classNames from 'classnames'
 import { useTranslation } from 'react-i18next'
+import { decodeBuffer } from '../../../utils/decodeFile'
 import S from './UrlFetch.module.scss'
 
 export async function fetchData(source) {
   const response = await fetch(source.url)
-  const text = await response.text()
-  return text
+  const buffer = await response.arrayBuffer()
+  return decodeBuffer(buffer)
 }
 
 export default function UrlFetch({ userInput, setUserInput, setLoadingError }) {

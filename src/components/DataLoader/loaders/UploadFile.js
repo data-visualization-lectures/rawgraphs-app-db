@@ -3,6 +3,7 @@ import { Button } from 'react-bootstrap'
 import { useDropzone } from 'react-dropzone'
 import classNames from 'classnames'
 import { useTranslation } from 'react-i18next'
+import { decodeBuffer } from '../../../utils/decodeFile'
 import S from './UploadFile.module.scss'
 
 export default function UploadFile({
@@ -14,11 +15,12 @@ export default function UploadFile({
     (acceptedFiles) => {
       const reader = new FileReader()
       reader.addEventListener('load', (e) => {
-        setUserInput(e.target.result)
+        const text = decodeBuffer(e.target.result)
+        setUserInput(text)
         setLoadingError(null)
       })
       if (acceptedFiles.length) {
-        reader.readAsText(acceptedFiles[0])
+        reader.readAsArrayBuffer(acceptedFiles[0])
       }
     },
     [setLoadingError, setUserInput]
