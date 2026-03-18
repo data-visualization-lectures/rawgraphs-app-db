@@ -224,9 +224,11 @@ const samplesList = [
   },
 ]
 export default function DataSamples({ onSampleReady, setLoadingError }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const isJa = i18n.language && i18n.language.startsWith('ja')
   const select = async (sample) => {
-    const { delimiter, url } = sample
+    const { delimiter } = sample
+    const url = isJa ? sample.url : sample.url.replace('./sample-datasets/', './sample-datasets-en/')
     let response
     try {
       response = await fetch(url)
