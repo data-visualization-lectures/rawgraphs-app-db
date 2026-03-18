@@ -1,6 +1,118 @@
 import * as d3 from 'd3'
 import { gridding } from 'd3-gridding'
 
+// Diverging schemes that should be reversed (so blue=low, red=high)
+const DIVERGING_REVERSED = ['interpolateRdYlBu', 'interpolateRdBu']
+const DIVERGING_SCHEMES = ['interpolateRdYlBu', 'interpolateRdBu', 'interpolatePiYG']
+
+function buildValueColorScale(allValues, colorScheme, symmetric) {
+    const interpolator = d3[colorScheme]
+    if (!interpolator) return () => '#666'
+
+    const extent = d3.extent(allValues)
+    let domain
+    if (symmetric && DIVERGING_SCHEMES.includes(colorScheme)) {
+        const absMax = Math.max(Math.abs(extent[0]), Math.abs(extent[1]))
+        domain = [-absMax, absMax]
+    } else {
+        domain = extent
+    }
+
+    if (DIVERGING_REVERSED.includes(colorScheme)) {
+        return d3.scaleSequential(t => interpolator(1 - t)).domain(domain)
+    }
+    return d3.scaleSequential(interpolator).domain(domain)
+}
+
+function drawColoredSegments(parentGroup, validPoints, getAngle, rScale, valueKey, valueColorScale, strokeWidth) {
+    const points = validPoints.map(d => {
+        const angle = getAngle(d)
+        const v = d.values[valueKey]
+        const r = (v !== undefined && v !== null && !isNaN(v)) ? rScale(v) : 0
+        return {
+            x: Math.sin(angle) * r,
+            y: -Math.cos(angle) * r,
+            value: v
+        }
+    })
+
+    const segmentGroup = parentGroup.append('g').attr('class', 'value-colored-segments')
+
+    for (let i = 0; i < points.length - 1; i++) {
+        const avgValue = (points[i].value + points[i + 1].value) / 2
+        segmentGroup.append('line')
+            .attr('x1', points[i].x)
+            .attr('y1', points[i].y)
+            .attr('x2', points[i + 1].x)
+            .attr('y2', points[i + 1].y)
+            .attr('stroke', valueColorScale(avgValue))
+            .attr('stroke-width', strokeWidth)
+            .attr('stroke-linecap', 'round')
+            .attr('opacity', 0.9)
+    }
+}
+
+function drawColorLegend(selection, valueColorScale, x, y) {
+    const legendWidth = 200
+    const legendHeight = 12
+    const legendX = x - legendWidth / 2
+    const legendY = y
+
+    const defs = selection.select('defs').empty()
+        ? selection.append('defs')
+        : selection.select('defs')
+
+    const gradientId = 'value-color-gradient-' + Math.random().toString(36).substr(2, 9)
+    const gradient = defs.append('linearGradient')
+        .attr('id', gradientId)
+
+    const nStops = 10
+    const domain = valueColorScale.domain()
+    for (let i = 0; i <= nStops; i++) {
+        const t = i / nStops
+        const val = domain[0] + t * (domain[1] - domain[0])
+        gradient.append('stop')
+            .attr('offset', `${t * 100}%`)
+            .attr('stop-color', valueColorScale(val))
+    }
+
+    const legendGroup = selection.append('g')
+        .attr('transform', `translate(${legendX}, ${legendY})`)
+
+    legendGroup.append('rect')
+        .attr('width', legendWidth)
+        .attr('height', legendHeight)
+        .attr('fill', `url(#${gradientId})`)
+        .attr('rx', 2)
+
+    legendGroup.append('text')
+        .attr('y', legendHeight + 14)
+        .attr('text-anchor', 'start')
+        .text(domain[0].toFixed(1))
+        .style('font-size', '10px')
+        .style('font-family', 'sans-serif')
+        .style('fill', '#666')
+
+    legendGroup.append('text')
+        .attr('x', legendWidth)
+        .attr('y', legendHeight + 14)
+        .attr('text-anchor', 'end')
+        .text(domain[1].toFixed(1))
+        .style('font-size', '10px')
+        .style('font-family', 'sans-serif')
+        .style('fill', '#666')
+
+    const midVal = (domain[0] + domain[1]) / 2
+    legendGroup.append('text')
+        .attr('x', legendWidth / 2)
+        .attr('y', legendHeight + 14)
+        .attr('text-anchor', 'middle')
+        .text(midVal.toFixed(1))
+        .style('font-size', '10px')
+        .style('font-family', 'sans-serif')
+        .style('fill', '#666')
+}
+
 export function render(
     svgNode,
     data,
@@ -124,7 +236,8 @@ function renderSpiralInGroup(
     showSeriesLabels,
     strokeWidth
 ) {
-    const { maxRadius } = visualOptions
+    const { maxRadius, valueColorScheme, symmetricDomain } = visualOptions
+    const colorByValue = valueColorScheme && valueColorScheme !== 'none'
     const margin = { top: 30, right: 20, bottom: 20, left: 20 }
     const chartWidth = width - margin.left - margin.right
     const chartHeight = height - margin.top - margin.bottom
@@ -181,28 +294,39 @@ function renderSpiralInGroup(
         .range(d3.schemeCategory10)
 
     // Draw paths
-    valueKeys.forEach((key, i) => {
-        const lineGenerator = d3.lineRadial()
-            .angle(d => getAngle(d))
-            .radius(d => {
-                const v = d.values[key]
-                return (v !== undefined && v !== null && !isNaN(v)) ? rScale(v) : 0
-            })
-            .curve(d3.curveCatmullRom)
+    if (colorByValue) {
+        const valueColorScale = buildValueColorScale(allValues, valueColorScheme, symmetricDomain)
 
-        const validPoints = data.filter(d => d.values[key] !== undefined && d.values[key] !== null)
-        if (validPoints.length < 2) return
+        valueKeys.forEach((key) => {
+            const validPoints = data.filter(d => d.values[key] !== undefined && d.values[key] !== null)
+            if (validPoints.length < 2) return
+            validPoints.sort((a, b) => a.date - b.date)
+            drawColoredSegments(chartGroup, validPoints, getAngle, rScale, key, valueColorScale, strokeWidth)
+        })
+    } else {
+        valueKeys.forEach((key, i) => {
+            const lineGenerator = d3.lineRadial()
+                .angle(d => getAngle(d))
+                .radius(d => {
+                    const v = d.values[key]
+                    return (v !== undefined && v !== null && !isNaN(v)) ? rScale(v) : 0
+                })
+                .curve(d3.curveCatmullRom)
 
-        validPoints.sort((a, b) => a.date - b.date)
+            const validPoints = data.filter(d => d.values[key] !== undefined && d.values[key] !== null)
+            if (validPoints.length < 2) return
 
-        chartGroup.append('path')
-            .datum(validPoints)
-            .attr('d', lineGenerator)
-            .attr('stroke', color(key))
-            .attr('stroke-width', strokeWidth)
-            .attr('fill', 'none')
-            .attr('opacity', 0.8)
-    })
+            validPoints.sort((a, b) => a.date - b.date)
+
+            chartGroup.append('path')
+                .datum(validPoints)
+                .attr('d', lineGenerator)
+                .attr('stroke', color(key))
+                .attr('stroke-width', strokeWidth)
+                .attr('fill', 'none')
+                .attr('opacity', 0.8)
+        })
+    }
 
     // Axis circles
     const ticks = rScale.ticks(3)
@@ -264,8 +388,10 @@ function renderSingleChart(svgNode, data, visualOptions, mapping, styles) {
         background,
         maxRadius,
         strokeWidth,
-        color: colorScale,
+        valueColorScheme,
+        symmetricDomain,
     } = visualOptions
+    const colorByValue = valueColorScheme && valueColorScheme !== 'none'
 
     const margin = { top: 50, right: 50, bottom: 50, left: 50 }
     const chartWidth = width - margin.left - margin.right
@@ -330,9 +456,7 @@ function renderSingleChart(svgNode, data, visualOptions, mapping, styles) {
         const seriesDomain = [...new Set(data.map(d => d.series))]
         color = d3.scaleOrdinal()
             .domain(seriesDomain)
-            .range(colorScale.scaleType ?
-                d3.quantize(d3.interpolate(colorScale.interpolator), seriesDomain.length)
-                : d3.schemeCategory10)
+            .range(d3.schemeCategory10)
     } else if (isMultiValue) {
         color = d3.scaleOrdinal()
             .domain(valueKeys)
@@ -362,7 +486,30 @@ function renderSingleChart(svgNode, data, visualOptions, mapping, styles) {
             .attr('opacity', 0.8)
     }
 
-    if (isSeriesMapped) {
+    if (colorByValue) {
+        const valueColorScale = buildValueColorScale(allValues, valueColorScheme, symmetricDomain)
+
+        if (isSeriesMapped) {
+            const nestedData = d3.groups(data, d => d.series)
+            nestedData.forEach(([seriesKey, seriesData]) => {
+                valueKeys.forEach((key) => {
+                    const validPoints = seriesData.filter(d => d.values[key] !== undefined && d.values[key] !== null)
+                    if (validPoints.length < 2) return
+                    validPoints.sort((a, b) => a.date - b.date)
+                    drawColoredSegments(svg, validPoints, getAngle, rScale, key, valueColorScale, strokeWidth)
+                })
+            })
+        } else {
+            valueKeys.forEach((key) => {
+                const validPoints = data.filter(d => d.values[key] !== undefined && d.values[key] !== null)
+                if (validPoints.length < 2) return
+                validPoints.sort((a, b) => a.date - b.date)
+                drawColoredSegments(svg, validPoints, getAngle, rScale, key, valueColorScale, strokeWidth)
+            })
+        }
+
+        drawColorLegend(selection, valueColorScale, width / 2, height - 40)
+    } else if (isSeriesMapped) {
         const nestedData = d3.groups(data, d => d.series)
 
         nestedData.forEach(([seriesKey, seriesData]) => {

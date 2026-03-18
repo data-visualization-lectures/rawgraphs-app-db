@@ -13,14 +13,28 @@ export const visualOptions = {
         group: 'chart',
     },
 
-    color: {
-        type: 'colorScale',
-        label: 'Color scale',
-        dimension: 'series',
-        default: {
-            scaleType: 'ordinal',
-            interpolator: 'interpolateSpectral',
-        },
+    valueColorScheme: {
+        type: 'text',
+        label: 'Color by value',
+        default: 'none',
+        options: [
+            { label: 'None', value: 'none' },
+            { label: 'Viridis', value: 'interpolateViridis' },
+            { label: 'Plasma', value: 'interpolatePlasma' },
+            { label: 'Blues', value: 'interpolateBlues' },
+            { label: 'Reds', value: 'interpolateReds' },
+            { label: 'YlOrRd', value: 'interpolateYlOrRd' },
+            { label: 'RdYlBu (diverging)', value: 'interpolateRdYlBu' },
+            { label: 'RdBu (diverging)', value: 'interpolateRdBu' },
+            { label: 'PiYG (diverging)', value: 'interpolatePiYG' },
+        ],
+        group: 'colors',
+    },
+
+    symmetricDomain: {
+        type: 'boolean',
+        label: 'Symmetric color domain (center at 0)',
+        default: false,
         group: 'colors',
     },
 
