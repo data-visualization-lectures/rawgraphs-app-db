@@ -261,6 +261,16 @@
   "chartOptions.Step": "Step",
   "chartOptions.Step After": "Step After",
   "chartOptions.Step Before": "Step Before",
+  "chartOptions.Color by value": "値で着色",
+  "chartOptions.Symmetric color domain (center at 0)": "色ドメインを0中心に対称化",
+  "chartOptions.Viridis": "Viridis",
+  "chartOptions.Plasma": "Plasma",
+  "chartOptions.Blues": "Blues",
+  "chartOptions.Reds": "Reds",
+  "chartOptions.YlOrRd": "YlOrRd（黄→橙→赤）",
+  "chartOptions.RdYlBu (diverging)": "RdYlBu（青↔赤・分岐）",
+  "chartOptions.RdBu (diverging)": "RdBu（青↔赤・分岐）",
+  "chartOptions.PiYG (diverging)": "PiYG（緑↔桃・分岐）",
 
   "exporter.download": "ダウンロード",
 

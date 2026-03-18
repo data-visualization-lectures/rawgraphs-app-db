@@ -186,59 +186,52 @@ const dimensionTranslations = {
   'row': '行 (Row)',
 }
 
-// チャートの説明文と変数を日本語に上書き
-charts = charts.map(chart => {
-  let newChart = { ...chart }
+// 日本語環境の場合にチャートメタデータをローカライズする関数
+export function localizeCharts(chartsArray, language) {
+  if (!language || !language.startsWith('ja')) {
+    return chartsArray
+  }
 
-  // 説明文の翻訳
-  const description = chartDescriptions[chart.metadata.id]
-  if (description) {
-    newChart = {
-      ...newChart,
-      metadata: {
-        ...newChart.metadata,
-        description: description
+  return chartsArray.map(chart => {
+    let newChart = { ...chart }
+
+    const description = chartDescriptions[chart.metadata.id]
+    if (description) {
+      newChart = {
+        ...newChart,
+        metadata: { ...newChart.metadata, description }
       }
     }
-  }
 
-  const nameOverride = chartNameOverrides[chart.metadata.id]
-  if (nameOverride) {
-    newChart = {
-      ...newChart,
-      metadata: {
-        ...newChart.metadata,
-        displayName: nameOverride
+    const nameOverride = chartNameOverrides[chart.metadata.id]
+    if (nameOverride) {
+      newChart = {
+        ...newChart,
+        metadata: { ...newChart.metadata, displayName: nameOverride }
       }
     }
-  }
 
-  // 変数名の翻訳
-  if (newChart.dimensions) {
-    newChart = {
-      ...newChart,
-      dimensions: newChart.dimensions.map(dim => {
-        // Beeswarm plotの場合、seriesを「グループ」と翻訳
-        if (chart.metadata.id === 'rawgraphs.beeswarm' && dim.id === 'series') {
-          return { ...dim, name: 'グループ (Groups)' }
-        }
-
-        // Line chartの場合、linesを「ファセット分割」と翻訳
-        if (chart.metadata.id === 'rawgraphs.linechart' && dim.id === 'lines') {
-          return { ...dim, name: 'ファセット分割 (Facets)' }
-        }
-
-        // その他のチャートは通常の翻訳テーブルを使用
-        const trans = dimensionTranslations[dim.id]
-        if (trans) {
-          return { ...dim, name: trans }
-        }
-        return dim
-      })
+    if (newChart.dimensions) {
+      newChart = {
+        ...newChart,
+        dimensions: newChart.dimensions.map(dim => {
+          if (chart.metadata.id === 'rawgraphs.beeswarm' && dim.id === 'series') {
+            return { ...dim, name: 'グループ (Groups)' }
+          }
+          if (chart.metadata.id === 'rawgraphs.linechart' && dim.id === 'lines') {
+            return { ...dim, name: 'ファセット分割 (Facets)' }
+          }
+          const trans = dimensionTranslations[dim.id]
+          if (trans) {
+            return { ...dim, name: trans }
+          }
+          return dim
+        })
+      }
     }
-  }
 
-  return newChart
-})
+    return newChart
+  })
+}
 
 export default charts

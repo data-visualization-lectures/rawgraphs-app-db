@@ -12,7 +12,7 @@ import Footer from './components/Footer'
 import ScreenSizeAlert from './components/ScreenSizeAlert'
 
 import DataLoader from './components/DataLoader'
-import charts from './charts'
+import chartsRaw, { localizeCharts } from './charts'
 import ChartSelector from './components/ChartSelector'
 import DataMapping from './components/DataMapping'
 import ChartPreviewWithOptions from './components/ChartPreviewWIthOptions'
@@ -36,7 +36,8 @@ import CloudSaveModal from './components/Exporter/CloudSaveModal'
 // import FixedHeader from './components/FixedHeader/FixedHeader'
 
 function App() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const charts = useMemo(() => localizeCharts(chartsRaw, i18n.language), [i18n.language])
   const dataLoader = useDataLoader()
   const {
     userInput,

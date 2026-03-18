@@ -261,6 +261,16 @@
   "chartOptions.Step": "Step",
   "chartOptions.Step After": "Step After",
   "chartOptions.Step Before": "Step Before",
+  "chartOptions.Color by value": "Color by value",
+  "chartOptions.Symmetric color domain (center at 0)": "Symmetric color domain (center at 0)",
+  "chartOptions.Viridis": "Viridis",
+  "chartOptions.Plasma": "Plasma",
+  "chartOptions.Blues": "Blues",
+  "chartOptions.Reds": "Reds",
+  "chartOptions.YlOrRd": "YlOrRd",
+  "chartOptions.RdYlBu (diverging)": "RdYlBu (diverging)",
+  "chartOptions.RdBu (diverging)": "RdBu (diverging)",
+  "chartOptions.PiYG (diverging)": "PiYG (diverging)",
 
   "exporter.download": "Download",
 
