@@ -1,6 +1,19 @@
 import * as d3 from 'd3'
 import { gridding } from 'd3-gridding'
 
+// Detect whether data is yearly (all dates are Jan 1) or sub-yearly
+function detectTimeUnit(data) {
+    if (data.length < 2) return 'month'
+    const sorted = [...data].sort((a, b) => a.date - b.date)
+    const gaps = []
+    for (let i = 1; i < Math.min(sorted.length, 20); i++) {
+        gaps.push((sorted[i].date - sorted[i - 1].date) / 86400000)
+    }
+    gaps.sort((a, b) => a - b)
+    const medianGap = gaps[Math.floor(gaps.length / 2)]
+    return medianGap > 300 ? 'year' : 'month'
+}
+
 // Diverging schemes that should be reversed (so blue=low, red=high)
 const DIVERGING_REVERSED = ['interpolateRdYlBu', 'interpolateRdBu']
 const DIVERGING_SCHEMES = ['interpolateRdYlBu', 'interpolateRdBu', 'interpolatePiYG']
@@ -111,6 +124,85 @@ function drawColorLegend(selection, valueColorScale, x, y) {
         .style('font-size', '10px')
         .style('font-family', 'sans-serif')
         .style('fill', '#666')
+}
+
+function drawYearLabelsOnSpiral(parentGroup, data, getAngle, rScale, minYear, nCycle, fontSize, outerRadius) {
+    const maxYear = d3.max(data, d => d.date.getFullYear())
+
+    // Key principle: numAxes = nCycle
+    // This guarantees every year lands exactly on an axis (no rounding, no misalignment)
+    const numAxes = nCycle
+    const maxYearAxisIdx = (maxYear - minYear) % nCycle
+
+    // Draw all axis lines (thin, light)
+    const axisGroup = parentGroup.append('g').attr('class', 'year-axes')
+    for (let i = 0; i < numAxes; i++) {
+        const angle = (i / numAxes) * 2 * Math.PI
+        axisGroup.append('line')
+            .attr('x1', 0)
+            .attr('y1', 0)
+            .attr('x2', Math.sin(angle) * outerRadius)
+            .attr('y2', -Math.cos(angle) * outerRadius)
+            .attr('stroke', '#ddd')
+            .attr('stroke-width', 0.5)
+    }
+
+    // Label only a subset of axes to avoid clutter
+    // ~5 labeled axes, plus always the axis containing maxYear
+    const labelStep = Math.max(1, Math.round(nCycle / 5))
+    const newestR = outerRadius + 8
+    const oldestR = outerRadius + 40
+
+    const labelGroup = parentGroup.append('g').attr('class', 'year-labels')
+
+    for (let i = 0; i < numAxes; i++) {
+        const showLabel = (i % labelStep === 0) || (i === maxYearAxisIdx)
+        if (!showLabel) continue
+
+        const angle = (i / numAxes) * 2 * Math.PI
+        const sx = Math.sin(angle)
+        const sy = -Math.cos(angle)
+
+        // Collect years on this axis
+        const yearsOnAxis = []
+        for (let y = minYear + i; y <= maxYear; y += nCycle) {
+            yearsOnAxis.push(y)
+        }
+        if (yearsOnAxis.length === 0) continue
+
+        const oldest = yearsOnAxis[0]
+        const newest = yearsOnAxis[yearsOnAxis.length - 1]
+
+        // text-anchor: right half → start, left half → end, top/bottom → middle
+        const eps = 0.01
+        let anchor = 'middle'
+        if (sx > eps) anchor = 'start'
+        else if (sx < -eps) anchor = 'end'
+
+        // Newest year (closer to outer circle)
+        labelGroup.append('text')
+            .attr('x', sx * newestR)
+            .attr('y', sy * newestR)
+            .attr('text-anchor', anchor)
+            .attr('dominant-baseline', 'central')
+            .text(newest)
+            .style('font-size', (fontSize || 9) + 'px')
+            .style('font-family', 'sans-serif')
+            .style('fill', '#999')
+
+        // Oldest year (further out, only if different)
+        if (newest !== oldest) {
+            labelGroup.append('text')
+                .attr('x', sx * oldestR)
+                .attr('y', sy * oldestR)
+                .attr('text-anchor', anchor)
+                .attr('dominant-baseline', 'central')
+                .text(oldest)
+                .style('font-size', (fontSize || 9) + 'px')
+                .style('font-family', 'sans-serif')
+                .style('fill', '#bbb')
+        }
+    }
 }
 
 export function render(
@@ -236,7 +328,7 @@ function renderSpiralInGroup(
     showSeriesLabels,
     strokeWidth
 ) {
-    const { maxRadius, valueColorScheme, symmetricDomain } = visualOptions
+    const { maxRadius, valueColorScheme, symmetricDomain, yearsPerCycle } = visualOptions
     const colorByValue = valueColorScheme && valueColorScheme !== 'none'
     const margin = { top: 30, right: 20, bottom: 20, left: 20 }
     const chartWidth = width - margin.left - margin.right
@@ -264,12 +356,19 @@ function renderSpiralInGroup(
     // Sort by date
     data.sort((a, b) => a.date - b.date)
 
-    // Angle scale
-    const getAngle = (d) => {
-        const startOfYear = new Date(d.date.getFullYear(), 0, 1)
-        const dayOfYear = (d.date - startOfYear) / 86400000
-        return (dayOfYear / 366) * 2 * Math.PI
-    }
+    // Detect time unit and build angle function
+    const timeUnit = detectTimeUnit(data)
+    const minYear = d3.min(data, d => d.date.getFullYear())
+    const nCycle = yearsPerCycle || 10
+
+    // Cumulative angle: for year mode, angle increases continuously (spiral)
+    const getAngle = timeUnit === 'year'
+        ? (d) => (d.date.getFullYear() - minYear) / nCycle * 2 * Math.PI
+        : (d) => {
+            const startOfYear = new Date(d.date.getFullYear(), 0, 1)
+            const dayOfYear = (d.date - startOfYear) / 86400000
+            return (dayOfYear / 366) * 2 * Math.PI
+        }
 
     // Radius scale
     const allValues = []
@@ -284,8 +383,8 @@ function renderSpiralInGroup(
     if (typeof extent[0] === 'undefined') return
 
     const rScale = d3.scaleLinear()
-        .domain([0, extent[1]])  // Start from 0, not minimum value
-        .range([0, radius])      // Map 0 to center (radius 0)
+        .domain(extent)
+        .range([radius * 0.1, radius])
 
     // Color scale for multiple values
     const valueKeys = Object.keys(data[0].values)
@@ -352,33 +451,37 @@ function renderSpiralInGroup(
         .style('font-size', '8px')
         .style('fill', '#999')
 
-    // Month lines and labels (simplified)
-    const months = ['Jan', 'Apr', 'Jul', 'Oct']
-    const angles = [0, 3, 6, 9].map(i => (i / 12) * 2 * Math.PI)
+    // Angle axis lines and labels
+    if (timeUnit === 'year') {
+        drawYearLabelsOnSpiral(chartGroup, data, getAngle, rScale, minYear, nCycle, 8, radius)
+    } else {
+        const months = ['Jan', 'Apr', 'Jul', 'Oct']
+        const axisAngles = [0, 3, 6, 9].map(i => (i / 12) * 2 * Math.PI)
 
-    chartGroup.append('g')
-        .selectAll('line')
-        .data(angles)
-        .enter()
-        .append('line')
-        .attr('x1', 0)
-        .attr('y1', 0)
-        .attr('x2', d => Math.sin(d) * radius)
-        .attr('y2', d => -Math.cos(d) * radius)
-        .attr('stroke', '#eee')
+        chartGroup.append('g')
+            .selectAll('line')
+            .data(axisAngles)
+            .enter()
+            .append('line')
+            .attr('x1', 0)
+            .attr('y1', 0)
+            .attr('x2', d => Math.sin(d) * radius)
+            .attr('y2', d => -Math.cos(d) * radius)
+            .attr('stroke', '#eee')
 
-    chartGroup.append('g')
-        .selectAll('text')
-        .data(months)
-        .enter()
-        .append('text')
-        .attr('x', (d, i) => Math.sin(angles[i]) * (radius + 10))
-        .attr('y', (d, i) => -Math.cos(angles[i]) * (radius + 10))
-        .attr('text-anchor', 'middle')
-        .attr('alignment-baseline', 'middle')
-        .text(d => d)
-        .style('font-size', '10px')
-        .style('font-family', 'sans-serif')
+        chartGroup.append('g')
+            .selectAll('text')
+            .data(months)
+            .enter()
+            .append('text')
+            .attr('x', (d, i) => Math.sin(axisAngles[i]) * (radius + 10))
+            .attr('y', (d, i) => -Math.cos(axisAngles[i]) * (radius + 10))
+            .attr('text-anchor', 'middle')
+            .attr('alignment-baseline', 'middle')
+            .text(d => d)
+            .style('font-size', '10px')
+            .style('font-family', 'sans-serif')
+    }
 }
 
 function renderSingleChart(svgNode, data, visualOptions, mapping, styles) {
@@ -390,6 +493,7 @@ function renderSingleChart(svgNode, data, visualOptions, mapping, styles) {
         strokeWidth,
         valueColorScheme,
         symmetricDomain,
+        yearsPerCycle,
     } = visualOptions
     const colorByValue = valueColorScheme && valueColorScheme !== 'none'
 
@@ -425,11 +529,19 @@ function renderSingleChart(svgNode, data, visualOptions, mapping, styles) {
 
     data.sort((a, b) => a.date - b.date)
 
-    const getAngle = (d) => {
-        const startOfYear = new Date(d.date.getFullYear(), 0, 1)
-        const dayOfYear = (d.date - startOfYear) / 86400000
-        return (dayOfYear / 366) * 2 * Math.PI
-    }
+    // Detect time unit and build angle function
+    const timeUnit = detectTimeUnit(data)
+    const minYear = d3.min(data, d => d.date.getFullYear())
+    const nCycle = yearsPerCycle || 10
+
+    // Cumulative angle: for year mode, angle increases continuously (spiral)
+    const getAngle = timeUnit === 'year'
+        ? (d) => (d.date.getFullYear() - minYear) / nCycle * 2 * Math.PI
+        : (d) => {
+            const startOfYear = new Date(d.date.getFullYear(), 0, 1)
+            const dayOfYear = (d.date - startOfYear) / 86400000
+            return (dayOfYear / 366) * 2 * Math.PI
+        }
 
     const allValues = []
     data.forEach(d => {
@@ -444,8 +556,8 @@ function renderSingleChart(svgNode, data, visualOptions, mapping, styles) {
     if (typeof extent[0] === 'undefined') return
 
     const rScale = d3.scaleLinear()
-        .domain([0, extent[1]])  // Start from 0, not minimum value
-        .range([0, radius])      // Map 0 to center (radius 0)
+        .domain(extent)
+        .range([radius * 0.1, radius])
 
     let color = () => '#666'
     const valueKeys = Object.keys(data[0].values)
@@ -508,7 +620,7 @@ function renderSingleChart(svgNode, data, visualOptions, mapping, styles) {
             })
         }
 
-        drawColorLegend(selection, valueColorScale, width / 2, height - 40)
+        drawColorLegend(selection, valueColorScale, width / 2, height - 60)
     } else if (isSeriesMapped) {
         const nestedData = d3.groups(data, d => d.series)
 
@@ -551,34 +663,39 @@ function renderSingleChart(svgNode, data, visualOptions, mapping, styles) {
         .style('font-size', '10px')
         .style('fill', '#999')
 
-    const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ]
-    const angles = months.map((m, i) => (i / 12) * 2 * Math.PI)
+    // Angle axis lines and labels
+    if (timeUnit === 'year') {
+        drawYearLabelsOnSpiral(svg, data, getAngle, rScale, minYear, nCycle, 10, radius)
+    } else {
+        const months = [
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ]
+        const axisAngles = months.map((_, i) => (i / 12) * 2 * Math.PI)
 
-    svg.append('g')
-        .attr('class', 'a-axis')
-        .selectAll('line')
-        .data(angles)
-        .enter()
-        .append('line')
-        .attr('x1', 0)
-        .attr('y1', 0)
-        .attr('x2', d => Math.sin(d) * radius)
-        .attr('y2', d => -Math.cos(d) * radius)
-        .attr('stroke', '#eee')
+        svg.append('g')
+            .attr('class', 'a-axis')
+            .selectAll('line')
+            .data(axisAngles)
+            .enter()
+            .append('line')
+            .attr('x1', 0)
+            .attr('y1', 0)
+            .attr('x2', d => Math.sin(d) * radius)
+            .attr('y2', d => -Math.cos(d) * radius)
+            .attr('stroke', '#eee')
 
-    svg.append('g')
-        .selectAll('text')
-        .data(months)
-        .enter()
-        .append('text')
-        .attr('x', (d, i) => Math.sin(angles[i]) * (radius + 20))
-        .attr('y', (d, i) => -Math.cos(angles[i]) * (radius + 20))
-        .attr('text-anchor', 'middle')
-        .attr('alignment-baseline', 'middle')
-        .text(d => d)
-        .style('font-size', '12px')
-        .style('font-family', 'sans-serif')
+        svg.append('g')
+            .selectAll('text')
+            .data(months)
+            .enter()
+            .append('text')
+            .attr('x', (d, i) => Math.sin(axisAngles[i]) * (radius + 20))
+            .attr('y', (d, i) => -Math.cos(axisAngles[i]) * (radius + 20))
+            .attr('text-anchor', 'middle')
+            .attr('alignment-baseline', 'middle')
+            .text(d => d)
+            .style('font-size', '12px')
+            .style('font-family', 'sans-serif')
+    }
 }

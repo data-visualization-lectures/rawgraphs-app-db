@@ -263,6 +263,7 @@
   "chartOptions.Step Before": "Step Before",
   "chartOptions.Color by value": "値で着色",
   "chartOptions.Center color at 0": "色の中心を0に",
+  "chartOptions.Years per cycle": "1周あたりの年数",
   "chartOptions.Viridis": "Viridis",
   "chartOptions.Plasma": "Plasma",
   "chartOptions.Blues": "Blues",

@@ -13,6 +13,13 @@ export const visualOptions = {
         group: 'chart',
     },
 
+    yearsPerCycle: {
+        type: 'number',
+        label: 'Years per cycle',
+        default: 10,
+        group: 'chart',
+    },
+
     valueColorScheme: {
         type: 'text',
         label: 'Color by value',
