@@ -262,7 +262,7 @@
   "chartOptions.Step After": "Step After",
   "chartOptions.Step Before": "Step Before",
   "chartOptions.Color by value": "Color by value",
-  "chartOptions.Symmetric color domain (center at 0)": "Symmetric color domain (center at 0)",
+  "chartOptions.Center color at 0": "Center color at 0",
   "chartOptions.Viridis": "Viridis",
   "chartOptions.Plasma": "Plasma",
   "chartOptions.Blues": "Blues",

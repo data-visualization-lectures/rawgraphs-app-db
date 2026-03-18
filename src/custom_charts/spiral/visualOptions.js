@@ -33,7 +33,7 @@ export const visualOptions = {
 
     symmetricDomain: {
         type: 'boolean',
-        label: 'Symmetric color domain (center at 0)',
+        label: 'Center color at 0',
         default: false,
         group: 'colors',
     },

@@ -262,7 +262,7 @@
   "chartOptions.Step After": "Step After",
   "chartOptions.Step Before": "Step Before",
   "chartOptions.Color by value": "値で着色",
-  "chartOptions.Symmetric color domain (center at 0)": "色ドメインを0中心に対称化",
+  "chartOptions.Center color at 0": "色の中心を0に",
   "chartOptions.Viridis": "Viridis",
   "chartOptions.Plasma": "Plasma",
   "chartOptions.Blues": "Blues",
