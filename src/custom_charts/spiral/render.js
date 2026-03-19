@@ -37,7 +37,7 @@ function buildValueColorScale(allValues, colorScheme, symmetric) {
     return d3.scaleSequential(interpolator).domain(domain)
 }
 
-function drawColoredSegments(parentGroup, validPoints, getAngle, rScale, valueKey, valueColorScale, strokeWidth) {
+function drawColoredSegments(parentGroup, validPoints, getAngle, rScale, valueKey, colorScale, strokeWidth, colorTarget) {
     const points = validPoints.map(d => {
         const angle = getAngle(d)
         const v = d.values[valueKey]
@@ -45,27 +45,30 @@ function drawColoredSegments(parentGroup, validPoints, getAngle, rScale, valueKe
         return {
             x: Math.sin(angle) * r,
             y: -Math.cos(angle) * r,
-            value: v
+            value: v,
+            date: d.date.getTime()
         }
     })
 
-    const segmentGroup = parentGroup.append('g').attr('class', 'value-colored-segments')
+    const segmentGroup = parentGroup.append('g').attr('class', 'colored-segments')
 
     for (let i = 0; i < points.length - 1; i++) {
-        const avgValue = (points[i].value + points[i + 1].value) / 2
+        const colorValue = colorTarget === 'date'
+            ? (points[i].date + points[i + 1].date) / 2
+            : (points[i].value + points[i + 1].value) / 2
         segmentGroup.append('line')
             .attr('x1', points[i].x)
             .attr('y1', points[i].y)
             .attr('x2', points[i + 1].x)
             .attr('y2', points[i + 1].y)
-            .attr('stroke', valueColorScale(avgValue))
+            .attr('stroke', colorScale(colorValue))
             .attr('stroke-width', strokeWidth)
             .attr('stroke-linecap', 'round')
             .attr('opacity', 0.9)
     }
 }
 
-function drawColorLegend(selection, valueColorScale, x, y) {
+function drawColorLegend(selection, colorScale, x, y) {
     const legendWidth = 200
     const legendHeight = 12
     const legendX = x - legendWidth / 2
@@ -75,18 +78,18 @@ function drawColorLegend(selection, valueColorScale, x, y) {
         ? selection.append('defs')
         : selection.select('defs')
 
-    const gradientId = 'value-color-gradient-' + Math.random().toString(36).substr(2, 9)
+    const gradientId = 'color-gradient-' + Math.random().toString(36).substr(2, 9)
     const gradient = defs.append('linearGradient')
         .attr('id', gradientId)
 
     const nStops = 10
-    const domain = valueColorScale.domain()
+    const domain = colorScale.domain()
     for (let i = 0; i <= nStops; i++) {
         const t = i / nStops
         const val = domain[0] + t * (domain[1] - domain[0])
         gradient.append('stop')
             .attr('offset', `${t * 100}%`)
-            .attr('stop-color', valueColorScale(val))
+            .attr('stop-color', colorScale(val))
     }
 
     const legendGroup = selection.append('g')
@@ -98,10 +101,14 @@ function drawColorLegend(selection, valueColorScale, x, y) {
         .attr('fill', `url(#${gradientId})`)
         .attr('rx', 2)
 
+    // Format label: use integer if all domain values are integers, otherwise 1 decimal
+    const allIntegers = domain.every(v => Number.isInteger(v))
+    const fmt = (v) => allIntegers ? String(Math.round(v)) : v.toFixed(1)
+
     legendGroup.append('text')
         .attr('y', legendHeight + 14)
         .attr('text-anchor', 'start')
-        .text(domain[0].toFixed(1))
+        .text(fmt(domain[0]))
         .style('font-size', '10px')
         .style('font-family', 'sans-serif')
         .style('fill', '#666')
@@ -110,7 +117,7 @@ function drawColorLegend(selection, valueColorScale, x, y) {
         .attr('x', legendWidth)
         .attr('y', legendHeight + 14)
         .attr('text-anchor', 'end')
-        .text(domain[1].toFixed(1))
+        .text(fmt(domain[1]))
         .style('font-size', '10px')
         .style('font-family', 'sans-serif')
         .style('fill', '#666')
@@ -120,7 +127,7 @@ function drawColorLegend(selection, valueColorScale, x, y) {
         .attr('x', legendWidth / 2)
         .attr('y', legendHeight + 14)
         .attr('text-anchor', 'middle')
-        .text(midVal.toFixed(1))
+        .text(fmt(midVal))
         .style('font-size', '10px')
         .style('font-family', 'sans-serif')
         .style('fill', '#666')
@@ -328,8 +335,8 @@ function renderSpiralInGroup(
     showSeriesLabels,
     strokeWidth
 ) {
-    const { maxRadius, valueColorScheme, symmetricDomain, yearsPerCycle } = visualOptions
-    const colorByValue = valueColorScheme && valueColorScheme !== 'none'
+    const { maxRadius, colorTarget, colorScheme, symmetricDomain, yearsPerCycle } = visualOptions
+    const hasColoring = colorTarget && colorTarget !== 'none'
     const margin = { top: 30, right: 20, bottom: 20, left: 20 }
     const chartWidth = width - margin.left - margin.right
     const chartHeight = height - margin.top - margin.bottom
@@ -393,14 +400,20 @@ function renderSpiralInGroup(
         .range(d3.schemeCategory10)
 
     // Draw paths
-    if (colorByValue) {
-        const valueColorScale = buildValueColorScale(allValues, valueColorScheme, symmetricDomain)
+    if (hasColoring) {
+        let cScale
+        if (colorTarget === 'date') {
+            const dateExtent = d3.extent(data, d => d.date.getTime())
+            cScale = d3.scaleSequential(d3[colorScheme] || d3.interpolateBlues).domain(dateExtent)
+        } else {
+            cScale = buildValueColorScale(allValues, colorScheme, symmetricDomain)
+        }
 
         valueKeys.forEach((key) => {
             const validPoints = data.filter(d => d.values[key] !== undefined && d.values[key] !== null)
             if (validPoints.length < 2) return
             validPoints.sort((a, b) => a.date - b.date)
-            drawColoredSegments(chartGroup, validPoints, getAngle, rScale, key, valueColorScale, strokeWidth)
+            drawColoredSegments(chartGroup, validPoints, getAngle, rScale, key, cScale, strokeWidth, colorTarget)
         })
     } else {
         valueKeys.forEach((key, i) => {
@@ -491,11 +504,12 @@ function renderSingleChart(svgNode, data, visualOptions, mapping, styles) {
         background,
         maxRadius,
         strokeWidth,
-        valueColorScheme,
+        colorTarget,
+        colorScheme,
         symmetricDomain,
         yearsPerCycle,
     } = visualOptions
-    const colorByValue = valueColorScheme && valueColorScheme !== 'none'
+    const hasColoring = colorTarget && colorTarget !== 'none'
 
     const margin = { top: 50, right: 50, bottom: 50, left: 50 }
     const chartWidth = width - margin.left - margin.right
@@ -598,8 +612,14 @@ function renderSingleChart(svgNode, data, visualOptions, mapping, styles) {
             .attr('opacity', 0.8)
     }
 
-    if (colorByValue) {
-        const valueColorScale = buildValueColorScale(allValues, valueColorScheme, symmetricDomain)
+    if (hasColoring) {
+        let cScale
+        if (colorTarget === 'date') {
+            const dateExtent = d3.extent(data, d => d.date.getTime())
+            cScale = d3.scaleSequential(d3[colorScheme] || d3.interpolateBlues).domain(dateExtent)
+        } else {
+            cScale = buildValueColorScale(allValues, colorScheme, symmetricDomain)
+        }
 
         if (isSeriesMapped) {
             const nestedData = d3.groups(data, d => d.series)
@@ -608,7 +628,7 @@ function renderSingleChart(svgNode, data, visualOptions, mapping, styles) {
                     const validPoints = seriesData.filter(d => d.values[key] !== undefined && d.values[key] !== null)
                     if (validPoints.length < 2) return
                     validPoints.sort((a, b) => a.date - b.date)
-                    drawColoredSegments(svg, validPoints, getAngle, rScale, key, valueColorScale, strokeWidth)
+                    drawColoredSegments(svg, validPoints, getAngle, rScale, key, cScale, strokeWidth, colorTarget)
                 })
             })
         } else {
@@ -616,11 +636,22 @@ function renderSingleChart(svgNode, data, visualOptions, mapping, styles) {
                 const validPoints = data.filter(d => d.values[key] !== undefined && d.values[key] !== null)
                 if (validPoints.length < 2) return
                 validPoints.sort((a, b) => a.date - b.date)
-                drawColoredSegments(svg, validPoints, getAngle, rScale, key, valueColorScale, strokeWidth)
+                drawColoredSegments(svg, validPoints, getAngle, rScale, key, cScale, strokeWidth, colorTarget)
             })
         }
 
-        drawColorLegend(selection, valueColorScale, width / 2, height - 60)
+        // Legend: for date mode show years, for value mode show numbers
+        if (colorTarget === 'date') {
+            const dateExtent = d3.extent(data, d => d.date.getTime())
+            const yearMin = new Date(dateExtent[0]).getFullYear()
+            const yearMax = new Date(dateExtent[1]).getFullYear()
+            // Create a year-labeled scale for legend
+            const legendScale = d3.scaleSequential(d3[colorScheme] || d3.interpolateBlues)
+                .domain([yearMin, yearMax])
+            drawColorLegend(selection, legendScale, width / 2, height - 60)
+        } else {
+            drawColorLegend(selection, cScale, width / 2, height - 60)
+        }
     } else if (isSeriesMapped) {
         const nestedData = d3.groups(data, d => d.series)
 

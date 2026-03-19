@@ -20,12 +20,23 @@ export const visualOptions = {
         group: 'chart',
     },
 
-    valueColorScheme: {
+    colorTarget: {
         type: 'text',
-        label: 'Color by value',
+        label: 'Color target',
         default: 'none',
         options: [
             { label: 'None', value: 'none' },
+            { label: 'Value', value: 'value' },
+            { label: 'Date', value: 'date' },
+        ],
+        group: 'colors',
+    },
+
+    colorScheme: {
+        type: 'text',
+        label: 'Color scheme',
+        default: 'interpolateBlues',
+        options: [
             { label: 'Viridis', value: 'interpolateViridis' },
             { label: 'Plasma', value: 'interpolatePlasma' },
             { label: 'Blues', value: 'interpolateBlues' },
@@ -43,6 +54,7 @@ export const visualOptions = {
         label: 'Center color at 0',
         default: false,
         group: 'colors',
+        disabled: { colorTarget: 'none' },
     },
 
     columnsNumber: {
