@@ -28,10 +28,6 @@ import isPlainObject from 'lodash/isPlainObject'
 import CookieConsent from 'react-cookie-consent'
 import { useTranslation } from 'react-i18next'
 
-import { loadProject } from './utils/cloudApi'
-import LoadCloudProject from './components/DataLoader/loaders/LoadCloudProject'
-import { Modal } from 'react-bootstrap'
-import CloudSaveModal from './components/Exporter/CloudSaveModal'
 
 // import FixedHeader from './components/FixedHeader/FixedHeader'
 
@@ -64,6 +60,10 @@ function App() {
   const [rawViz, setRawViz] = useState(null)
   const [mappingLoading, setMappingLoading] = useState(false)
   const dataMappingRef = useRef(null)
+
+  // Project management state (for header's save modal)
+  const [currentProjectId, setCurrentProjectId] = useState(null)
+  const [currentProjectName, setCurrentProjectName] = useState(null)
 
   const columnNames = useMemo(() => {
     if (get(data, 'dataTypes')) {
@@ -172,44 +172,37 @@ function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const projectId = params.get('project_id')
+    if (!projectId) return
 
-    if (projectId) {
-      console.log('Found project_id in URL:', projectId)
-
-      loadProject(projectId)
-        .then((projectData) => {
-          console.log('Project data loaded:', projectData)
-          // We need to deserialize the project to link the chart string to the actual chart object
-          // deserializeProject expects a string, so we stringify the object first
-          const project = deserializeProject(
-            JSON.stringify(projectData),
-            charts
-          )
-          importProject(project)
-
-          // Remove query param from URL
-          window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname
-          )
-        })
-        .catch((err) => {
-          console.error('Project Load Error:', err)
-          alert(t('app.projectLoadError'))
-        })
+    const doLoad = async () => {
+      try {
+        await customElements.whenDefined('dataviz-tool-header')
+        const header = document.querySelector('dataviz-tool-header')
+        const projectData = await header.loadProject(projectId)
+        const project = deserializeProject(
+          JSON.stringify(projectData),
+          charts
+        )
+        importProject(project)
+        setCurrentProjectId(projectId)
+        window.history.replaceState({}, document.title, window.location.pathname)
+      } catch (err) {
+        console.error('Project Load Error:', err)
+        const header = document.querySelector('dataviz-tool-header')
+        if (header && typeof header.showMessage === 'function') {
+          header.showMessage(t('app.projectLoadError'), 'error')
+        }
+      }
     }
+    doLoad()
   }, [importProject])
 
 
 
-  // Cloud Save Logic
-  const [showCloudSaveModal, setShowCloudSaveModal] = useState(false)
-
-  const getThumbnailBlob = useCallback(() => {
+  const getThumbnailDataUri = useCallback(() => {
     return new Promise((resolve, reject) => {
       if (!rawViz || !rawViz._node || !rawViz._node.firstChild) {
-        resolve(null) // No chart rendered, so no thumbnail
+        resolve(null)
         return
       }
       try {
@@ -219,11 +212,10 @@ function App() {
         const svgBlob = new Blob([svgString], {
           type: 'image/svg+xml;charset=utf-8',
         })
-        const URL = window.URL || window.webkitURL || window
-        const url = URL.createObjectURL(svgBlob)
+        const URL_API = window.URL || window.webkitURL || window
+        const url = URL_API.createObjectURL(svgBlob)
 
         const canvas = document.createElement('canvas')
-        // Use the native dimensions of the SVG
         canvas.width = rawViz._node.firstChild.clientWidth
         canvas.height = rawViz._node.firstChild.clientHeight
         const ctx = canvas.getContext('2d')
@@ -231,17 +223,11 @@ function App() {
         const img = new Image()
         img.onload = function () {
           ctx.drawImage(img, 0, 0)
-          canvas.toBlob((blob) => {
-            URL.revokeObjectURL(url)
-            if (blob) {
-              resolve(blob)
-            } else {
-              reject(new Error('Canvas toBlob failed'))
-            }
-          }, 'image/png')
+          URL_API.revokeObjectURL(url)
+          resolve(canvas.toDataURL('image/png'))
         }
         img.onerror = (e) => {
-          URL.revokeObjectURL(url)
+          URL_API.revokeObjectURL(url)
           reject(e)
         }
         img.src = url
@@ -250,10 +236,6 @@ function App() {
       }
     })
   }, [rawViz])
-
-  // Load Project Modal State
-  const [showLoadModal, setShowLoadModal] = useState(false)
-  const [loadingError, setLoadingError] = useState(null)
 
   // Load Project from File Logic
   const fileInputRef = useRef(null)
@@ -286,39 +268,67 @@ function App() {
     reader.readAsText(file)
   }, [importProject])
 
-  const loadProjectFromFile = useCallback(() => {
-    setShowLoadModal(true)
-  }, [])
-
   // Configure Tool Header
   useEffect(() => {
     const configureHeader = () => {
       const header = document.querySelector('dataviz-tool-header')
-      if (header) {
-        if (typeof header.setConfig === 'function') {
-          header.setConfig({
-            backgroundColor: '#06c26c',
-            logo: {
-              type: 'image',
-              src: '/logo_rawgraphs.png',
-              href: '/' // Or appropriate link
+      if (!header) return
+
+      if (typeof header.setConfig === 'function') {
+        header.setConfig({
+          backgroundColor: '#06c26c',
+          logo: {
+            type: 'image',
+            src: '/logo_rawgraphs.png',
+            href: '/',
+          },
+          buttons: [
+            {
+              id: 'load-project-btn',
+              label: t('app.loadProject'),
+              action: () => header.showLoadModal(),
+              align: 'right',
             },
-            buttons: [
-              {
-                id: 'load-project-btn',
-                label: t('app.loadProject'),
-                action: loadProjectFromFile,
-                align: 'right'
+            {
+              id: 'save-project-btn',
+              label: t('app.saveProject'),
+              action: async () => {
+                const projectData = exportProject()
+                const thumbnailDataUri = await getThumbnailDataUri()
+                header.showSaveModal({
+                  name: currentProjectName || undefined,
+                  data: projectData,
+                  thumbnailDataUri: thumbnailDataUri,
+                  existingProjectId: currentProjectId || undefined,
+                })
               },
-              {
-                id: 'save-project-btn',
-                label: t('app.saveProject'),
-                action: () => setShowCloudSaveModal(true),
-                align: 'right'
-              }
-            ]
-          })
-        }
+              align: 'right',
+            },
+          ],
+        })
+      }
+
+      if (typeof header.setProjectConfig === 'function') {
+        header.setProjectConfig({
+          appName: 'rawgraphs',
+          onProjectLoad: (projectData) => {
+            const project = deserializeProject(
+              JSON.stringify(projectData),
+              charts
+            )
+            importProject(project)
+          },
+          onProjectSave: (meta) => {
+            setCurrentProjectId(meta.id)
+            setCurrentProjectName(meta.name)
+          },
+          onProjectDelete: (projectId) => {
+            if (currentProjectId === projectId) {
+              setCurrentProjectId(null)
+              setCurrentProjectName(null)
+            }
+          },
+        })
       }
     }
 
@@ -327,7 +337,7 @@ function App() {
     } else {
       customElements.whenDefined('dataviz-tool-header').then(configureHeader)
     }
-  }, [loadProjectFromFile, t])
+  }, [t, charts, importProject, exportProject, getThumbnailDataUri, currentProjectId, currentProjectName])
 
   //setting initial chart and related options
   useEffect(() => {
@@ -419,35 +429,6 @@ function App() {
       </div>
       <ScreenSizeAlert />
 
-      {/* Load Project Modal */}
-      <Modal show={showLoadModal} onHide={() => setShowLoadModal(false)} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>{t('app.loadProjectModal')}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <LoadCloudProject
-            onProjectSelected={(project) => {
-              importProject(project)
-              setShowLoadModal(false)
-            }}
-            setLoadingError={setLoadingError}
-          />
-          {loadingError && (
-            <div className="alert alert-danger mt-2">
-              {typeof loadingError === 'string'
-                ? loadingError
-                : loadingError.message || t('app.errorLoadingProject')}
-            </div>
-          )}
-        </Modal.Body>
-      </Modal>
-
-      <CloudSaveModal
-        show={showCloudSaveModal}
-        onHide={() => setShowCloudSaveModal(false)}
-        getProjectData={exportProject}
-        getThumbnailBlob={getThumbnailBlob}
-      />
     </div>
   )
 }
