@@ -172,9 +172,25 @@ function App() {
   )
 
 
-  // Handle project loading from URL query param (integration with app.dataviz.jp)
+  // Handle data_url or project_id from URL query param
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+
+    const dataUrl = params.get('data_url')
+    if (dataUrl) {
+      fetch(dataUrl)
+        .then((res) => res.text())
+        .then((text) => {
+          const isTsv = dataUrl.endsWith('.tsv')
+          if (loadSampleRef.current) {
+            loadSampleRef.current(text, isTsv ? '\t' : ',')
+          }
+        })
+        .catch((err) => console.error('data_url load failed:', err))
+      window.history.replaceState({}, document.title, window.location.pathname)
+      return
+    }
+
     const projectId = params.get('project_id')
     if (!projectId) return
 
