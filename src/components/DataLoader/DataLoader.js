@@ -14,7 +14,7 @@ import {
 } from 'react-icons/bs'
 import { DATA_LOADER_MODE } from '../../hooks/useDataLoader'
 import DataGrid from '../DataGrid/DataGrid'
-import DataSamples from '../DataSamples/DataSamples'
+// DataSamples removed — sample data now accessed via tool header picker
 import JsonViewer from '../JsonViewer'
 import ParsingOptions from '../ParsingOptions'
 import styles from './DataLoader.module.scss'
@@ -96,10 +96,11 @@ function DataLoader({
       name: t('dataLoader.samples.name'),
       message: '',
       loader: (
-        <DataSamples
-          onSampleReady={loadSample}
-          setLoadingError={setLoadingError}
-        />
+        <div className="d-flex align-items-center justify-content-center p-4 text-muted" style={{ minHeight: 120 }}>
+          <p className="text-center m-0" style={{ fontSize: '0.95rem' }}>
+            {t('dataLoader.samples.toolbarHint', { defaultValue: 'ツールバーの「サンプルデータ」ボタンから選択してください' })}
+          </p>
+        </div>
       ),
       icon: BsGift,
       allowedForReplace: true,

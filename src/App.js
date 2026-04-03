@@ -61,6 +61,10 @@ function App() {
   const [mappingLoading, setMappingLoading] = useState(false)
   const dataMappingRef = useRef(null)
 
+  // Keep a ref to loadSample so tool-header callback can access it
+  const loadSampleRef = useRef(dataLoader.loadSample)
+  useEffect(() => { loadSampleRef.current = dataLoader.loadSample }, [dataLoader.loadSample])
+
   // Project management state (for header's save modal)
   const [currentProjectId, setCurrentProjectId] = useState(null)
   const [currentProjectName, setCurrentProjectName] = useState(null)
@@ -168,7 +172,7 @@ function App() {
   )
 
 
-  // Handle project loading from URL query param (integration with auth.dataviz.jp)
+  // Handle project loading from URL query param (integration with app.dataviz.jp)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const projectId = params.get('project_id')
@@ -327,6 +331,23 @@ function App() {
               setCurrentProjectId(null)
               setCurrentProjectName(null)
             }
+          },
+        })
+      }
+
+      // Sample data picker integration
+      if (typeof header.setSampleConfig === 'function') {
+        header.setSampleConfig({
+          toolId: 'rawgraphs',
+          onSampleSelect: (detail) => {
+            fetch(detail.url)
+              .then((res) => res.text())
+              .then((text) => {
+                const separator = detail.format === 'tsv' ? '\t' : ','
+                if (loadSampleRef.current) {
+                  loadSampleRef.current(text, separator)
+                }
+              })
           },
         })
       }
