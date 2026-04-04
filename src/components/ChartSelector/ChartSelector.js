@@ -1,7 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react'
-import classNames from 'classnames'
 import { Row, Col, Card, Dropdown } from 'react-bootstrap'
-import { BsLink } from 'react-icons/bs'
 import uniq from 'lodash/uniq'
 import { useTranslation } from 'react-i18next'
 import { CHART_CATEGORY_KEYS } from '../../constants'
@@ -79,17 +77,6 @@ function ChartSelector({ availableCharts, currentChart, setCurrentChart }) {
                   <h4 className="mb-2">{currentChart.metadata.category}</h4>
                 </Card.Subtitle>
                 <Card.Text>{currentChart.metadata.description}</Card.Text>
-
-                <Card.Link
-                  className={classNames({
-                    [styles.disabled]: !currentChart.metadata.tutorial,
-                    underlined: true,
-                  })}
-                  href={currentChart.metadata.tutorial}
-                  target="_blank"
-                >
-                  <BsLink color="black" /> Tutorial
-                </Card.Link>
               </Card.Body>
             </Card>
           )}
