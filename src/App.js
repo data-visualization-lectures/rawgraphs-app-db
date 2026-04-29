@@ -31,6 +31,34 @@ import { useTranslation } from 'react-i18next'
 
 // import FixedHeader from './components/FixedHeader/FixedHeader'
 
+const RAWGRAPHS_TOOL_ID = 'rawgraphs'
+const RAWGRAPHS_CATALOG_URL = `${
+  window.datavizAuthUrl || 'https://app.dataviz.jp'
+}/catalog.json`
+
+function parseCompatibleToolToken(token) {
+  const value = String(token || '').trim()
+  const slashIndex = value.indexOf('/')
+  if (slashIndex === -1) {
+    return {
+      baseTool: value,
+      chartKey: null,
+    }
+  }
+
+  return {
+    baseTool: value.slice(0, slashIndex),
+    chartKey: value.slice(slashIndex + 1) || null,
+  }
+}
+
+function findRecommendedRawgraphsChartId(compatibleTools) {
+  const match = (compatibleTools || [])
+    .map(parseCompatibleToolToken)
+    .find((token) => token.baseTool === RAWGRAPHS_TOOL_ID && token.chartKey)
+  return match?.chartKey || null
+}
+
 function App() {
   const { t, i18n } = useTranslation()
   const charts = useMemo(() => localizeCharts(chartsRaw, i18n.language), [i18n.language])
@@ -60,6 +88,7 @@ function App() {
   const [rawViz, setRawViz] = useState(null)
   const [mappingLoading, setMappingLoading] = useState(false)
   const dataMappingRef = useRef(null)
+  const catalogEntriesRef = useRef(null)
 
   // Keep a ref to loadSample so tool-header callback can access it
   const loadSampleRef = useRef(dataLoader.loadSample)
@@ -109,6 +138,48 @@ function App() {
       setRawViz(null)
     },
     [clearLocalMapping]
+  )
+
+  const applyRecommendedRawgraphsChart = useCallback(
+    (compatibleTools) => {
+      const chartId = findRecommendedRawgraphsChartId(compatibleTools)
+      if (!chartId) return false
+
+      const nextChart = charts.find((chart) => chart.metadata?.id === chartId)
+      if (!nextChart) return false
+
+      handleChartChange(nextChart)
+      return true
+    },
+    [charts, handleChartChange]
+  )
+
+  const getCatalogEntries = useCallback(async () => {
+    if (catalogEntriesRef.current) return catalogEntriesRef.current
+
+    const res = await fetch(RAWGRAPHS_CATALOG_URL)
+    if (!res.ok) throw new Error(`catalog fetch failed: ${res.status}`)
+
+    const catalog = await res.json()
+    catalogEntriesRef.current = catalog.entries || []
+    return catalogEntriesRef.current
+  }, [])
+
+  const resolveCompatibleToolsForDataUrl = useCallback(
+    async (dataUrl) => {
+      const entries = await getCatalogEntries()
+      const entry = entries.find((item) => {
+        const urlMatch = item.fileUrl === dataUrl || item.fileUrlEn === dataUrl
+        if (urlMatch) return true
+
+        return (item.variants || []).some(
+          (variant) => variant.fileUrl === dataUrl || variant.fileUrlEn === dataUrl
+        )
+      })
+
+      return entry?.compatibleTools || []
+    },
+    [getCatalogEntries]
   )
 
   const exportProject = useCallback(() => {
@@ -186,6 +257,10 @@ function App() {
             loadSampleRef.current(text, isTsv ? '\t' : ',')
           }
         })
+        .then(() => resolveCompatibleToolsForDataUrl(dataUrl))
+        .then((compatibleTools) => {
+          applyRecommendedRawgraphsChart(compatibleTools)
+        })
         .catch((err) => console.error('data_url load failed:', err))
       window.history.replaceState({}, document.title, window.location.pathname)
       return
@@ -215,7 +290,7 @@ function App() {
       }
     }
     doLoad()
-  }, [importProject])
+  }, [applyRecommendedRawgraphsChart, charts, importProject, resolveCompatibleToolsForDataUrl, t])
 
 
 
@@ -354,9 +429,9 @@ function App() {
       // Sample data picker integration
       if (typeof header.setSampleConfig === 'function') {
         header.setSampleConfig({
-          toolId: 'rawgraphs',
-          chartKey: currentChart?.metadata?.id || null,
+          toolId: RAWGRAPHS_TOOL_ID,
           onSampleSelect: (detail) => {
+            applyRecommendedRawgraphsChart(detail.compatibleTools || [])
             fetch(detail.url)
               .then((res) => res.text())
               .then((text) => {
@@ -375,7 +450,7 @@ function App() {
     } else {
       customElements.whenDefined('dataviz-tool-header').then(configureHeader)
     }
-  }, [t, charts, importProject, exportProject, getThumbnailDataUri, currentProjectId, currentProjectName, currentChart])
+  }, [t, charts, importProject, exportProject, getThumbnailDataUri, currentProjectId, currentProjectName, applyRecommendedRawgraphsChart])
 
   //setting initial chart and related options
   useEffect(() => {
