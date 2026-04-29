@@ -355,6 +355,7 @@ function App() {
       if (typeof header.setSampleConfig === 'function') {
         header.setSampleConfig({
           toolId: 'rawgraphs',
+          chartKey: currentChart?.metadata?.id || null,
           onSampleSelect: (detail) => {
             fetch(detail.url)
               .then((res) => res.text())
@@ -374,7 +375,7 @@ function App() {
     } else {
       customElements.whenDefined('dataviz-tool-header').then(configureHeader)
     }
-  }, [t, charts, importProject, exportProject, getThumbnailDataUri, currentProjectId, currentProjectName])
+  }, [t, charts, importProject, exportProject, getThumbnailDataUri, currentProjectId, currentProjectName, currentChart])
 
   //setting initial chart and related options
   useEffect(() => {
