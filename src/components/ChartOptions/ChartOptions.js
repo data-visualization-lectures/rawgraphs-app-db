@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo } from 'react'
+import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Row, Col } from 'react-bootstrap'
 import {
@@ -40,12 +40,12 @@ function getPartialMapping(mapping, dimension, repeatIndex) {
 function getPartialMappedData(mappedData, dimension, repeatIndex) {
   return Array.isArray(mappedData)
     ? mappedData.map((datum) => {
-      const value = get(datum[dimension], `[${repeatIndex}]`)
-      return {
-        ...datum,
-        [dimension]: value,
-      }
-    })
+        const value = get(datum[dimension], `[${repeatIndex}]`)
+        return {
+          ...datum,
+          [dimension]: value,
+        }
+      })
     : mappedData
 }
 
@@ -54,6 +54,25 @@ function getDefaultForRepeat(def, index) {
     return get(def.repeatDefault, `[${index}]`, def.default)
   }
   return def.default
+}
+
+function groupOptionsByName(optionsConfig) {
+  return Object.keys(optionsConfig).reduce((acc, optionId) => {
+    const option = optionsConfig[optionId]
+    const group = option?.group || ''
+    if (!acc[group]) {
+      acc[group] = {}
+    }
+    acc[group][optionId] = option
+    return acc
+  }, {})
+}
+
+function getDefaultCollapseStatus(groupNames) {
+  return groupNames.reduce((acc, groupName) => {
+    acc[groupName] = true
+    return acc
+  }, {})
 }
 
 function WrapControlComponent({
@@ -209,28 +228,47 @@ const ChartOptions = ({
     const config = getOptionsConfig(chart?.visualOptions)
 
     const translatedConfig = {}
-    Object.keys(config).forEach(key => {
+    Object.keys(config).forEach((key) => {
       const option = config[key]
       const i18nKey = 'chartOptions.' + option.label
       translatedConfig[key] = {
         ...option,
-        label: t(i18nKey, option.label)
+        label: t(i18nKey, option.label),
       }
     })
 
     return translatedConfig
   }, [chart, t])
 
-  const [collapseStatus, setCollapseStatus] = useState(() => {
-    const groups = {}
-    for (const option in optionsConfig) {
-      const group = optionsConfig[option].group
-      if (!groups.hasOwnProperty(group)) {
-        groups[group] = true
-      }
-    }
-    return groups
-  })
+  const optionsDefinitionsByGroup = useMemo(() => {
+    return groupOptionsByName(optionsConfig)
+  }, [optionsConfig])
+
+  const optionGroupNames = useMemo(() => {
+    return Object.keys(optionsDefinitionsByGroup)
+  }, [optionsDefinitionsByGroup])
+
+  const [collapseStatus, setCollapseStatus] = useState(() =>
+    getDefaultCollapseStatus(optionGroupNames)
+  )
+
+  useEffect(() => {
+    setCollapseStatus((prev) => {
+      const next = {}
+      let changed = Object.keys(prev).length !== optionGroupNames.length
+
+      optionGroupNames.forEach((groupName) => {
+        if (Object.prototype.hasOwnProperty.call(prev, groupName)) {
+          next[groupName] = prev[groupName]
+        } else {
+          next[groupName] = true
+          changed = true
+        }
+      })
+
+      return changed ? next : prev
+    })
+  }, [optionGroupNames])
 
   const enabledOptions = useMemo(() => {
     return getEnabledOptions(optionsConfig, visualOptions, mapping)
@@ -241,28 +279,6 @@ const ChartOptions = ({
   //   return mapValues(keyBy(enabledGroupsNames), x => true)
   // }, [enabledOptions, optionsConfig])
   // // #TODO we can use enabledGroupsByName to disable the group
-
-  const optionsDefinitionsByGroup = useMemo(() => {
-    // update "collapseStatus" state
-    // add/remove options groups when selected charts changes
-    const groups = {}
-    for (const option in optionsConfig) {
-      const group = optionsConfig[option].group
-      if (!groups.hasOwnProperty(group)) {
-        groups[group] = true
-      }
-    }
-    setCollapseStatus(groups)
-    return Object.keys(optionsConfig).reduce((acc, optionId) => {
-      const option = optionsConfig[optionId]
-      const group = option?.group || ''
-      if (!acc[group]) {
-        acc[group] = {}
-      }
-      acc[group][optionId] = option
-      return acc
-    }, {})
-  }, [optionsConfig])
 
   const containerOptions = useMemo(() => {
     const defaultOptionsValues = getDefaultOptionsValues(optionsConfig, mapping)
@@ -295,10 +311,10 @@ const ChartOptions = ({
                     ' '
                   )}
                   onClick={() =>
-                    setCollapseStatus({
-                      ...collapseStatus,
-                      [groupName]: !collapseStatus[groupName],
-                    })
+                    setCollapseStatus((prev) => ({
+                      ...prev,
+                      [groupName]: !prev[groupName],
+                    }))
                   }
                 ></span>
               </Col>
@@ -309,44 +325,46 @@ const ChartOptions = ({
               // (when a new value is dragged to the dimension that repeats the option)
               // the same approach is applied in option validation by the raw core lib
               return def.repeatFor ? (
-                get(
-                  mapping,
-                  `[${def.repeatFor}].value`,
-                  []
-                ).map((v, repeatIndex) => (
-                  <WrapControlComponent
-                    className={styles['chart-option']}
-                    key={optionId + repeatIndex}
-                    repeatIndex={repeatIndex}
-                    {...def}
-                    optionId={optionId}
-                    error={error?.errors?.[optionId + repeatIndex]}
-                    value={
-                      visualOptions?.[optionId]?.[repeatIndex] ??
-                      getDefaultForRepeat(def, repeatIndex)
-                    }
-                    mapping={
-                      def.type === 'colorScale'
-                        ? getPartialMapping(mapping, def.repeatFor, repeatIndex)
-                        : undefined
-                    }
-                    chart={def.type === 'colorScale' ? chart : undefined}
-                    dataset={def.type === 'colorScale' ? dataset : undefined}
-                    dataTypes={
-                      def.type === 'colorScale' ? dataTypes : undefined
-                    }
-                    visualOptions={
-                      def.type === 'colorScale' ? visualOptions : undefined
-                    }
-                    mappedData={getPartialMappedData(
-                      mappedData,
-                      def.repeatFor,
-                      repeatIndex
-                    )}
-                    setVisualOptions={setVisualOptions}
-                    isEnabled={enabledOptions[optionId]}
-                  />
-                ))
+                get(mapping, `[${def.repeatFor}].value`, []).map(
+                  (v, repeatIndex) => (
+                    <WrapControlComponent
+                      className={styles['chart-option']}
+                      key={optionId + repeatIndex}
+                      repeatIndex={repeatIndex}
+                      {...def}
+                      optionId={optionId}
+                      error={error?.errors?.[optionId + repeatIndex]}
+                      value={
+                        visualOptions?.[optionId]?.[repeatIndex] ??
+                        getDefaultForRepeat(def, repeatIndex)
+                      }
+                      mapping={
+                        def.type === 'colorScale'
+                          ? getPartialMapping(
+                              mapping,
+                              def.repeatFor,
+                              repeatIndex
+                            )
+                          : undefined
+                      }
+                      chart={def.type === 'colorScale' ? chart : undefined}
+                      dataset={def.type === 'colorScale' ? dataset : undefined}
+                      dataTypes={
+                        def.type === 'colorScale' ? dataTypes : undefined
+                      }
+                      visualOptions={
+                        def.type === 'colorScale' ? visualOptions : undefined
+                      }
+                      mappedData={getPartialMappedData(
+                        mappedData,
+                        def.repeatFor,
+                        repeatIndex
+                      )}
+                      setVisualOptions={setVisualOptions}
+                      isEnabled={enabledOptions[optionId]}
+                    />
+                  )
+                )
               ) : (
                 <WrapControlComponent
                   className={styles['chart-option']}
@@ -370,7 +388,10 @@ const ChartOptions = ({
             })}
             {groupName === 'artboard' && visualOptions.showLegend && (
               <p className="small">
-                {t('chartOptions.artboardNote', { width: containerOptions?.width, height: containerOptions?.height })}
+                {t('chartOptions.artboardNote', {
+                  width: containerOptions?.width,
+                  height: containerOptions?.height,
+                })}
               </p>
             )}
           </div>
