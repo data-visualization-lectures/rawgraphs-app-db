@@ -41,7 +41,6 @@ const ChartDimensionCard = ({
   draggingId,
   setDraggingId,
   replaceDimension,
-  localMappding,
 }) => {
   const { t } = useTranslation()
   const [{ isOver }, drop] = useDrop({
@@ -283,7 +282,6 @@ const ChartDimensionCard = ({
               onInsertColumn={onInsertColumn}
               draggingColumn={draggingId === renderId}
               replaceDimension={replaceDimension}
-              localMappding={localMappding}
             />
           )
         })}

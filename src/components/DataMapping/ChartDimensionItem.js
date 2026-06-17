@@ -26,8 +26,6 @@ export default function ChartDimensionItem({
   rollbackLocalMapping,
   onInsertColumn,
   replaceDimension,
-
-  localMappding,
 }) {
   const { t } = useTranslation()
   const ref = useRef(null)

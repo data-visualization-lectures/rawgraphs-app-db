@@ -96,17 +96,15 @@ function handleReplaceLocalMapping(
 
 function DataMapping({ dataTypes, dimensions, mapping, setMapping }, ref) {
   const { t } = useTranslation()
-  const [localMappding, setLocalMapping] = useState(mapping)
+  const [localMapping, setLocalMapping] = useState(mapping)
 
   const updateMapping = useCallback(
     (dimension, mappingConf, isLocal) => {
-      // Local
       setLocalMapping((prev) => ({
         ...prev,
         [dimension]: mappingConf,
       }))
       if (!isLocal) {
-        // Gloab mapping
         setMapping((prev) => ({
           ...prev,
           [dimension]: mappingConf,
@@ -159,20 +157,14 @@ function DataMapping({ dataTypes, dimensions, mapping, setMapping }, ref) {
     setDraggingId(null)
   }, [mapping])
 
-  // const commitLocalMapping = useCallback(() => {
-  //   console.log('COMMIT!', localMappding)
-  //   setMapping(localMappding)
-  //   setDraggingId(null)
-  // }, [localMappding, setMapping])
   const commitLocalMapping = () => {
-    // setMapping()
     setMapping(lastMapping.current)
     setDraggingId(null)
   }
 
   const lastMapping = useRef()
   useEffect(() => {
-    lastMapping.current = localMappding
+    lastMapping.current = localMapping
   })
 
   useImperativeHandle(ref, () => ({
@@ -210,8 +202,7 @@ function DataMapping({ dataTypes, dimensions, mapping, setMapping }, ref) {
                   key={d.id}
                   dimension={d}
                   dataTypes={dataTypes}
-                  // mapping={mapping[d.id] || {}}
-                  mapping={localMappding[d.id] || {}}
+                  mapping={localMapping[d.id] || {}}
                   setMapping={(mappingConf, isLocal = false) =>
                     updateMapping(d.id, mappingConf, isLocal)
                   }
@@ -220,7 +211,6 @@ function DataMapping({ dataTypes, dimensions, mapping, setMapping }, ref) {
                   draggingId={draggingId}
                   setDraggingId={setDraggingId}
                   replaceDimension={replaceDimension}
-                  localMappding={localMappding}
                 />
               )
             })}
