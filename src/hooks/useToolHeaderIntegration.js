@@ -12,6 +12,7 @@ export default function useToolHeaderIntegration({
   applyRecommendedRawgraphsChart,
   installHeaderProcessingToasts,
   showProcessingToast,
+  showHeaderMessage,
   setCurrentProjectId,
   setCurrentProjectName,
 }) {
@@ -94,12 +95,24 @@ export default function useToolHeaderIntegration({
             showProcessingToast(t('app.processingSample'))
             applyRecommendedRawgraphsChart(detail.compatibleTools || [])
             fetch(detail.url)
-              .then((res) => res.text())
+              .then((res) => {
+                if (!res.ok) {
+                  throw new Error(`sample fetch failed: ${res.status}`)
+                }
+                return res.text()
+              })
               .then((text) => {
                 const separator = detail.format === 'tsv' ? '\t' : ','
                 if (loadSampleRef.current) {
                   loadSampleRef.current(text, separator)
                 }
+              })
+              .catch((err) => {
+                console.error('sample load failed:', err)
+                showHeaderMessage(
+                  `${t('sample.loadingError')}${err.message || ''}`,
+                  'error'
+                )
               })
           },
         })
@@ -121,6 +134,7 @@ export default function useToolHeaderIntegration({
     applyRecommendedRawgraphsChart,
     installHeaderProcessingToasts,
     showProcessingToast,
+    showHeaderMessage,
     setCurrentProjectId,
     setCurrentProjectName,
   ])

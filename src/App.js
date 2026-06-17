@@ -90,6 +90,7 @@ function App() {
     applyRecommendedRawgraphsChart,
     installHeaderProcessingToasts,
     showProcessingToast,
+    showHeaderMessage,
     setCurrentProjectId,
     setCurrentProjectName,
   })
