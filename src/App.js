@@ -1,5 +1,5 @@
 import './utils/extendColorPresets'
-import React, { useCallback, useMemo, useRef } from 'react'
+import React, { useMemo } from 'react'
 
 // import HeaderItems from './HeaderItems'
 // import Header from './components/Header'
@@ -16,15 +16,12 @@ import Exporter from './components/Exporter'
 import useDataLoader from './hooks/useDataLoader'
 import CookieConsent from 'react-cookie-consent'
 import { useTranslation } from 'react-i18next'
-import {
-  getCompatibleToolsForDataUrl,
-  getRawgraphsCatalogUrl,
-} from './utils/rawgraphsCatalog'
 import useToolHeaderIntegration from './hooks/useToolHeaderIntegration'
 import useRawgraphsProject from './hooks/useRawgraphsProject'
 import useToolHeaderToasts from './hooks/useToolHeaderToasts'
 import useInitialUrlLoad from './hooks/useInitialUrlLoad'
 import useChartWorkflow from './hooks/useChartWorkflow'
+import useRawgraphsCatalog from './hooks/useRawgraphsCatalog'
 
 // import FixedHeader from './components/FixedHeader/FixedHeader'
 
@@ -36,8 +33,6 @@ function App() {
   )
   const dataLoader = useDataLoader()
   const { data, loading } = dataLoader
-
-  const catalogEntriesRef = useRef(null)
 
   const {
     showHeaderMessage,
@@ -61,24 +56,7 @@ function App() {
     applyRecommendedRawgraphsChart,
   } = useChartWorkflow({ charts, data })
 
-  const getCatalogEntries = useCallback(async () => {
-    if (catalogEntriesRef.current) return catalogEntriesRef.current
-
-    const res = await fetch(getRawgraphsCatalogUrl())
-    if (!res.ok) throw new Error(`catalog fetch failed: ${res.status}`)
-
-    const catalog = await res.json()
-    catalogEntriesRef.current = catalog.entries || []
-    return catalogEntriesRef.current
-  }, [])
-
-  const resolveCompatibleToolsForDataUrl = useCallback(
-    async (dataUrl) => {
-      const entries = await getCatalogEntries()
-      return getCompatibleToolsForDataUrl(entries, dataUrl)
-    },
-    [getCatalogEntries]
-  )
+  const { resolveCompatibleToolsForDataUrl } = useRawgraphsCatalog()
 
   const {
     currentProjectId,
