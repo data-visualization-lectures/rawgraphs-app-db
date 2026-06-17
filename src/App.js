@@ -1,18 +1,10 @@
 import './utils/extendColorPresets'
 import React, { useMemo } from 'react'
 
-// import HeaderItems from './HeaderItems'
-// import Header from './components/Header'
-import Section from './components/Section'
 import Footer from './components/Footer'
 import ScreenSizeAlert from './components/ScreenSizeAlert'
 
-import DataLoader from './components/DataLoader'
 import chartsRaw, { localizeCharts } from './charts'
-import ChartSelector from './components/ChartSelector'
-import DataMapping from './components/DataMapping'
-import ChartPreviewWithOptions from './components/ChartPreviewWIthOptions'
-import Exporter from './components/Exporter'
 import useDataLoader from './hooks/useDataLoader'
 import CookieConsent from 'react-cookie-consent'
 import { useTranslation } from 'react-i18next'
@@ -22,6 +14,7 @@ import useToolHeaderToasts from './hooks/useToolHeaderToasts'
 import useInitialUrlLoad from './hooks/useInitialUrlLoad'
 import useChartWorkflow from './hooks/useChartWorkflow'
 import useRawgraphsCatalog from './hooks/useRawgraphsCatalog'
+import RawgraphsWorkflowSections from './components/RawgraphsWorkflowSections'
 
 // import FixedHeader from './components/FixedHeader/FixedHeader'
 
@@ -110,50 +103,26 @@ function App() {
   return (
     <div className="App">
       {/* <FixedHeader /> */}
-      {/* <Header menuItems={HeaderItems} /> */}
       <div className="app-sections" style={{ marginTop: '96px' }}>
-        <Section title={t('app.section1')} loading={loading}>
-          <DataLoader {...dataLoader} hydrateFromProject={importProject} />
-        </Section>
-        {data && (
-          <Section title={t('app.section2')}>
-            <ChartSelector
-              availableCharts={charts}
-              currentChart={currentChart}
-              setCurrentChart={handleChartChange}
-            />
-          </Section>
-        )}
-        {data && currentChart && (
-          <Section title={t('app.section3')} loading={mappingLoading}>
-            <DataMapping
-              ref={dataMappingRef}
-              dimensions={currentChart.dimensions}
-              dataTypes={data.dataTypes}
-              mapping={mapping}
-              setMapping={setMapping}
-            />
-          </Section>
-        )}
-        {data && currentChart && (
-          <Section title={t('app.section4')}>
-            <ChartPreviewWithOptions
-              chart={currentChart}
-              dataset={data.dataset}
-              dataTypes={data.dataTypes}
-              mapping={mapping}
-              visualOptions={visualOptions}
-              setVisualOptions={setVisualOptions}
-              setRawViz={setRawViz}
-              setMappingLoading={setMappingLoading}
-            />
-          </Section>
-        )}
-        {data && currentChart && rawViz && (
-          <Section title={t('app.section5')}>
-            <Exporter rawViz={rawViz} />
-          </Section>
-        )}
+        <RawgraphsWorkflowSections
+          t={t}
+          loading={loading}
+          dataLoader={dataLoader}
+          importProject={importProject}
+          data={data}
+          charts={charts}
+          currentChart={currentChart}
+          handleChartChange={handleChartChange}
+          mappingLoading={mappingLoading}
+          dataMappingRef={dataMappingRef}
+          mapping={mapping}
+          setMapping={setMapping}
+          visualOptions={visualOptions}
+          setVisualOptions={setVisualOptions}
+          setRawViz={setRawViz}
+          setMappingLoading={setMappingLoading}
+          rawViz={rawViz}
+        />
         <Footer />
         <CookieConsent
           location="bottom"
