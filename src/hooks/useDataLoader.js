@@ -1,6 +1,6 @@
 import { parseDataset } from '@rawgraphs/rawgraphs-core'
 import { difference, get } from 'lodash'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { DefaultSeparator, localeList, WEBWORKER_ACTIVE } from '../constants'
 import { parseDatasetInWorker } from '../worker'
 import {
@@ -13,8 +13,6 @@ export const DATA_LOADER_MODE = {
   DIRECT: 'direct',
   REPLACE: 'replace',
 }
-
-const __cache = {}
 
 export default function useDataLoader() {
   /* Data to be plot in the chart */
@@ -53,6 +51,7 @@ export default function useDataLoader() {
   const [mode, setMode] = useState(DATA_LOADER_MODE.DIRECT)
   const [replaceRequiresConfirmation, setReplaceRequiresConfirmation] =
     useState(undefined)
+  const replaceCacheRef = useRef({})
 
   /* Unpacking */
   const columnsTypes = unstackedColumns ?? data?.dataTypes
@@ -174,7 +173,7 @@ export default function useDataLoader() {
       }).then((newDataInferred) => {
         if (newDataInferred.errors.length > 0) {
           // Parsing resulted in errors, cannot replace data safely!
-          __cache.replacedData = newDataInferred
+          replaceCacheRef.current.replacedData = newDataInferred
           setReplaceRequiresConfirmation('parse-error')
         } else {
           const oldColNames = Object.keys(columnsTypes)
@@ -183,7 +182,7 @@ export default function useDataLoader() {
           if (missingCols.length > 0) {
             // There is at least one column missing in the new dataset
             // Replace cannot be safe
-            __cache.replacedData = newDataInferred
+            replaceCacheRef.current.replacedData = newDataInferred
             setReplaceRequiresConfirmation('missing-column:' + missingCols[0])
           } else {
             const nextDataTypes = {
@@ -197,7 +196,7 @@ export default function useDataLoader() {
             }).then((newData) => {
               if (newData.errors.length > 0) {
                 // There was some error in type coercing, data cannot be replaced safely
-                __cache.replacedData = newDataInferred
+                replaceCacheRef.current.replacedData = newDataInferred
                 setReplaceRequiresConfirmation('type-mismatch')
               } else {
                 if (stackDimension) {
@@ -431,10 +430,12 @@ export default function useDataLoader() {
 
   const startDataReplace = useCallback(() => {
     setMode(DATA_LOADER_MODE.REPLACE)
-    __cache.userInput = userInput
-    __cache.userDataType = userDataType
-    __cache.dataSource = dataSource
-    __cache.userData = userData
+    replaceCacheRef.current = {
+      userInput,
+      userDataType,
+      dataSource,
+      userData,
+    }
     setUserInput(null)
     setUserDataType(null)
     setDataSource(null)
@@ -442,20 +443,24 @@ export default function useDataLoader() {
   }, [dataSource, userData, userDataType, userInput])
 
   const cancelDataReplace = useCallback(() => {
+    const cachedReplace = replaceCacheRef.current
     setReplaceRequiresConfirmation(false)
     setMode(DATA_LOADER_MODE.DIRECT)
-    setUserInput(__cache.userInput)
-    setUserDataType(__cache.userDataType)
-    setDataSource(__cache.dataSource)
-    setUserData(__cache.userData)
+    setUserInput(cachedReplace.userInput)
+    setUserDataType(cachedReplace.userDataType)
+    setDataSource(cachedReplace.dataSource)
+    setUserData(cachedReplace.userData)
+    replaceCacheRef.current = {}
   }, [])
 
   const commitDataReplace = useCallback(() => {
+    const cachedReplace = replaceCacheRef.current
     setReplaceRequiresConfirmation(false)
-    setData(__cache.replacedData)
+    setData(cachedReplace.replacedData)
     setParserError(null)
     setStackDimension(null)
     setUnstackedInfo([null, null])
+    replaceCacheRef.current = {}
   }, [])
 
   return {
