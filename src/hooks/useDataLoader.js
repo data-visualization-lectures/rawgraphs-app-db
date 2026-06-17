@@ -51,10 +51,8 @@ export default function useDataLoader() {
   /* Misc */
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState(DATA_LOADER_MODE.DIRECT)
-  const [
-    replaceRequiresConfirmation,
-    setReplaceRequiresConfirmation,
-  ] = useState(undefined)
+  const [replaceRequiresConfirmation, setReplaceRequiresConfirmation] =
+    useState(undefined)
 
   /* Unpacking */
   const columnsTypes = unstackedColumns ?? data?.dataTypes
@@ -66,16 +64,9 @@ export default function useDataLoader() {
       return parseDatasetInWorker(data, dataTypes, {
         ...parsingOptions,
         dateLocale: get(localeList, parsingOptions.locale),
+      }).finally(() => {
+        setLoading(false)
       })
-        .then((resultData) => {
-          return resultData
-        })
-        .catch((err) => {
-          console.log('eee', err)
-        })
-        .finally(() => {
-          setLoading(false)
-        })
     },
     [setLoading]
   )
@@ -112,9 +103,16 @@ export default function useDataLoader() {
 
   const parseDatasetAndSetData = useCallback(
     (data, dataTypes, parsingOptions) => {
-      return parseDatasetAuto(data, dataTypes, parsingOptions).then((data) =>
-        setData(data)
-      )
+      return parseDatasetAuto(data, dataTypes, parsingOptions)
+        .then((data) => {
+          setData(data)
+          return data
+        })
+        .catch((err) => {
+          setData(null)
+          setParserError(err?.message || 'Cannot parse dataset!')
+          return null
+        })
     },
     [parseDatasetAuto]
   )
@@ -210,7 +208,7 @@ export default function useDataLoader() {
                     locale,
                     decimal: decimalsSeparator,
                     group: thousandsSeparator,
-                  }).then(data => setData(data))
+                  }).then((data) => setData(data))
                 } else {
                   setData(newData)
                 }
@@ -270,7 +268,7 @@ export default function useDataLoader() {
     setDataSource(source)
     setUserDataType(dataType)
     setParserError(error)
-    if (extra && typeof extra === "object" && "separator" in extra) {
+    if (extra && typeof extra === 'object' && 'separator' in extra) {
       setSeparator(extra.separator)
     }
     // Data parsed ok set parent data
@@ -290,7 +288,7 @@ export default function useDataLoader() {
     (data, path) => {
       const normalized = normalizeJsonArray(data)
       setUserData(normalized)
-      setDataSource({...dataSource, jsonPath: path })
+      setDataSource({ ...dataSource, jsonPath: path })
       handleNewUserData(normalized)
     },
     [dataSource, handleNewUserData]

@@ -43,7 +43,6 @@ export default function SparqlFetch({
   }, [])
 
   const onParserFailure = useCallback(() => {
-    console.log('parser failed')
     setParsedQuery(null)
   }, [])
 
@@ -61,7 +60,7 @@ export default function SparqlFetch({
           query: parsedQuery,
         })
       })
-      .catch((err) => {
+      .catch(() => {
         setLoadingError(t('sparql.error'))
       })
   }, [parsedQuery, setLoadingError, setUserInput, t, url])

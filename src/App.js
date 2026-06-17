@@ -24,36 +24,14 @@ import useDataLoader from './hooks/useDataLoader'
 import isPlainObject from 'lodash/isPlainObject'
 import CookieConsent from 'react-cookie-consent'
 import { useTranslation } from 'react-i18next'
+import {
+  RAWGRAPHS_TOOL_ID,
+  findRecommendedRawgraphsChartId,
+  getCompatibleToolsForDataUrl,
+  getRawgraphsCatalogUrl,
+} from './utils/rawgraphsCatalog'
 
 // import FixedHeader from './components/FixedHeader/FixedHeader'
-
-const RAWGRAPHS_TOOL_ID = 'rawgraphs'
-const RAWGRAPHS_CATALOG_URL = `${
-  window.datavizAuthUrl || 'https://app.dataviz.jp'
-}/catalog.json`
-
-function parseCompatibleToolToken(token) {
-  const value = String(token || '').trim()
-  const slashIndex = value.indexOf('/')
-  if (slashIndex === -1) {
-    return {
-      baseTool: value,
-      chartKey: null,
-    }
-  }
-
-  return {
-    baseTool: value.slice(0, slashIndex),
-    chartKey: value.slice(slashIndex + 1) || null,
-  }
-}
-
-function findRecommendedRawgraphsChartId(compatibleTools) {
-  const match = (compatibleTools || [])
-    .map(parseCompatibleToolToken)
-    .find((token) => token.baseTool === RAWGRAPHS_TOOL_ID && token.chartKey)
-  return match?.chartKey || null
-}
 
 function App() {
   const { t, i18n } = useTranslation()
@@ -198,7 +176,7 @@ function App() {
   const getCatalogEntries = useCallback(async () => {
     if (catalogEntriesRef.current) return catalogEntriesRef.current
 
-    const res = await fetch(RAWGRAPHS_CATALOG_URL)
+    const res = await fetch(getRawgraphsCatalogUrl())
     if (!res.ok) throw new Error(`catalog fetch failed: ${res.status}`)
 
     const catalog = await res.json()
@@ -209,17 +187,7 @@ function App() {
   const resolveCompatibleToolsForDataUrl = useCallback(
     async (dataUrl) => {
       const entries = await getCatalogEntries()
-      const entry = entries.find((item) => {
-        const urlMatch = item.fileUrl === dataUrl || item.fileUrlEn === dataUrl
-        if (urlMatch) return true
-
-        return (item.variants || []).some(
-          (variant) =>
-            variant.fileUrl === dataUrl || variant.fileUrlEn === dataUrl
-        )
-      })
-
-      return entry?.compatibleTools || []
+      return getCompatibleToolsForDataUrl(entries, dataUrl)
     },
     [getCatalogEntries]
   )

@@ -16,77 +16,74 @@ const ChartPreviewWithOptions = ({
   setRawViz,
   setMappingLoading,
 }) => {
-  const [error, setError] = useState({variant: "secondary", message: "Required chart variables"})
+  const [error, setError] = useState({
+    variant: 'secondary',
+    message: 'Required chart variables',
+  })
   const [mappedData, setMappedData] = useState(null)
 
   useEffect(() => {
-    // console.info('Updating mapped dataset')
-    try {
-      setMappingLoading(true)
+    let isCurrent = true
 
-      if (WEBWORKER_ACTIVE) {
-        mapDataInWorker(chart.metadata.name, {
-          data: dataset,
-          mapping: mapping,
-          dataTypes,
-        })
-          .then((mappedData) => {
-            setMappingLoading(false)
-            setMappedData(mappedData)
-          })
-          .catch((err) => {
-            console.error(err)
-            setMappingLoading(false)
-            setMappedData(null)
-          })
-      } else {
-        const viz = rawChart(chart, {
-          data: dataset,
-          mapping: mapping,
-          dataTypes,
-        })
-        const vizData = viz._getVizData()
-        setMappingLoading(false)
-        setMappedData(vizData)
+    const updateMappedData = async () => {
+      setMappingLoading(true)
+      try {
+        const nextMappedData = WEBWORKER_ACTIVE
+          ? await mapDataInWorker(chart.metadata.name, {
+              data: dataset,
+              mapping,
+              dataTypes,
+            })
+          : rawChart(chart, {
+              data: dataset,
+              mapping,
+              dataTypes,
+            })._getVizData()
+
+        if (!isCurrent) return
+        setMappedData(nextMappedData)
+      } catch (err) {
+        if (!isCurrent) return
+        console.error(err)
+        setMappedData(null)
+        setRawViz(null)
+      } finally {
+        if (isCurrent) {
+          setMappingLoading(false)
+        }
       }
-    } catch (e) {
-      console.error(e)
-      setMappingLoading(false)
-      setMappedData(null)
     }
-  }, [
-    chart,
-    mapping,
-    dataTypes,
-    setError,
-    setRawViz,
-    setMappingLoading,
-    dataset,
-  ])
+
+    updateMappedData()
+
+    return () => {
+      isCurrent = false
+    }
+  }, [chart, mapping, dataTypes, setRawViz, setMappingLoading, dataset])
 
   return (
     <Row>
-        <ChartOptions
-          chart={chart}
-          dataset={dataset}
-          mapping={mapping}
-          dataTypes={dataTypes}
-          visualOptions={visualOptions}
-          setVisualOptions={setVisualOptions}
-          error={error}
-          mappedData={mappedData}
-        />
-        <ChartPreview
-          chart={chart}
-          dataset={dataset}
-          dataTypes={dataTypes}
-          mapping={mapping}
-          visualOptions={visualOptions}
-          error={error}
-          setError={setError}
-          setRawViz={setRawViz}
-          mappedData={mappedData}
-        />
+      <ChartOptions
+        chart={chart}
+        dataset={dataset}
+        mapping={mapping}
+        dataTypes={dataTypes}
+        visualOptions={visualOptions}
+        setVisualOptions={setVisualOptions}
+        error={error}
+        mappedData={mappedData}
+      />
+      <ChartPreview
+        chart={chart}
+        dataset={dataset}
+        dataTypes={dataTypes}
+        mapping={mapping}
+        visualOptions={visualOptions}
+        error={error}
+        setError={setError}
+        setRawViz={setRawViz}
+        mappedData={mappedData}
+      />
     </Row>
   )
 }
