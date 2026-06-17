@@ -1,5 +1,5 @@
 import React from 'react'
-import { useTable, useBlockLayout, useFlexLayout } from 'react-table'
+import { useTable, useBlockLayout } from 'react-table'
 import { FixedSizeList } from 'react-window'
 import './DataTable.scss'
 

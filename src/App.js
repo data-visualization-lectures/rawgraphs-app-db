@@ -19,15 +19,11 @@ import ChartPreviewWithOptions from './components/ChartPreviewWIthOptions'
 import Exporter from './components/Exporter'
 import get from 'lodash/get'
 import usePrevious from './hooks/usePrevious'
-import {
-  serializeProject,
-  deserializeProject,
-} from '@rawgraphs/rawgraphs-core'
+import { serializeProject, deserializeProject } from '@rawgraphs/rawgraphs-core'
 import useDataLoader from './hooks/useDataLoader'
 import isPlainObject from 'lodash/isPlainObject'
 import CookieConsent from 'react-cookie-consent'
 import { useTranslation } from 'react-i18next'
-
 
 // import FixedHeader from './components/FixedHeader/FixedHeader'
 
@@ -61,7 +57,10 @@ function findRecommendedRawgraphsChartId(compatibleTools) {
 
 function App() {
   const { t, i18n } = useTranslation()
-  const charts = useMemo(() => localizeCharts(chartsRaw, i18n.language), [i18n.language])
+  const charts = useMemo(
+    () => localizeCharts(chartsRaw, i18n.language),
+    [i18n.language]
+  )
   const dataLoader = useDataLoader()
   const {
     userInput,
@@ -92,21 +91,20 @@ function App() {
 
   // Keep a ref to loadSample so tool-header callback can access it
   const loadSampleRef = useRef(dataLoader.loadSample)
-  useEffect(() => { loadSampleRef.current = dataLoader.loadSample }, [dataLoader.loadSample])
+  useEffect(() => {
+    loadSampleRef.current = dataLoader.loadSample
+  }, [dataLoader.loadSample])
 
   // Project management state (for header's save modal)
   const [currentProjectId, setCurrentProjectId] = useState(null)
   const [currentProjectName, setCurrentProjectName] = useState(null)
 
-  const showProcessingToast = useCallback(
-    (message) => {
-      const header = document.querySelector('dataviz-tool-header')
-      if (header && typeof header.showMessage === 'function') {
-        header.showMessage(message, 'info', 5000)
-      }
-    },
-    []
-  )
+  const showProcessingToast = useCallback((message) => {
+    const header = document.querySelector('dataviz-tool-header')
+    if (header && typeof header.showMessage === 'function') {
+      header.showMessage(message, 'info', 5000)
+    }
+  }, [])
 
   const installHeaderProcessingToasts = useCallback(
     (header) => {
@@ -216,7 +214,8 @@ function App() {
         if (urlMatch) return true
 
         return (item.variants || []).some(
-          (variant) => variant.fileUrl === dataUrl || variant.fileUrlEn === dataUrl
+          (variant) =>
+            variant.fileUrl === dataUrl || variant.fileUrlEn === dataUrl
         )
       })
 
@@ -274,17 +273,22 @@ function App() {
       // to le the ui know they are coming from a loaded project
       // so we don't have to re-evaluate defaults
       // this is due to the current implementation of the color scale
-      const patchedOptions = { ...project.visualOptions }
-      Object.keys(patchedOptions).forEach((k) => {
-        if (isPlainObject(patchedOptions[k])) {
-          patchedOptions[k].__loaded = true
-        }
-      })
-      setVisualOptions(project.visualOptions)
+      const patchedOptions = Object.keys(project.visualOptions || {}).reduce(
+        (options, optionKey) => {
+          const optionValue = project.visualOptions[optionKey]
+          return {
+            ...options,
+            [optionKey]: isPlainObject(optionValue)
+              ? { ...optionValue, __loaded: true }
+              : optionValue,
+          }
+        },
+        {}
+      )
+      setVisualOptions(patchedOptions)
     },
     [hydrateFromSavedProject]
   )
-
 
   // Handle data_url or project_id from URL query param
   useEffect(() => {
@@ -319,13 +323,14 @@ function App() {
         const header = document.querySelector('dataviz-tool-header')
         installHeaderProcessingToasts(header)
         const projectData = await header.loadProject(projectId)
-        const project = deserializeProject(
-          JSON.stringify(projectData),
-          charts
-        )
+        const project = deserializeProject(JSON.stringify(projectData), charts)
         importProject(project)
         setCurrentProjectId(projectId)
-        window.history.replaceState({}, document.title, window.location.pathname)
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        )
       } catch (err) {
         console.error('Project Load Error:', err)
         const header = document.querySelector('dataviz-tool-header')
@@ -335,9 +340,15 @@ function App() {
       }
     }
     doLoad()
-  }, [applyRecommendedRawgraphsChart, charts, importProject, installHeaderProcessingToasts, resolveCompatibleToolsForDataUrl, showProcessingToast, t])
-
-
+  }, [
+    applyRecommendedRawgraphsChart,
+    charts,
+    importProject,
+    installHeaderProcessingToasts,
+    resolveCompatibleToolsForDataUrl,
+    showProcessingToast,
+    t,
+  ])
 
   const getThumbnailDataUri = useCallback(() => {
     return new Promise((resolve, reject) => {
@@ -380,34 +391,37 @@ function App() {
   // Load Project from File Logic
   const fileInputRef = useRef(null)
 
-  const handleFileLoad = useCallback((e) => {
-    const file = e.target.files[0]
-    if (!file) return
+  const handleFileLoad = useCallback(
+    (e) => {
+      const file = e.target.files[0]
+      if (!file) return
 
-    const reader = new FileReader()
-    showProcessingToast(t('app.processingFile'))
-    reader.onload = (event) => {
-      try {
-        const projectData = JSON.parse(event.target.result)
-        const project = deserializeProject(
-          JSON.stringify(projectData),
-          charts
-        )
-        importProject(project)
-        // Reset input value to allow reloading the same file
-        e.target.value = ''
-      } catch (err) {
-        console.error('Error loading project:', err)
-        const header = document.querySelector('dataviz-tool-header')
-        if (header && typeof header.showMessage === 'function') {
-          header.showMessage(t('app.projectLoadFailed'), 'error')
-        } else {
-          alert(t('app.projectLoadFailed'))
+      const reader = new FileReader()
+      showProcessingToast(t('app.processingFile'))
+      reader.onload = (event) => {
+        try {
+          const projectData = JSON.parse(event.target.result)
+          const project = deserializeProject(
+            JSON.stringify(projectData),
+            charts
+          )
+          importProject(project)
+          // Reset input value to allow reloading the same file
+          e.target.value = ''
+        } catch (err) {
+          console.error('Error loading project:', err)
+          const header = document.querySelector('dataviz-tool-header')
+          if (header && typeof header.showMessage === 'function') {
+            header.showMessage(t('app.projectLoadFailed'), 'error')
+          } else {
+            alert(t('app.projectLoadFailed'))
+          }
         }
       }
-    }
-    reader.readAsText(file)
-  }, [charts, importProject, showProcessingToast, t])
+      reader.readAsText(file)
+    },
+    [charts, importProject, showProcessingToast, t]
+  )
 
   // Configure Tool Header
   useEffect(() => {
@@ -499,18 +513,29 @@ function App() {
     } else {
       customElements.whenDefined('dataviz-tool-header').then(configureHeader)
     }
-  }, [t, charts, importProject, exportProject, getThumbnailDataUri, currentProjectId, currentProjectName, applyRecommendedRawgraphsChart, installHeaderProcessingToasts, showProcessingToast])
+  }, [
+    t,
+    charts,
+    importProject,
+    exportProject,
+    getThumbnailDataUri,
+    currentProjectId,
+    currentProjectName,
+    applyRecommendedRawgraphsChart,
+    installHeaderProcessingToasts,
+    showProcessingToast,
+  ])
 
   //setting initial chart and related options
   useEffect(() => {
+    if (currentChart || !charts[0]) return
     setCurrentChart(charts[0])
     const options = getOptionsConfig(charts[0]?.visualOptions)
     setVisualOptions(getDefaultOptionsValues(options))
-  }, [])
+  }, [charts, currentChart])
 
   return (
     <div className="App">
-
       <input
         type="file"
         ref={fileInputRef}
@@ -590,7 +615,6 @@ function App() {
         </CookieConsent>
       </div>
       <ScreenSizeAlert />
-
     </div>
   )
 }

@@ -23,6 +23,14 @@ import styles from './DataMapping.module.scss'
 const aggregators = getAggregatorNames()
 const emptyList = []
 
+function isValidColumnType(dimension, columnDataType) {
+  return (
+    !dimension.validTypes ||
+    dimension.validTypes.length === 0 ||
+    dimension.validTypes.includes(columnDataType)
+  )
+}
+
 const ChartDimensionCard = ({
   dimension,
   dataTypes,
@@ -47,10 +55,8 @@ const ChartDimensionCard = ({
           ? getDefaultDimensionAggregation(dimension, dataTypes[item.id])
           : null
 
-        const columnDataType = getTypeName(dataTypes[item.id]);
-        const isValid =
-          dimension.validTypes?.length === 0 ||
-          dimension.validTypes?.includes(columnDataType)
+        const columnDataType = getTypeName(dataTypes[item.id])
+        const isValid = isValidColumnType(dimension, columnDataType)
 
         setMapping({
           ...mapping,
@@ -60,11 +66,11 @@ const ChartDimensionCard = ({
           mappedType: columnDataType,
           config: dimension.aggregation
             ? {
-              aggregation: [
-                ...(get(mapping, 'config.aggregation') || []),
-                defaulAggregation,
-              ],
-            }
+                aggregation: [
+                  ...(get(mapping, 'config.aggregation') || []),
+                  defaulAggregation,
+                ],
+              }
             : undefined,
         })
       } else if (item.dimensionId !== dimension.id) {
@@ -131,12 +137,30 @@ const ChartDimensionCard = ({
 
   const onChangeDimension = useCallback(
     (i, newCol) => {
-      setMapping({
+      const columnDataType = getTypeName(dataTypes[newCol])
+      const nextMapping = {
         ...mapping,
         value: mapping.value.map((col, j) => (j === i ? newCol : col)),
+        isValid: isValidColumnType(dimension, columnDataType),
+        mappedType: columnDataType,
+      }
+
+      if (dimension.aggregation) {
+        const nextAggregation = [...get(mapping, 'config.aggregation', [])]
+        nextAggregation[i] = getDefaultDimensionAggregation(
+          dimension,
+          dataTypes[newCol]
+        )
+        nextMapping.config = {
+          aggregation: nextAggregation,
+        }
+      }
+
+      setMapping({
+        ...nextMapping,
       })
     },
-    [mapping, setMapping]
+    [dataTypes, dimension, mapping, setMapping]
   )
 
   const onMove = useCallback(
@@ -181,12 +205,12 @@ const ChartDimensionCard = ({
           value: arrayInsert(mapping.value ?? [], index, item.id),
           config: dimension.aggregation
             ? {
-              aggregation: arrayInsert(
-                get(mapping, 'config.aggregation', []),
-                index,
-                defaulAggregation
-              ),
-            }
+                aggregation: arrayInsert(
+                  get(mapping, 'config.aggregation', []),
+                  index,
+                  defaulAggregation
+                ),
+              }
             : undefined,
         },
         true
@@ -233,11 +257,9 @@ const ChartDimensionCard = ({
           const columnDataType = getTypeName(dataTypes[columnId])
           const relatedAggregation = dimension.aggregation
             ? aggregationsMappedHere[i] ||
-            getDefaultDimensionAggregation(dimension, columnDataType)
+              getDefaultDimensionAggregation(dimension, dataTypes[columnId])
             : undefined
-          const isValid =
-            dimension.validTypes?.length === 0 ||
-            dimension.validTypes?.includes(columnDataType)
+          const isValid = isValidColumnType(dimension, columnDataType)
 
           const DataTypeIcon = dataTypeIcons[getTypeName(dataTypes[columnId])]
 

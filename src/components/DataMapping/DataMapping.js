@@ -13,6 +13,7 @@ import { DndProvider } from 'react-dnd'
 import ColumnCard from './ColumnCard'
 import ChartDimensionCard from './ChartDimensionCard'
 import get from 'lodash/get'
+import keyBy from 'lodash/keyBy'
 import uniqueId from 'lodash/uniqueId'
 import arrayInsert from 'array-insert'
 import { getDefaultDimensionAggregation } from '@rawgraphs/rawgraphs-core'
@@ -63,8 +64,11 @@ function handleReplaceLocalMapping(
     value: moveFn(prevToMapping.value ?? [], toIndex, removedItem.value),
   }
 
-  const dimension = dimensions[toDimension]
-  if (dimensions.aggregation) {
+  const dimensionsById = Array.isArray(dimensions)
+    ? keyBy(dimensions, 'id')
+    : dimensions
+  const dimension = dimensionsById[toDimension]
+  if (dimension?.aggregation) {
     let newAggregation
     if (removedItem.aggregation) {
       newAggregation = removedItem.aggregation

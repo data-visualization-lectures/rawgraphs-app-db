@@ -6,7 +6,7 @@ function JsonParser(dataString) {
   const trimmedDataString = dataString
     .trim()
     .replace(/^(?=\n)$|^\s*|\s*$|\n\n+/gm, '')
-  
+
   return [JSON.parse(trimmedDataString), {}]
 }
 
@@ -15,7 +15,7 @@ function CsvParser(dataString, opts) {
   const trimmedDataString = dataString
     .trim()
     .replace(/^(?=\n)$|^\s*|\s*$|\n\n+/gm, '')
-  
+
   // Use the separator the user gives me, if any
   if (opts.separator) {
     return [
@@ -51,13 +51,13 @@ function CsvParser(dataString, opts) {
   return [candidates[0].parsed, { separator: candidates[0].separator }]
 }
 
-export const SparqlMarker = Symbol("RawgraphsSparqlMarker")
+export const SparqlMarker = Symbol('RawgraphsSparqlMarker')
 
 function SparqlParser(data, opts) {
   if (data[SparqlMarker] === true) {
     return [data, {}]
-  } 
-  throw new Error("Not a sparql result")
+  }
+  throw new Error('Not a sparql result')
 }
 
 const PARSERS = [
@@ -123,7 +123,7 @@ export function normalizeJsonArray(jsonArray) {
         const valueType = typeof value
         if (Array.isArray(value)) {
           outElement[property] = value.filter(isScalarType).join(' ')
-        } else if (valueType === 'object' && valueType !== null) {
+        } else if (value !== null && valueType === 'object') {
           for (const nestedProperty in value) {
             const nestedValue = value[nestedProperty]
             if (isScalarType(nestedValue)) {

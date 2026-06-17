@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next'
 import styles from './DataMapping.module.scss'
 import { BsX } from 'react-icons/bs'
 import { useDrag, useDrop } from 'react-dnd'
-import get from 'lodash/get'
 import { AGGREGATIONS_KEYS } from '../../constants'
 
 export default function ChartDimensionItem({
@@ -161,7 +160,9 @@ export default function ChartDimensionItem({
             variant={isValid ? 'primary' : 'danger'}
             className="pr-5"
           >
-            {AGGREGATIONS_KEYS[relatedAggregation] ? t(AGGREGATIONS_KEYS[relatedAggregation]) : relatedAggregation}
+            {AGGREGATIONS_KEYS[relatedAggregation]
+              ? t(AGGREGATIONS_KEYS[relatedAggregation])
+              : relatedAggregation}
           </Dropdown.Toggle>
           <Dropdown.Menu>
             {aggregators.map((aggregatorName) => (
@@ -169,7 +170,9 @@ export default function ChartDimensionItem({
                 key={aggregatorName}
                 onClick={() => onChangeAggregation(index, aggregatorName)}
               >
-                {AGGREGATIONS_KEYS[aggregatorName] ? t(AGGREGATIONS_KEYS[aggregatorName]) : aggregatorName}
+                {AGGREGATIONS_KEYS[aggregatorName]
+                  ? t(AGGREGATIONS_KEYS[aggregatorName])
+                  : aggregatorName}
               </Dropdown.Item>
             ))}
           </Dropdown.Menu>

@@ -15,6 +15,47 @@ import { BsFillCaretRightFill } from 'react-icons/bs'
 
 const DATE_FORMATS = Object.keys(dateFormats)
 
+function compareEmptyValues(aValue, bValue) {
+  const isAEmpty = aValue === null || aValue === undefined || aValue === ''
+  const isBEmpty = bValue === null || bValue === undefined || bValue === ''
+  if (isAEmpty && isBEmpty) return 0
+  if (isAEmpty) return 1
+  if (isBEmpty) return -1
+  return null
+}
+
+function compareNumbers(aValue, bValue) {
+  const emptyComparison = compareEmptyValues(aValue, bValue)
+  if (emptyComparison !== null) return emptyComparison
+
+  const aNumber = Number(aValue)
+  const bNumber = Number(bValue)
+  if (Number.isNaN(aNumber) && Number.isNaN(bNumber)) return 0
+  if (Number.isNaN(aNumber)) return 1
+  if (Number.isNaN(bNumber)) return -1
+  return aNumber - bNumber
+}
+
+function compareDates(aValue, bValue) {
+  const emptyComparison = compareEmptyValues(aValue, bValue)
+  if (emptyComparison !== null) return emptyComparison
+
+  const aTime =
+    aValue instanceof Date ? aValue.valueOf() : new Date(aValue).valueOf()
+  const bTime =
+    bValue instanceof Date ? bValue.valueOf() : new Date(bValue).valueOf()
+  if (Number.isNaN(aTime) && Number.isNaN(bTime)) return 0
+  if (Number.isNaN(aTime)) return 1
+  if (Number.isNaN(bTime)) return -1
+  return aTime - bTime
+}
+
+function compareStrings(aValue, bValue) {
+  const emptyComparison = compareEmptyValues(aValue, bValue)
+  if (emptyComparison !== null) return emptyComparison
+  return aValue.toString().localeCompare(bValue.toString())
+}
+
 const DateFormatSelector = React.forwardRef(
   ({ currentFormat, onChange, className, ...props }, ref) => {
     return (
@@ -166,7 +207,7 @@ function DataTypeSelector({
                     {'Date'}
                     {currentType === 'date' && (
                       <span className={S['date-format-preview']}>
-                        {' (' + (currentTypeComplete.dateFormat) + ')  '}
+                        {' (' + currentTypeComplete.dateFormat + ')  '}
                       </span>
                     )}
                   </div>
@@ -192,20 +233,19 @@ function DataTypeSelector({
   )
 }
 
-function HeaderRenderer({ ...props }) {
-  const { column } = props
-  const { key, sortColumn, sortDirection } = column
+function HeaderRenderer({ column, sortDirection, onSort }) {
   return (
     <div
+      onClick={(event) => {
+        if (column.sortable) {
+          onSort(event.ctrlKey || event.metaKey)
+        }
+      }}
       className={classNames(
         { [S['raw-col-header']]: true },
-        {
-          [S['unsorted']]:
-            key !== sortColumn ||
-            (key === sortColumn && sortDirection === 'NONE'),
-        },
-        { [S['acs']]: key === sortColumn && sortDirection === 'ASC' },
-        { [S['desc']]: key === sortColumn && sortDirection === 'DESC' }
+        { [S['unsorted']]: !sortDirection },
+        { [S['acs']]: sortDirection === 'ASC' },
+        { [S['desc']]: sortDirection === 'DESC' }
       )}
     >
       <DataTypeSelector
@@ -231,7 +271,8 @@ export default function DataGrid({
   coerceTypes,
   onDataUpdate,
 }) {
-  const [[sortColumn, sortDirection], setSort] = useState(['id', 'NONE'])
+  const [sortColumns, setSortColumns] = useState([])
+  const activeSort = sortColumns[0]
 
   const keyedErrors = useMemo(() => keyBy(errors, 'row'), [errors])
 
@@ -241,11 +282,15 @@ export default function DataGrid({
   // Adjust constants to fit cell padding and font size
   // (Math.floor(Math.log10(data.dataset.length)) + 1) is the number
   //   of digits of the highest id
-  const idColumnWidth =
-    24 + 8 * (Math.floor(Math.log10(userDataset.length)) + 1)
-  
-  const equalDinstribution = (containerEl.current?.getBoundingClientRect().width - idColumnWidth - 1) / Object.keys(dataTypes).length
-  const columnWidth = equalDinstribution ? Math.max(equalDinstribution, 170) : 170;
+  const rowCount = Math.max(userDataset.length, 1)
+  const idColumnWidth = 24 + 8 * (Math.floor(Math.log10(rowCount)) + 1)
+
+  const equalDinstribution =
+    (containerEl.current?.getBoundingClientRect().width - idColumnWidth - 1) /
+    Object.keys(dataTypes).length
+  const columnWidth = equalDinstribution
+    ? Math.max(equalDinstribution, 170)
+    : 170
 
   const columns = useMemo(() => {
     if (!userDataset || !dataTypes) {
@@ -263,8 +308,6 @@ export default function DataGrid({
       ...Object.keys(dataTypes).map((k, i) => ({
         key: k,
         name: k,
-        sortColumn: sortColumn,
-        sortDirection: sortDirection,
         headerRenderer: HeaderRenderer,
         editable: true,
         formatter: ({ row }) => {
@@ -282,18 +325,10 @@ export default function DataGrid({
           coerceTypes({ ...dataTypes, [k]: nextType }),
         sortable: true,
         resizable: true,
-        width: columnWidth
+        width: columnWidth,
       })),
     ]
-  }, [
-    coerceTypes,
-    dataTypes,
-    userDataset,
-    idColumnWidth,
-    columnWidth,
-    sortColumn,
-    sortDirection,
-  ])
+  }, [coerceTypes, dataTypes, userDataset, idColumnWidth, columnWidth])
 
   const sortedDataset = useMemo(() => {
     let datasetWithIds = userDataset.map((item, i) => ({
@@ -303,60 +338,70 @@ export default function DataGrid({
       _stage3: dataset[i], // The dataset parsed by raw lib basing on data types is needed for sorting!
       _errors: keyedErrors[i]?.error, // Inject errors to format cells with parsing errors
     }))
-    if (sortDirection === 'NONE') return datasetWithIds
+    if (!activeSort) return datasetWithIds
 
-    const sortColumnType = getTypeName(dataTypes[sortColumn])
+    const sortColumn = activeSort.columnKey
+    const sortDirection = activeSort.direction
+    const sortColumnType =
+      sortColumn === '_id' ? 'number' : getTypeName(dataTypes[sortColumn])
+    const getSortableValue = (row) =>
+      sortColumn === '_id' ? row._id : row._stage3?.[sortColumn]
 
     if (sortColumnType === 'number') {
-      datasetWithIds = datasetWithIds.sort(
-        (a, b) => a._stage3[sortColumn] - b._stage3[sortColumn]
+      datasetWithIds = datasetWithIds.sort((a, b) =>
+        compareNumbers(getSortableValue(a), getSortableValue(b))
       )
     } else if (sortColumnType === 'date') {
-      datasetWithIds =
-        datasetWithIds.sort(
-          (a, b) =>
-            a._stage3[sortColumn]?.valueOf() ??
-            0 - b._stage3[sortColumn]?.valueOf()
-        ) ?? 0
+      datasetWithIds = datasetWithIds.sort((a, b) =>
+        compareDates(getSortableValue(a), getSortableValue(b))
+      )
     } else {
       datasetWithIds = datasetWithIds.sort((a, b) =>
-        a._stage3[sortColumn]
-          ?.toString()
-          .localeCompare(b._stage3[sortColumn].toString())
+        compareStrings(getSortableValue(a), getSortableValue(b))
       )
     }
 
     return sortDirection === 'DESC' ? datasetWithIds.reverse() : datasetWithIds
-  }, [userDataset, sortDirection, dataTypes, sortColumn, dataset, keyedErrors])
+  }, [userDataset, activeSort, dataTypes, dataset, keyedErrors])
 
-  const handleSort = useCallback((columnKey, direction) => {
-    setSort([columnKey, direction])
+  const handleRowsChange = useCallback(
+    (rows, { indexes, column }) => {
+      const columnKey = column?.key
+      if (!Object.prototype.hasOwnProperty.call(dataTypes, columnKey)) return
+
+      const newDataset = [...userDataset]
+      indexes.forEach((rowIndex) => {
+        const updatedRow = rows[rowIndex]
+        const sourceIndex = updatedRow._id - 1
+        if (sourceIndex < 0 || sourceIndex >= newDataset.length) return
+        newDataset[sourceIndex] = {
+          ...newDataset[sourceIndex],
+          [columnKey]: updatedRow[columnKey],
+        }
+      })
+      onDataUpdate && onDataUpdate(newDataset)
+    },
+    [dataTypes, onDataUpdate, userDataset]
+  )
+
+  const handleColumnResize = useCallback(() => {
+    // react-data-grid requires a resize handler when resizable columns are enabled.
   }, [])
+
+  const rowKeyGetter = useCallback((row) => row._id, [])
 
   return (
     <div ref={containerEl}>
       <ReactDataGrid
-        minColumnWidth={idColumnWidth}
         columns={columns}
         rows={sortedDataset}
+        rowKeyGetter={rowKeyGetter}
         rowHeight={48}
-        sortColumn={sortColumn}
-        sortDirection={sortDirection}
-        onSort={handleSort}
-        height={432}
-        onColumnResize={() => {
-          
-        }}
-        onRowsUpdate={(update) => {
-          if (update.action === 'CELL_UPDATE') {
-            const newDataset = [...userDataset]
-            newDataset[update.fromRow] = {
-              ...newDataset[update.fromRow],
-              [update.cellKey]: update.updated[update.cellKey],
-            }
-            onDataUpdate && onDataUpdate(newDataset)
-          }
-        }}
+        sortColumns={sortColumns}
+        onSortColumnsChange={setSortColumns}
+        style={{ height: 432 }}
+        onColumnResize={handleColumnResize}
+        onRowsChange={handleRowsChange}
       />
     </div>
   )

@@ -2,6 +2,10 @@
   "name": "rawgraphs-frontend",
   "version": "2.0.0-beta.10",
   "private": true,
+  "packageManager": "yarn@4.4.0",
+  "resolutions": {
+    "sparqljs@npm:^3.4.1": "3.5.2"
+  },
   "dependencies": {
     "@rawgraphs/rawgraphs-calendar-heatmap": "^1.0.0-beta.8",
     "@rawgraphs/rawgraphs-charts": "https://github.com/data-visualization-lectures/rawgraphs-charts.git",
@@ -48,6 +52,13 @@
   },
   "eslintConfig": {
     "extends": "react-app"
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "^@rdfjs-elements/sparql-editor/sparql-editor\\.js$": "<rootDir>/src/test/EmptyModule.js",
+      "^lit-html$": "<rootDir>/src/test/LitHtmlMock.js",
+      "^worker-loader!.*$": "<rootDir>/src/test/WorkerMock.js"
+    }
   },
   "browserslist": {
     "production": [

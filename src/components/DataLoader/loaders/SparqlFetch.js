@@ -64,7 +64,7 @@ export default function SparqlFetch({
       .catch((err) => {
         setLoadingError(t('sparql.error'))
       })
-  }, [parsedQuery, setLoadingError, setUserInput, url])
+  }, [parsedQuery, setLoadingError, setUserInput, t, url])
 
   useEffect(() => {
     const node = editorDomRef.current
