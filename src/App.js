@@ -25,11 +25,11 @@ import isPlainObject from 'lodash/isPlainObject'
 import CookieConsent from 'react-cookie-consent'
 import { useTranslation } from 'react-i18next'
 import {
-  RAWGRAPHS_TOOL_ID,
   findRecommendedRawgraphsChartId,
   getCompatibleToolsForDataUrl,
   getRawgraphsCatalogUrl,
 } from './utils/rawgraphsCatalog'
+import useToolHeaderIntegration from './hooks/useToolHeaderIntegration'
 
 // import FixedHeader from './components/FixedHeader/FixedHeader'
 
@@ -66,12 +66,6 @@ function App() {
   const [mappingLoading, setMappingLoading] = useState(false)
   const dataMappingRef = useRef(null)
   const catalogEntriesRef = useRef(null)
-
-  // Keep a ref to loadSample so tool-header callback can access it
-  const loadSampleRef = useRef(dataLoader.loadSample)
-  useEffect(() => {
-    loadSampleRef.current = dataLoader.loadSample
-  }, [dataLoader.loadSample])
 
   // Project management state (for header's save modal)
   const [currentProjectId, setCurrentProjectId] = useState(null)
@@ -258,6 +252,60 @@ function App() {
     [hydrateFromSavedProject]
   )
 
+  const getThumbnailDataUri = useCallback(() => {
+    return new Promise((resolve, reject) => {
+      if (!rawViz || !rawViz._node || !rawViz._node.firstChild) {
+        resolve(null)
+        return
+      }
+      try {
+        const svgString = new XMLSerializer().serializeToString(
+          rawViz._node.firstChild
+        )
+        const svgBlob = new Blob([svgString], {
+          type: 'image/svg+xml;charset=utf-8',
+        })
+        const URL_API = window.URL || window.webkitURL || window
+        const url = URL_API.createObjectURL(svgBlob)
+
+        const canvas = document.createElement('canvas')
+        canvas.width = rawViz._node.firstChild.clientWidth
+        canvas.height = rawViz._node.firstChild.clientHeight
+        const ctx = canvas.getContext('2d')
+
+        const img = new Image()
+        img.onload = function () {
+          ctx.drawImage(img, 0, 0)
+          URL_API.revokeObjectURL(url)
+          resolve(canvas.toDataURL('image/png'))
+        }
+        img.onerror = (e) => {
+          URL_API.revokeObjectURL(url)
+          reject(e)
+        }
+        img.src = url
+      } catch (err) {
+        reject(err)
+      }
+    })
+  }, [rawViz])
+
+  const loadSampleRef = useToolHeaderIntegration({
+    t,
+    charts,
+    currentProjectId,
+    currentProjectName,
+    exportProject,
+    getThumbnailDataUri,
+    importProject,
+    loadSample: dataLoader.loadSample,
+    applyRecommendedRawgraphsChart,
+    installHeaderProcessingToasts,
+    showProcessingToast,
+    setCurrentProjectId,
+    setCurrentProjectName,
+  })
+
   // Handle data_url or project_id from URL query param
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -313,48 +361,11 @@ function App() {
     charts,
     importProject,
     installHeaderProcessingToasts,
+    loadSampleRef,
     resolveCompatibleToolsForDataUrl,
     showProcessingToast,
     t,
   ])
-
-  const getThumbnailDataUri = useCallback(() => {
-    return new Promise((resolve, reject) => {
-      if (!rawViz || !rawViz._node || !rawViz._node.firstChild) {
-        resolve(null)
-        return
-      }
-      try {
-        const svgString = new XMLSerializer().serializeToString(
-          rawViz._node.firstChild
-        )
-        const svgBlob = new Blob([svgString], {
-          type: 'image/svg+xml;charset=utf-8',
-        })
-        const URL_API = window.URL || window.webkitURL || window
-        const url = URL_API.createObjectURL(svgBlob)
-
-        const canvas = document.createElement('canvas')
-        canvas.width = rawViz._node.firstChild.clientWidth
-        canvas.height = rawViz._node.firstChild.clientHeight
-        const ctx = canvas.getContext('2d')
-
-        const img = new Image()
-        img.onload = function () {
-          ctx.drawImage(img, 0, 0)
-          URL_API.revokeObjectURL(url)
-          resolve(canvas.toDataURL('image/png'))
-        }
-        img.onerror = (e) => {
-          URL_API.revokeObjectURL(url)
-          reject(e)
-        }
-        img.src = url
-      } catch (err) {
-        reject(err)
-      }
-    })
-  }, [rawViz])
 
   // Load Project from File Logic
   const fileInputRef = useRef(null)
@@ -390,109 +401,6 @@ function App() {
     },
     [charts, importProject, showProcessingToast, t]
   )
-
-  // Configure Tool Header
-  useEffect(() => {
-    const configureHeader = () => {
-      const header = document.querySelector('dataviz-tool-header')
-      if (!header) return
-      installHeaderProcessingToasts(header)
-
-      if (typeof header.setConfig === 'function') {
-        header.setConfig({
-          backgroundColor: '#06c26c',
-          logo: {
-            type: 'image',
-            src: '/logo_rawgraphs.png',
-            href: '/',
-          },
-          buttons: [
-            {
-              id: 'load-project-btn',
-              label: t('app.loadProject'),
-              action: () => header.showLoadModal(),
-              align: 'right',
-            },
-            {
-              id: 'save-project-btn',
-              label: t('app.saveProject'),
-              action: async () => {
-                showProcessingToast(t('app.processingSavePrep'))
-                const projectData = exportProject()
-                const thumbnailDataUri = await getThumbnailDataUri()
-                header.showSaveModal({
-                  name: currentProjectName || undefined,
-                  data: projectData,
-                  thumbnailDataUri: thumbnailDataUri,
-                  existingProjectId: currentProjectId || undefined,
-                })
-              },
-              align: 'right',
-            },
-          ],
-        })
-      }
-
-      if (typeof header.setProjectConfig === 'function') {
-        header.setProjectConfig({
-          appName: 'rawgraphs',
-          onProjectLoad: (projectData) => {
-            const project = deserializeProject(
-              JSON.stringify(projectData),
-              charts
-            )
-            importProject(project)
-          },
-          onProjectSave: (meta) => {
-            setCurrentProjectId(meta.id)
-            setCurrentProjectName(meta.name)
-          },
-          onProjectDelete: (projectId) => {
-            if (currentProjectId === projectId) {
-              setCurrentProjectId(null)
-              setCurrentProjectName(null)
-            }
-          },
-        })
-      }
-
-      // Sample data picker integration
-      if (typeof header.setSampleConfig === 'function') {
-        header.setSampleConfig({
-          toolId: RAWGRAPHS_TOOL_ID,
-          onSampleSelect: (detail) => {
-            showProcessingToast(t('app.processingSample'))
-            applyRecommendedRawgraphsChart(detail.compatibleTools || [])
-            fetch(detail.url)
-              .then((res) => res.text())
-              .then((text) => {
-                const separator = detail.format === 'tsv' ? '\t' : ','
-                if (loadSampleRef.current) {
-                  loadSampleRef.current(text, separator)
-                }
-              })
-          },
-        })
-      }
-    }
-
-    if (customElements.get('dataviz-tool-header')) {
-      configureHeader()
-    } else {
-      customElements.whenDefined('dataviz-tool-header').then(configureHeader)
-    }
-  }, [
-    t,
-    charts,
-    importProject,
-    exportProject,
-    getThumbnailDataUri,
-    currentProjectId,
-    currentProjectName,
-    applyRecommendedRawgraphsChart,
-    installHeaderProcessingToasts,
-    showProcessingToast,
-  ])
 
   //setting initial chart and related options
   useEffect(() => {
