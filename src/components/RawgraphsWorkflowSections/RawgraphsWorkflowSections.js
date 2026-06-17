@@ -13,18 +13,22 @@ export default function RawgraphsWorkflowSections({
   importProject,
   data,
   charts,
-  currentChart,
-  handleChartChange,
-  mappingLoading,
-  dataMappingRef,
-  mapping,
-  setMapping,
-  visualOptions,
-  setVisualOptions,
-  setRawViz,
-  setMappingLoading,
-  rawViz,
+  chartWorkflow,
 }) {
+  const {
+    currentChart,
+    handleChartChange,
+    mappingLoading,
+    dataMappingRef,
+    mapping,
+    setMapping,
+    visualOptions,
+    setVisualOptions,
+    setRawViz,
+    setMappingLoading,
+    rawViz,
+  } = chartWorkflow
+
   return (
     <>
       <Section title={t('app.section1')} loading={loading}>

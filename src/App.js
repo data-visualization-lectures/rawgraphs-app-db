@@ -33,6 +33,7 @@ function App() {
     installHeaderProcessingToasts,
   } = useToolHeaderToasts(t)
 
+  const chartWorkflow = useChartWorkflow({ charts, data })
   const {
     currentChart,
     setCurrentChart,
@@ -41,13 +42,8 @@ function App() {
     visualOptions,
     setVisualOptions,
     rawViz,
-    setRawViz,
-    mappingLoading,
-    setMappingLoading,
-    dataMappingRef,
-    handleChartChange,
     applyRecommendedRawgraphsChart,
-  } = useChartWorkflow({ charts, data })
+  } = chartWorkflow
 
   const { resolveCompatibleToolsForDataUrl } = useRawgraphsCatalog()
 
@@ -111,17 +107,7 @@ function App() {
           importProject={importProject}
           data={data}
           charts={charts}
-          currentChart={currentChart}
-          handleChartChange={handleChartChange}
-          mappingLoading={mappingLoading}
-          dataMappingRef={dataMappingRef}
-          mapping={mapping}
-          setMapping={setMapping}
-          visualOptions={visualOptions}
-          setVisualOptions={setVisualOptions}
-          setRawViz={setRawViz}
-          setMappingLoading={setMappingLoading}
-          rawViz={rawViz}
+          chartWorkflow={chartWorkflow}
         />
         <Footer />
         <CookieConsent
