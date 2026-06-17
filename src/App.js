@@ -1,9 +1,5 @@
 import './utils/extendColorPresets'
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
-import {
-  getOptionsConfig,
-  getDefaultOptionsValues,
-} from '@rawgraphs/rawgraphs-core'
+import React, { useCallback, useMemo, useRef } from 'react'
 
 // import HeaderItems from './HeaderItems'
 // import Header from './components/Header'
@@ -17,13 +13,10 @@ import ChartSelector from './components/ChartSelector'
 import DataMapping from './components/DataMapping'
 import ChartPreviewWithOptions from './components/ChartPreviewWIthOptions'
 import Exporter from './components/Exporter'
-import get from 'lodash/get'
-import usePrevious from './hooks/usePrevious'
 import useDataLoader from './hooks/useDataLoader'
 import CookieConsent from 'react-cookie-consent'
 import { useTranslation } from 'react-i18next'
 import {
-  findRecommendedRawgraphsChartId,
   getCompatibleToolsForDataUrl,
   getRawgraphsCatalogUrl,
 } from './utils/rawgraphsCatalog'
@@ -31,6 +24,7 @@ import useToolHeaderIntegration from './hooks/useToolHeaderIntegration'
 import useRawgraphsProject from './hooks/useRawgraphsProject'
 import useToolHeaderToasts from './hooks/useToolHeaderToasts'
 import useInitialUrlLoad from './hooks/useInitialUrlLoad'
+import useChartWorkflow from './hooks/useChartWorkflow'
 
 // import FixedHeader from './components/FixedHeader/FixedHeader'
 
@@ -43,13 +37,6 @@ function App() {
   const dataLoader = useDataLoader()
   const { data, loading } = dataLoader
 
-  /* From here on, we deal with viz state */
-  const [currentChart, setCurrentChart] = useState(null)
-  const [mapping, setMapping] = useState({})
-  const [visualOptions, setVisualOptions] = useState({})
-  const [rawViz, setRawViz] = useState(null)
-  const [mappingLoading, setMappingLoading] = useState(false)
-  const dataMappingRef = useRef(null)
   const catalogEntriesRef = useRef(null)
 
   const {
@@ -58,61 +45,21 @@ function App() {
     installHeaderProcessingToasts,
   } = useToolHeaderToasts(t)
 
-  const columnNames = useMemo(() => {
-    if (get(data, 'dataTypes')) {
-      return Object.keys(data.dataTypes)
-    }
-  }, [data])
-
-  const prevColumnNames = usePrevious(columnNames)
-  const clearLocalMapping = useCallback(() => {
-    if (dataMappingRef.current) {
-      dataMappingRef.current.clearLocalMapping()
-    }
-  }, [])
-
-  //resetting mapping when column names changes (ex: separator change in parsing)
-  useEffect(() => {
-    if (prevColumnNames) {
-      if (!columnNames) {
-        setMapping({})
-        clearLocalMapping()
-      } else {
-        const prevCols = prevColumnNames.join('.')
-        const currentCols = columnNames.join('.')
-        if (prevCols !== currentCols) {
-          setMapping({})
-          clearLocalMapping()
-        }
-      }
-    }
-  }, [columnNames, prevColumnNames, clearLocalMapping])
-
-  const handleChartChange = useCallback(
-    (nextChart) => {
-      setMapping({})
-      clearLocalMapping()
-      setCurrentChart(nextChart)
-      const options = getOptionsConfig(nextChart?.visualOptions)
-      setVisualOptions(getDefaultOptionsValues(options))
-      setRawViz(null)
-    },
-    [clearLocalMapping]
-  )
-
-  const applyRecommendedRawgraphsChart = useCallback(
-    (compatibleTools) => {
-      const chartId = findRecommendedRawgraphsChartId(compatibleTools)
-      if (!chartId) return false
-
-      const nextChart = charts.find((chart) => chart.metadata?.id === chartId)
-      if (!nextChart) return false
-
-      handleChartChange(nextChart)
-      return true
-    },
-    [charts, handleChartChange]
-  )
+  const {
+    currentChart,
+    setCurrentChart,
+    mapping,
+    setMapping,
+    visualOptions,
+    setVisualOptions,
+    rawViz,
+    setRawViz,
+    mappingLoading,
+    setMappingLoading,
+    dataMappingRef,
+    handleChartChange,
+    applyRecommendedRawgraphsChart,
+  } = useChartWorkflow({ charts, data })
 
   const getCatalogEntries = useCallback(async () => {
     if (catalogEntriesRef.current) return catalogEntriesRef.current
@@ -180,14 +127,6 @@ function App() {
     showHeaderMessage,
     setCurrentProjectId,
   })
-
-  //setting initial chart and related options
-  useEffect(() => {
-    if (currentChart || !charts[0]) return
-    setCurrentChart(charts[0])
-    const options = getOptionsConfig(charts[0]?.visualOptions)
-    setVisualOptions(getDefaultOptionsValues(options))
-  }, [charts, currentChart])
 
   return (
     <div className="App">
