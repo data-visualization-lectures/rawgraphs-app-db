@@ -19,9 +19,7 @@ import ChartPreviewWithOptions from './components/ChartPreviewWIthOptions'
 import Exporter from './components/Exporter'
 import get from 'lodash/get'
 import usePrevious from './hooks/usePrevious'
-import { serializeProject, deserializeProject } from '@rawgraphs/rawgraphs-core'
 import useDataLoader from './hooks/useDataLoader'
-import isPlainObject from 'lodash/isPlainObject'
 import CookieConsent from 'react-cookie-consent'
 import { useTranslation } from 'react-i18next'
 import {
@@ -30,6 +28,7 @@ import {
   getRawgraphsCatalogUrl,
 } from './utils/rawgraphsCatalog'
 import useToolHeaderIntegration from './hooks/useToolHeaderIntegration'
+import useRawgraphsProject from './hooks/useRawgraphsProject'
 
 // import FixedHeader from './components/FixedHeader/FixedHeader'
 
@@ -40,23 +39,7 @@ function App() {
     [i18n.language]
   )
   const dataLoader = useDataLoader()
-  const {
-    userInput,
-    userData,
-    userDataType,
-    parseError,
-    unstackedData,
-    unstackedColumns,
-    data,
-    separator,
-    thousandsSeparator,
-    decimalsSeparator,
-    locale,
-    stackDimension,
-    dataSource,
-    loading,
-    hydrateFromSavedProject,
-  } = dataLoader
+  const { data, loading } = dataLoader
 
   /* From here on, we deal with viz state */
   const [currentChart, setCurrentChart] = useState(null)
@@ -66,10 +49,6 @@ function App() {
   const [mappingLoading, setMappingLoading] = useState(false)
   const dataMappingRef = useRef(null)
   const catalogEntriesRef = useRef(null)
-
-  // Project management state (for header's save modal)
-  const [currentProjectId, setCurrentProjectId] = useState(null)
-  const [currentProjectName, setCurrentProjectName] = useState(null)
 
   const showProcessingToast = useCallback((message) => {
     const header = document.querySelector('dataviz-tool-header')
@@ -186,118 +165,34 @@ function App() {
     [getCatalogEntries]
   )
 
-  const exportProject = useCallback(() => {
-    return serializeProject({
-      userInput,
-      userData,
-      userDataType,
-      parseError,
-      unstackedData,
-      unstackedColumns,
-      data,
-      separator,
-      thousandsSeparator,
-      decimalsSeparator,
-      locale,
-      stackDimension,
-      dataSource,
-      currentChart,
-      mapping,
-      visualOptions,
-    })
-  }, [
+  const {
+    currentProjectId,
+    currentProjectName,
+    setCurrentProjectId,
+    setCurrentProjectName,
+    exportProject,
+    importProject,
+    importSerializedProject,
+    getThumbnailDataUri,
+  } = useRawgraphsProject({
+    charts,
+    dataLoader,
     currentChart,
-    data,
-    dataSource,
-    decimalsSeparator,
-    locale,
+    setCurrentChart,
     mapping,
-    parseError,
-    separator,
-    stackDimension,
-    thousandsSeparator,
-    userData,
-    userDataType,
-    userInput,
+    setMapping,
     visualOptions,
-    unstackedColumns,
-    unstackedData,
-  ])
-
-  // project import
-  const importProject = useCallback(
-    (project) => {
-      hydrateFromSavedProject(project)
-      setCurrentChart(project.currentChart)
-      setMapping(project.mapping)
-      // adding "annotations" for color scale:
-      // we annotate the incoming options values (complex ones such as color scales)
-      // to le the ui know they are coming from a loaded project
-      // so we don't have to re-evaluate defaults
-      // this is due to the current implementation of the color scale
-      const patchedOptions = Object.keys(project.visualOptions || {}).reduce(
-        (options, optionKey) => {
-          const optionValue = project.visualOptions[optionKey]
-          return {
-            ...options,
-            [optionKey]: isPlainObject(optionValue)
-              ? { ...optionValue, __loaded: true }
-              : optionValue,
-          }
-        },
-        {}
-      )
-      setVisualOptions(patchedOptions)
-    },
-    [hydrateFromSavedProject]
-  )
-
-  const getThumbnailDataUri = useCallback(() => {
-    return new Promise((resolve, reject) => {
-      if (!rawViz || !rawViz._node || !rawViz._node.firstChild) {
-        resolve(null)
-        return
-      }
-      try {
-        const svgString = new XMLSerializer().serializeToString(
-          rawViz._node.firstChild
-        )
-        const svgBlob = new Blob([svgString], {
-          type: 'image/svg+xml;charset=utf-8',
-        })
-        const URL_API = window.URL || window.webkitURL || window
-        const url = URL_API.createObjectURL(svgBlob)
-
-        const canvas = document.createElement('canvas')
-        canvas.width = rawViz._node.firstChild.clientWidth
-        canvas.height = rawViz._node.firstChild.clientHeight
-        const ctx = canvas.getContext('2d')
-
-        const img = new Image()
-        img.onload = function () {
-          ctx.drawImage(img, 0, 0)
-          URL_API.revokeObjectURL(url)
-          resolve(canvas.toDataURL('image/png'))
-        }
-        img.onerror = (e) => {
-          URL_API.revokeObjectURL(url)
-          reject(e)
-        }
-        img.src = url
-      } catch (err) {
-        reject(err)
-      }
-    })
-  }, [rawViz])
+    setVisualOptions,
+    rawViz,
+  })
 
   const loadSampleRef = useToolHeaderIntegration({
     t,
-    charts,
     currentProjectId,
     currentProjectName,
     exportProject,
     getThumbnailDataUri,
-    importProject,
+    importSerializedProject,
     loadSample: dataLoader.loadSample,
     applyRecommendedRawgraphsChart,
     installHeaderProcessingToasts,
@@ -339,8 +234,7 @@ function App() {
         const header = document.querySelector('dataviz-tool-header')
         installHeaderProcessingToasts(header)
         const projectData = await header.loadProject(projectId)
-        const project = deserializeProject(JSON.stringify(projectData), charts)
-        importProject(project)
+        importSerializedProject(projectData)
         setCurrentProjectId(projectId)
         window.history.replaceState(
           {},
@@ -358,49 +252,14 @@ function App() {
     doLoad()
   }, [
     applyRecommendedRawgraphsChart,
-    charts,
-    importProject,
+    importSerializedProject,
     installHeaderProcessingToasts,
     loadSampleRef,
     resolveCompatibleToolsForDataUrl,
+    setCurrentProjectId,
     showProcessingToast,
     t,
   ])
-
-  // Load Project from File Logic
-  const fileInputRef = useRef(null)
-
-  const handleFileLoad = useCallback(
-    (e) => {
-      const file = e.target.files[0]
-      if (!file) return
-
-      const reader = new FileReader()
-      showProcessingToast(t('app.processingFile'))
-      reader.onload = (event) => {
-        try {
-          const projectData = JSON.parse(event.target.result)
-          const project = deserializeProject(
-            JSON.stringify(projectData),
-            charts
-          )
-          importProject(project)
-          // Reset input value to allow reloading the same file
-          e.target.value = ''
-        } catch (err) {
-          console.error('Error loading project:', err)
-          const header = document.querySelector('dataviz-tool-header')
-          if (header && typeof header.showMessage === 'function') {
-            header.showMessage(t('app.projectLoadFailed'), 'error')
-          } else {
-            alert(t('app.projectLoadFailed'))
-          }
-        }
-      }
-      reader.readAsText(file)
-    },
-    [charts, importProject, showProcessingToast, t]
-  )
 
   //setting initial chart and related options
   useEffect(() => {
@@ -412,13 +271,6 @@ function App() {
 
   return (
     <div className="App">
-      <input
-        type="file"
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        accept=".rawgraphs,.json"
-        onChange={handleFileLoad}
-      />
       {/* <FixedHeader /> */}
       {/* <Header menuItems={HeaderItems} /> */}
       <div className="app-sections" style={{ marginTop: '96px' }}>

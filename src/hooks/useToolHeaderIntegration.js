@@ -1,15 +1,13 @@
 import { useEffect, useRef } from 'react'
-import { deserializeProject } from '@rawgraphs/rawgraphs-core'
 import { RAWGRAPHS_TOOL_ID } from '../utils/rawgraphsCatalog'
 
 export default function useToolHeaderIntegration({
   t,
-  charts,
   currentProjectId,
   currentProjectName,
   exportProject,
   getThumbnailDataUri,
-  importProject,
+  importSerializedProject,
   loadSample,
   applyRecommendedRawgraphsChart,
   installHeaderProcessingToasts,
@@ -67,12 +65,14 @@ export default function useToolHeaderIntegration({
       if (typeof header.setProjectConfig === 'function') {
         header.setProjectConfig({
           appName: 'rawgraphs',
-          onProjectLoad: (projectData) => {
-            const project = deserializeProject(
-              JSON.stringify(projectData),
-              charts
-            )
-            importProject(project)
+          onProjectLoad: (projectData, meta) => {
+            importSerializedProject(projectData)
+            if (meta && !meta.isGroupProject && meta.projectId) {
+              setCurrentProjectId(meta.projectId)
+            }
+            if (meta?.projectName) {
+              setCurrentProjectName(meta.projectName)
+            }
           },
           onProjectSave: (meta) => {
             setCurrentProjectId(meta.id)
@@ -113,8 +113,7 @@ export default function useToolHeaderIntegration({
     }
   }, [
     t,
-    charts,
-    importProject,
+    importSerializedProject,
     exportProject,
     getThumbnailDataUri,
     currentProjectId,
