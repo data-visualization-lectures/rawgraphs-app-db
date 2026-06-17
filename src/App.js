@@ -98,6 +98,49 @@ function App() {
   const [currentProjectId, setCurrentProjectId] = useState(null)
   const [currentProjectName, setCurrentProjectName] = useState(null)
 
+  const showProcessingToast = useCallback(
+    (message) => {
+      const header = document.querySelector('dataviz-tool-header')
+      if (header && typeof header.showMessage === 'function') {
+        header.showMessage(message, 'info', 5000)
+      }
+    },
+    []
+  )
+
+  const installHeaderProcessingToasts = useCallback(
+    (header) => {
+      if (!header || header.__dvzProcessingToastsInstalled === '1') return
+
+      if (typeof header.showLoadModal === 'function') {
+        const originalShowLoadModal = header.showLoadModal.bind(header)
+        header.showLoadModal = (...args) => {
+          showProcessingToast(t('app.processingProjectList'))
+          return originalShowLoadModal(...args)
+        }
+      }
+
+      if (typeof header.loadProject === 'function') {
+        const originalLoadProject = header.loadProject.bind(header)
+        header.loadProject = (...args) => {
+          showProcessingToast(t('app.processingProjectLoad'))
+          return originalLoadProject(...args)
+        }
+      }
+
+      if (typeof header.saveProject === 'function') {
+        const originalSaveProject = header.saveProject.bind(header)
+        header.saveProject = (...args) => {
+          showProcessingToast(t('app.processingProjectSave'))
+          return originalSaveProject(...args)
+        }
+      }
+
+      header.__dvzProcessingToastsInstalled = '1'
+    },
+    [showProcessingToast, t]
+  )
+
   const columnNames = useMemo(() => {
     if (get(data, 'dataTypes')) {
       return Object.keys(data.dataTypes)
@@ -249,6 +292,7 @@ function App() {
 
     const dataUrl = params.get('data_url')
     if (dataUrl) {
+      showProcessingToast(t('app.processingSample'))
       fetch(dataUrl)
         .then((res) => res.text())
         .then((text) => {
@@ -273,6 +317,7 @@ function App() {
       try {
         await customElements.whenDefined('dataviz-tool-header')
         const header = document.querySelector('dataviz-tool-header')
+        installHeaderProcessingToasts(header)
         const projectData = await header.loadProject(projectId)
         const project = deserializeProject(
           JSON.stringify(projectData),
@@ -290,7 +335,7 @@ function App() {
       }
     }
     doLoad()
-  }, [applyRecommendedRawgraphsChart, charts, importProject, resolveCompatibleToolsForDataUrl, t])
+  }, [applyRecommendedRawgraphsChart, charts, importProject, installHeaderProcessingToasts, resolveCompatibleToolsForDataUrl, showProcessingToast, t])
 
 
 
@@ -340,6 +385,7 @@ function App() {
     if (!file) return
 
     const reader = new FileReader()
+    showProcessingToast(t('app.processingFile'))
     reader.onload = (event) => {
       try {
         const projectData = JSON.parse(event.target.result)
@@ -361,13 +407,14 @@ function App() {
       }
     }
     reader.readAsText(file)
-  }, [importProject])
+  }, [charts, importProject, showProcessingToast, t])
 
   // Configure Tool Header
   useEffect(() => {
     const configureHeader = () => {
       const header = document.querySelector('dataviz-tool-header')
       if (!header) return
+      installHeaderProcessingToasts(header)
 
       if (typeof header.setConfig === 'function') {
         header.setConfig({
@@ -388,6 +435,7 @@ function App() {
               id: 'save-project-btn',
               label: t('app.saveProject'),
               action: async () => {
+                showProcessingToast(t('app.processingSavePrep'))
                 const projectData = exportProject()
                 const thumbnailDataUri = await getThumbnailDataUri()
                 header.showSaveModal({
@@ -431,6 +479,7 @@ function App() {
         header.setSampleConfig({
           toolId: RAWGRAPHS_TOOL_ID,
           onSampleSelect: (detail) => {
+            showProcessingToast(t('app.processingSample'))
             applyRecommendedRawgraphsChart(detail.compatibleTools || [])
             fetch(detail.url)
               .then((res) => res.text())
@@ -450,7 +499,7 @@ function App() {
     } else {
       customElements.whenDefined('dataviz-tool-header').then(configureHeader)
     }
-  }, [t, charts, importProject, exportProject, getThumbnailDataUri, currentProjectId, currentProjectName, applyRecommendedRawgraphsChart])
+  }, [t, charts, importProject, exportProject, getThumbnailDataUri, currentProjectId, currentProjectName, applyRecommendedRawgraphsChart, installHeaderProcessingToasts, showProcessingToast])
 
   //setting initial chart and related options
   useEffect(() => {

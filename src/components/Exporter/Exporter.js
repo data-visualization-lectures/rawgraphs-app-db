@@ -13,6 +13,13 @@ function downloadBlob(url, filename) {
 
 export default function Exporter({ rawViz }) {
   const { t } = useTranslation()
+  const showProcessingToast = useCallback(() => {
+    const header = document.querySelector('dataviz-tool-header')
+    if (header && typeof header.showMessage === 'function') {
+      header.showMessage(t('app.processingExport'), 'info', 5000)
+    }
+  }, [t])
+
   const downloadSvg = useCallback(
     (filename) => {
       var svgString = new XMLSerializer().serializeToString(
@@ -57,6 +64,7 @@ export default function Exporter({ rawViz }) {
   const [currentFile, setCurrentFile] = useState('viz')
 
   const downloadViz = useCallback(() => {
+    showProcessingToast()
     switch (currentFormat) {
       case 'svg':
         downloadSvg(`${currentFile}.svg`)
@@ -70,7 +78,7 @@ export default function Exporter({ rawViz }) {
       default:
         break
     }
-  }, [currentFile, currentFormat, downloadImage, downloadSvg])
+  }, [currentFile, currentFormat, downloadImage, downloadSvg, showProcessingToast])
 
   return (
     <div className="row">
