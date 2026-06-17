@@ -29,6 +29,8 @@ import {
 } from './utils/rawgraphsCatalog'
 import useToolHeaderIntegration from './hooks/useToolHeaderIntegration'
 import useRawgraphsProject from './hooks/useRawgraphsProject'
+import useToolHeaderToasts from './hooks/useToolHeaderToasts'
+import useInitialUrlLoad from './hooks/useInitialUrlLoad'
 
 // import FixedHeader from './components/FixedHeader/FixedHeader'
 
@@ -50,45 +52,11 @@ function App() {
   const dataMappingRef = useRef(null)
   const catalogEntriesRef = useRef(null)
 
-  const showProcessingToast = useCallback((message) => {
-    const header = document.querySelector('dataviz-tool-header')
-    if (header && typeof header.showMessage === 'function') {
-      header.showMessage(message, 'info', 5000)
-    }
-  }, [])
-
-  const installHeaderProcessingToasts = useCallback(
-    (header) => {
-      if (!header || header.__dvzProcessingToastsInstalled === '1') return
-
-      if (typeof header.showLoadModal === 'function') {
-        const originalShowLoadModal = header.showLoadModal.bind(header)
-        header.showLoadModal = (...args) => {
-          showProcessingToast(t('app.processingProjectList'))
-          return originalShowLoadModal(...args)
-        }
-      }
-
-      if (typeof header.loadProject === 'function') {
-        const originalLoadProject = header.loadProject.bind(header)
-        header.loadProject = (...args) => {
-          showProcessingToast(t('app.processingProjectLoad'))
-          return originalLoadProject(...args)
-        }
-      }
-
-      if (typeof header.saveProject === 'function') {
-        const originalSaveProject = header.saveProject.bind(header)
-        header.saveProject = (...args) => {
-          showProcessingToast(t('app.processingProjectSave'))
-          return originalSaveProject(...args)
-        }
-      }
-
-      header.__dvzProcessingToastsInstalled = '1'
-    },
-    [showProcessingToast, t]
-  )
+  const {
+    showHeaderMessage,
+    showProcessingToast,
+    installHeaderProcessingToasts,
+  } = useToolHeaderToasts(t)
 
   const columnNames = useMemo(() => {
     if (get(data, 'dataTypes')) {
@@ -201,65 +169,17 @@ function App() {
     setCurrentProjectName,
   })
 
-  // Handle data_url or project_id from URL query param
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-
-    const dataUrl = params.get('data_url')
-    if (dataUrl) {
-      showProcessingToast(t('app.processingSample'))
-      fetch(dataUrl)
-        .then((res) => res.text())
-        .then((text) => {
-          const isTsv = dataUrl.endsWith('.tsv')
-          if (loadSampleRef.current) {
-            loadSampleRef.current(text, isTsv ? '\t' : ',')
-          }
-        })
-        .then(() => resolveCompatibleToolsForDataUrl(dataUrl))
-        .then((compatibleTools) => {
-          applyRecommendedRawgraphsChart(compatibleTools)
-        })
-        .catch((err) => console.error('data_url load failed:', err))
-      window.history.replaceState({}, document.title, window.location.pathname)
-      return
-    }
-
-    const projectId = params.get('project_id')
-    if (!projectId) return
-
-    const doLoad = async () => {
-      try {
-        await customElements.whenDefined('dataviz-tool-header')
-        const header = document.querySelector('dataviz-tool-header')
-        installHeaderProcessingToasts(header)
-        const projectData = await header.loadProject(projectId)
-        importSerializedProject(projectData)
-        setCurrentProjectId(projectId)
-        window.history.replaceState(
-          {},
-          document.title,
-          window.location.pathname
-        )
-      } catch (err) {
-        console.error('Project Load Error:', err)
-        const header = document.querySelector('dataviz-tool-header')
-        if (header && typeof header.showMessage === 'function') {
-          header.showMessage(t('app.projectLoadError'), 'error')
-        }
-      }
-    }
-    doLoad()
-  }, [
+  useInitialUrlLoad({
+    t,
+    loadSampleRef,
+    resolveCompatibleToolsForDataUrl,
     applyRecommendedRawgraphsChart,
     importSerializedProject,
     installHeaderProcessingToasts,
-    loadSampleRef,
-    resolveCompatibleToolsForDataUrl,
-    setCurrentProjectId,
     showProcessingToast,
-    t,
-  ])
+    showHeaderMessage,
+    setCurrentProjectId,
+  })
 
   //setting initial chart and related options
   useEffect(() => {
