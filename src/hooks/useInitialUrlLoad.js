@@ -42,7 +42,7 @@ export default function useInitialUrlLoad({
       return
     }
 
-    const projectId = params.get('project_id')
+    const projectId = params.get('projectId')
     if (!projectId) return
 
     let isActive = true
