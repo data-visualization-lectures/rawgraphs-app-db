@@ -379,7 +379,5 @@
   "sample.olympicsMedals": "オリンピック メダル",
   "sample.nyWeather": "ニューヨークの天気（2012-2015年）",
   "sample.netflixOriginals": "Netflixオリジナルシリーズ2013/2017年",
-  "sample.loadingError": "読み込みエラー: ",
-
-  "languageSwitcher.label": "English"
+  "sample.loadingError": "読み込みエラー: "
 }

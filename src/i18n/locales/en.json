@@ -379,7 +379,5 @@
   "sample.olympicsMedals": "Olympic Medals",
   "sample.nyWeather": "New York weather (2012-2015)",
   "sample.netflixOriginals": "Netflix Original Series 2013/2017",
-  "sample.loadingError": "Loading error: ",
-
-  "languageSwitcher.label": "日本語"
+  "sample.loadingError": "Loading error: "
 }
