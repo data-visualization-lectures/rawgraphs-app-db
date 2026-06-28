@@ -1,13 +1,18 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import LanguageDetector from 'i18next-browser-languagedetector'
 import ja from './locales/ja.json'
 import en from './locales/en.json'
+import { resolveDatavizLocale } from '../utils/datavizLocale'
+
+const appLocale = resolveDatavizLocale()
+if (typeof document !== 'undefined' && document.documentElement) {
+  document.documentElement.lang = appLocale
+}
 
 i18n
-  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
+    lng: appLocale,
     resources: {
       ja: { translation: ja },
       en: { translation: en },
@@ -16,10 +21,6 @@ i18n
     supportedLngs: ['ja', 'en'],
     interpolation: {
       escapeValue: false,
-    },
-    detection: {
-      order: ['navigator'],
-      caches: [],
     },
   })
 
