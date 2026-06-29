@@ -8,6 +8,7 @@ import {
   parseAndCheckData,
 } from './useDataLoaderUtils/parser'
 import { stackData } from './useDataLoaderUtils/stack'
+import { resolveRawgraphsParsingLocale } from '../utils/datavizLocale'
 
 export const DATA_LOADER_MODE = {
   DIRECT: 'direct',
@@ -37,7 +38,7 @@ export default function useDataLoader() {
   const [separator, setSeparator] = useState(DefaultSeparator)
   const [thousandsSeparator, setThousandsSeparator] = useState(',')
   const [decimalsSeparator, setDecimalsSeparator] = useState('.')
-  const [locale, setLocale] = useState(navigator.language || 'en-US')
+  const [locale, setLocale] = useState(resolveRawgraphsParsingLocale)
   const [stackDimension, setStackDimension] = useState()
 
   /* Third stage: data ready to become a chart */
