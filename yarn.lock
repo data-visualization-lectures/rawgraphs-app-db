@@ -2295,9 +2295,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rawgraphs/rawgraphs-charts@https://github.com/data-visualization-lectures/rawgraphs-charts.git":
+"@rawgraphs/rawgraphs-charts@https://github.com/data-visualization-lectures/rawgraphs-charts.git#6a76cea6938e3bf776554862c3a2d859b6d7a779":
   version: v1.0.1
-  resolution: "@rawgraphs/rawgraphs-charts@https://github.com/data-visualization-lectures/rawgraphs-charts.git#commit=cad02448228b56248f909ae4c470ca030385efa5"
+  resolution: "@rawgraphs/rawgraphs-charts@https://github.com/data-visualization-lectures/rawgraphs-charts.git#commit=6a76cea6938e3bf776554862c3a2d859b6d7a779"
   dependencies:
     d3: "npm:^7.2.0"
     d3-contour: "npm:^3.0.1"
@@ -2307,7 +2307,7 @@ __metadata:
     d3-sankey-circular: "npm:^0.34.0"
     d3-voronoi-treemap: "npm:^1.1.1"
     louvain: "npm:^1.2.0"
-  checksum: 10c0/687b51c9f8f3a691fa7bf0867a74903b43cba0af15a7f90170c8b2f651f0d2221bf0fa5b1a466d50deb904afdd65094d46f8b65e2f656cec1c8a5811bb078227
+  checksum: 10c0/bf48cf03221452a59d3a87a0615fcb1f73da083247ef9250b9ea2355a55474b238482d25d83dcb378b4ff0a4b151ef73e813dbd4518e0a6abde8fdb33023267a
   languageName: node
   linkType: hard
 
@@ -14520,7 +14520,7 @@ __metadata:
   resolution: "rawgraphs-frontend@workspace:."
   dependencies:
     "@rawgraphs/rawgraphs-calendar-heatmap": "npm:^1.0.0-beta.8"
-    "@rawgraphs/rawgraphs-charts": "https://github.com/data-visualization-lectures/rawgraphs-charts.git"
+    "@rawgraphs/rawgraphs-charts": "https://github.com/data-visualization-lectures/rawgraphs-charts.git#6a76cea6938e3bf776554862c3a2d859b6d7a779"
     "@rawgraphs/rawgraphs-core": "npm:^1.0.0-beta.17"
     "@rdfjs-elements/sparql-editor": "npm:0.1.5"
     "@testing-library/jest-dom": "npm:^4.2.4"
