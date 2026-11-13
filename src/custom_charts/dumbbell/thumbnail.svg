@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_レイヤー_1" data-name="レイヤー_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 320 160">
+  <defs>
+    <style>
+      .st0 {
+        fill: #5b8db8;
+      }
+
+      .st1 {
+        fill: #fff;
+      }
+
+      .st2 {
+        fill: none;
+        stroke: #000;
+      }
+
+      .st3 {
+        fill: #d1605e;
+      }
+
+      .st4 {
+        fill: none;
+        stroke: #bbb;
+        stroke-width: 2;
+      }
+
+      .st5 {
+        fill: none;
+        stroke: #e5e5e5;
+      }
+
+      .st6 {
+        fill: #ddd;
+      }
+    </style>
+  </defs>
+  <rect class="st1" y="0" width="320" height="160"/>
+  <line class="st5" x1="60" y1="18" x2="290" y2="18"/>
+  <line class="st5" x1="60" y1="37" x2="290" y2="37"/>
+  <line class="st5" x1="60" y1="56" x2="290" y2="56"/>
+  <line class="st5" x1="60" y1="75" x2="290" y2="75"/>
+  <line class="st5" x1="60" y1="94" x2="290" y2="94"/>
+  <line class="st5" x1="60" y1="113" x2="290" y2="113"/>
+  <line class="st5" x1="60" y1="132" x2="290" y2="132"/>
+  <rect class="st6" x="15" y="15.5" width="30" height="5"/>
+  <line class="st4" x1="90" y1="18" x2="210" y2="18"/>
+  <circle class="st0" cx="90" cy="18" r="6"/>
+  <circle class="st3" cx="210" cy="18" r="6"/>
+  <rect class="st6" x="15" y="34.5" width="30" height="5"/>
+  <line class="st4" x1="130" y1="37" x2="240" y2="37"/>
+  <circle class="st0" cx="130" cy="37" r="6"/>
+  <circle class="st3" cx="240" cy="37" r="6"/>
+  <rect class="st6" x="15" y="53.5" width="30" height="5"/>
+  <line class="st4" x1="70" y1="56" x2="150" y2="56"/>
+  <circle class="st0" cx="70" cy="56" r="6"/>
+  <circle class="st3" cx="150" cy="56" r="6"/>
+  <rect class="st6" x="15" y="72.5" width="30" height="5"/>
+  <line class="st4" x1="180" y1="75" x2="250" y2="75"/>
+  <circle class="st0" cx="180" cy="75" r="6"/>
+  <circle class="st3" cx="250" cy="75" r="6"/>
+  <rect class="st6" x="15" y="91.5" width="30" height="5"/>
+  <line class="st4" x1="100" y1="94" x2="200" y2="94"/>
+  <circle class="st0" cx="100" cy="94" r="6"/>
+  <circle class="st3" cx="200" cy="94" r="6"/>
+  <rect class="st6" x="15" y="110.5" width="30" height="5"/>
+  <line class="st4" x1="220" y1="113" x2="150" y2="113"/>
+  <circle class="st0" cx="220" cy="113" r="6"/>
+  <circle class="st3" cx="150" cy="113" r="6"/>
+  <rect class="st6" x="15" y="129.5" width="30" height="5"/>
+  <line class="st4" x1="140" y1="132" x2="260" y2="132"/>
+  <circle class="st0" cx="140" cy="132" r="6"/>
+  <circle class="st3" cx="260" cy="132" r="6"/>
+  <line class="st2" x1="60" y1="148" x2="290" y2="148"/>
+</svg>
