@@ -20,6 +20,9 @@ export const dimensions = [
     },
 ]
 
+// a cell left empty in the dataset
+const isEmpty = (v) => v === null || v === undefined || v === ''
+
 export const mapData = function (data, mapping, dataTypes, dimensions) {
     const valueAggregator = getDimensionAggregator(
         'value',
@@ -41,9 +44,10 @@ export const mapData = function (data, mapping, dataTypes, dimensions) {
         ? (v) => d3.timeFormat(dateFormat)(new Date(v))
         : (v) => String(v)
 
+    // rows without a category are left out
     const results = d3
         .rollups(
-            data,
+            data.filter((d) => !isEmpty(d[categoryColumn])),
             (v) => ({
                 category: formatCategory(v[0][categoryColumn]),
                 // not mapped: count the rows

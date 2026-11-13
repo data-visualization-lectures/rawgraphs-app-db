@@ -103,6 +103,20 @@ export const visualOptions = {
         },
     },
 
+    valueAxisTitle: {
+        type: 'text',
+        label: 'Left axis title (empty = automatic)',
+        default: '',
+        group: 'labels',
+    },
+
+    cumulativeAxisTitle: {
+        type: 'text',
+        label: 'Right axis title',
+        default: 'Cumulative %',
+        group: 'labels',
+    },
+
     barColor: {
         type: 'color',
         label: 'Bar color',

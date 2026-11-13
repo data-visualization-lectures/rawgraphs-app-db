@@ -26,6 +26,9 @@ export const dimensions = [
   },
 ]
 
+// a cell left empty in the dataset
+export const isEmpty = (v) => v === null || v === undefined || v === ''
+
 export const mapData = function (data, mapping, dataTypes, dimensions) {
   if (!('size' in mapping)) {
     mapping.size = { value: undefined }
@@ -45,6 +48,8 @@ export const mapData = function (data, mapping, dataTypes, dimensions) {
   data.forEach((d) => {
     const source = d[mapping.source.value]
     const target = d[mapping.target.value]
+    // a row with only one node is kept: that node is drawn without a link
+    if (isEmpty(source) && isEmpty(target)) return
     const key = JSON.stringify([source, target])
     if (!pairs.has(key)) {
       pairs.set(key, { source, target, rows: [] })
