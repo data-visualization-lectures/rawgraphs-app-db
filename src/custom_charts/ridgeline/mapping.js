@@ -66,11 +66,21 @@ export const buildGroups = function (rows) {
   return groups
 }
 
+// Compares two group names: numbers by value, dates by time, anything else
+// as text where digit sequences count as numbers ("2月" before "10月").
+const compareNames = (a, b) => {
+  if (typeof a === 'number' && typeof b === 'number') return d3.ascending(a, b)
+  if (a instanceof Date && b instanceof Date) {
+    return d3.ascending(a.getTime(), b.getTime())
+  }
+  return String(a).localeCompare(String(b), undefined, { numeric: true })
+}
+
 // Orders the groups from top to bottom. `groups` is not modified.
 export const sortGroups = function (groups, sortGroupsBy) {
   const comparators = {
     original: null,
-    name: (a, b) => d3.ascending(a.group, b.group),
+    name: (a, b) => compareNames(a.group, b.group),
     medianAscending: (a, b) =>
       d3.ascending(d3.median(a.values), d3.median(b.values)),
     medianDescending: (a, b) =>
@@ -86,17 +96,17 @@ export const sortGroups = function (groups, sortGroupsBy) {
 }
 
 // Silverman's rule of thumb: 0.9 * min(sd, IQR / 1.34) * n^(-1/5).
-// The rule gives 0 when the values have no spread (one value, all values
-// equal, or an IQR of 0), so in that case it falls back to, in order:
-// the standard deviation, the size of the first value (|v|), and 1.
-// The result is always a positive number.
+// When the IQR is 0 but the values do vary, the standard deviation is used.
+// Returns 0 when the values have no spread at all (no values, one value, or
+// all values equal): the rule cannot choose a bandwidth then, and the caller
+// decides what to use instead.
 export const silvermanBandwidth = function (values) {
   const n = values.length
-  if (n === 0) return 1
+  if (n === 0) return 0
   const sd = d3.deviation(values) || 0
   const sorted = values.slice().sort(d3.ascending)
   const iqr = d3.quantileSorted(sorted, 0.75) - d3.quantileSorted(sorted, 0.25)
-  const spread = Math.min(sd, iqr / 1.34) || sd || Math.abs(values[0]) || 1
+  const spread = Math.min(sd, iqr / 1.34) || sd
   return 0.9 * spread * Math.pow(n, -1 / 5)
 }
 

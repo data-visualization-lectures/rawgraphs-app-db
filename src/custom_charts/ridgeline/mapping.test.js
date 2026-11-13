@@ -165,6 +165,41 @@ describe('sortGroups', () => {
     expect(names(sortGroups(dates, 'name'))).toEqual([early, late])
   })
 
+  test('name sorts digits in text as numbers, not as characters', () => {
+    const month = (list) =>
+      names(
+        sortGroups(
+          list.map((group) => ({ group, values: [1] })),
+          'name'
+        )
+      )
+    expect(month(['10月', '2月', '1月'])).toEqual(['1月', '2月', '10月'])
+    expect(month(['12月', '1月', '11月', '10月', '2月'])).toEqual([
+      '1月',
+      '2月',
+      '10月',
+      '11月',
+      '12月',
+    ])
+    // numbers are compared as numbers
+    expect(month([100, 9, 10])).toEqual([9, 10, 100])
+    // the same numbers given as text
+    expect(month(['100', '9', '10'])).toEqual(['9', '10', '100'])
+    // numbers and text together are compared as text
+    expect(month([10, 'b', 9, 'a'])).toEqual([9, 10, 'a', 'b'])
+  })
+
+  test('name sorts dates by time', () => {
+    const jan = new Date(2020, 0, 15)
+    const feb = new Date(2020, 1, 1)
+    const dec = new Date(2019, 11, 31)
+    const sorted = sortGroups(
+      [jan, feb, dec].map((group) => ({ group, values: [1] })),
+      'name'
+    )
+    expect(names(sorted)).toEqual([dec, jan, feb])
+  })
+
   test('median sorts by the median of the values', () => {
     // medians: b 7, c 2, a 25
     expect(names(sortGroups(groups, 'medianAscending'))).toEqual([
@@ -231,16 +266,20 @@ describe('silvermanBandwidth', () => {
     expect(b / a).toBeCloseTo(10, 10)
   })
 
-  test('is positive for a single value, equal values and an empty list', () => {
-    expect(silvermanBandwidth([7])).toBeCloseTo(0.9 * 7, 10)
-    expect(silvermanBandwidth([-7])).toBeCloseTo(0.9 * 7, 10)
-    expect(silvermanBandwidth([4, 4, 4, 4])).toBeCloseTo(
-      0.9 * 4 * Math.pow(4, -0.2),
-      10
-    )
-    expect(silvermanBandwidth([0])).toBeCloseTo(0.9, 10)
-    expect(silvermanBandwidth([0, 0, 0])).toBeGreaterThan(0)
-    expect(silvermanBandwidth([])).toBe(1)
+  test('is 0 when the values have no spread: one value, equal values, no values', () => {
+    expect(silvermanBandwidth([7])).toBe(0)
+    expect(silvermanBandwidth([-7])).toBe(0)
+    expect(silvermanBandwidth([4, 4, 4, 4])).toBe(0)
+    // the size of the values does not matter
+    expect(silvermanBandwidth([1000, 1000, 1000])).toBe(0)
+    expect(silvermanBandwidth([0])).toBe(0)
+    expect(silvermanBandwidth([0, 0, 0])).toBe(0)
+    expect(silvermanBandwidth([])).toBe(0)
+  })
+
+  test('is positive when the values vary', () => {
+    expect(silvermanBandwidth([1, 2])).toBeGreaterThan(0)
+    expect(silvermanBandwidth([0, 0, 0, 0, 1])).toBeGreaterThan(0)
   })
 
   test('falls back to the standard deviation when the IQR is 0', () => {

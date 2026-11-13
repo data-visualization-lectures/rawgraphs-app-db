@@ -1,6 +1,6 @@
 import * as d3 from 'd3'
 import render from './render'
-import { silvermanBandwidth } from './mapping'
+import { silvermanBandwidth, kernelDensity } from './mapping'
 import { visualOptions as optionDefs } from './visualOptions'
 
 const defaults = Object.keys(optionDefs).reduce((acc, key) => {
@@ -146,15 +146,77 @@ describe('Ridgeline render', () => {
     expect(own[1]).toBeCloseTo(own[0], 6)
   })
 
-  test('the curve has one point per sample', () => {
-    const svg = draw(items, { curveType: 'linear', samples: 10 })
-    const d = svg.querySelector('.ridge').getAttribute('d')
-    // the top line and the baseline, 10 points each
-    expect(numbersOf(d)).toHaveLength(2 * 2 * 10)
-    const minimal = draw(items, { curveType: 'linear', samples: 2 })
-    expect(
-      numbersOf(minimal.querySelector('.ridge').getAttribute('d'))
-    ).toHaveLength(2 * 2 * 2)
+  // number of points of the first curve (the top line and the baseline have the same count)
+  const pointsOf = (svg) =>
+    numbersOf(svg.querySelector('.ridge').getAttribute('d')).length / 4
+
+  test('the curve has one point per sample when the bandwidth is large enough', () => {
+    // bandwidth 1000: the x domain is about 6000 wide, 13 points are enough
+    // for a gap of half a bandwidth
+    const svg = draw(items, {
+      curveType: 'linear',
+      samples: 20,
+      bandwidth: 1000,
+    })
+    expect(pointsOf(svg)).toBe(20)
+  })
+
+  test('uses more points than samples when the bandwidth is small, and never fewer', () => {
+    // values 8..50, bandwidth 0.1: domain 42.6 wide, gaps of at most 0.05
+    // need 2 * 42.6 / 0.1 + 1 = 853 points
+    const fine = draw(items, {
+      curveType: 'linear',
+      samples: 100,
+      bandwidth: 0.1,
+    })
+    expect(pointsOf(fine)).toBe(853)
+    // more samples than needed: samples is the minimum
+    const many = draw(items, {
+      curveType: 'linear',
+      samples: 1000,
+      bandwidth: 0.1,
+    })
+    expect(pointsOf(many)).toBe(1000)
+  })
+
+  test('the number of points is limited to 2000', () => {
+    const svg = draw(items, {
+      curveType: 'linear',
+      samples: 100,
+      bandwidth: 0.001,
+    })
+    expect(pointsOf(svg)).toBe(2000)
+  })
+
+  test('with a small bandwidth the height of a curve follows the maximum of the density', () => {
+    // each group has its peak at a different place between the points of a
+    // 100 point grid; D has two values, so its maximum is half of the others
+    const groupValues = {
+      A: [5.037],
+      B: [14.3],
+      C: [23.77],
+      D: [31.9, 38.2],
+    }
+    const data = Object.keys(groupValues).flatMap((group) =>
+      groupValues[group].map((value) => ({ group, value }))
+    )
+    const bandwidth = 0.1
+    const svg = draw(data, { curveType: 'linear', bandwidth, samples: 100 })
+    const ys = labelY(svg)
+    const heights = Array.from(svg.querySelectorAll('.ridge')).map(
+      (p, i) => ys[i] - Math.min(...yOf(p.getAttribute('d')))
+    )
+    // maximum of the density on a very fine grid
+    const fineXs = d3.range(0, 45, 0.001)
+    const maxima = Object.values(groupValues).map((values) =>
+      d3.max(kernelDensity(values, fineXs, bandwidth))
+    )
+    // sameScale is on: the highest density is overlap * step high, the others in proportion
+    const tallest = 1.5 * (330 / (3 + 1.5))
+    // points half a bandwidth apart can miss a peak by up to 3%
+    heights.forEach((height, i) =>
+      expect(height / tallest).toBeCloseTo(maxima[i] / d3.max(maxima), 1)
+    )
   })
 
   test('Smooth and Linear give different curves', () => {
@@ -186,14 +248,109 @@ describe('Ridgeline render', () => {
     expect(value(ticks[ticks.length - 1])).toBe(40)
   })
 
-  test('bandwidth 0 uses the Silverman bandwidth of all the values together', () => {
-    const all = items.map((d) => d.value)
+  const paths = (svg) =>
+    Array.from(svg.querySelectorAll('.ridge')).map((p) => p.getAttribute('d'))
+  const valuesOf = (group) =>
+    items.filter((d) => d.group === group).map((d) => d.value)
+
+  test('bandwidth 0 uses the median of the Silverman bandwidths of the groups', () => {
+    // Cold and Mild have the same spread, Wide is much wider: the median is the narrow one
+    const cold = silvermanBandwidth(valuesOf('Cold'))
+    const wide = silvermanBandwidth(valuesOf('Wide'))
+    expect(wide).toBeGreaterThan(cold * 2)
     const auto = draw(items)
-    const manual = draw(items, { bandwidth: silvermanBandwidth(all) })
-    const paths = (svg) =>
-      Array.from(svg.querySelectorAll('.ridge')).map((p) => p.getAttribute('d'))
-    expect(paths(auto)).toEqual(paths(manual))
+    expect(paths(auto)).toEqual(paths(draw(items, { bandwidth: cold })))
+    expect(paths(auto)).not.toEqual(
+      paths(
+        draw(items, {
+          bandwidth: silvermanBandwidth(items.map((d) => d.value)),
+        })
+      )
+    )
     expect(paths(draw(items, { bandwidth: 1 }))).not.toEqual(paths(auto))
+  })
+
+  test('the automatic bandwidth does not include the distance between the groups', () => {
+    // A spans 0..4 and B spans 1000..1004: each is as wide as 5 neighbouring values
+    const far = [
+      ...[0, 1, 2, 3, 4].map((value) => ({ group: 'A', value })),
+      ...[1000, 1001, 1002, 1003, 1004].map((value) => ({ group: 'B', value })),
+    ]
+    const h = silvermanBandwidth([0, 1, 2, 3, 4])
+    expect(h).toBeLessThan(1)
+    const auto = draw(far)
+    expect(paths(auto)).toEqual(paths(draw(far, { bandwidth: h })))
+    // the x axis goes from 0 - 3h to 1004 + 3h
+    const ticks = Array.from(auto.querySelectorAll('#xAxis .tick'))
+    expect(ticks[0].textContent).toBe('0')
+    expect(ticks[ticks.length - 1].textContent).toBe('1,000')
+  })
+
+  test('groups without spread are left out of the automatic bandwidth', () => {
+    // Flat has one value only, so its bandwidth is 0 and does not count
+    const withFlat = [
+      ...items.filter((d) => d.group !== 'Mild'),
+      { group: 'Flat', value: 30 },
+    ]
+    const expected =
+      (silvermanBandwidth(valuesOf('Cold')) +
+        silvermanBandwidth(valuesOf('Wide'))) /
+      2
+    expect(paths(draw(withFlat))).toEqual(
+      paths(draw(withFlat, { bandwidth: expected }))
+    )
+  })
+
+  test('without a group the bandwidth is the one of all the values', () => {
+    const values = [1, 2, 3, 4, 5, 9]
+    const data = values.map((value) => ({ group: undefined, value }))
+    const mapping = { value: { value: 'temp' } }
+    expect(paths(draw(data, {}, mapping))).toEqual(
+      paths(draw(data, { bandwidth: silvermanBandwidth(values) }, mapping))
+    )
+  })
+
+  test('when no group has a spread, the bandwidth is 1/20 of the range of the values', () => {
+    const flat = [
+      ...[10, 10, 10].map((value) => ({ group: 'A', value })),
+      ...[20, 20, 20].map((value) => ({ group: 'B', value })),
+    ]
+    expect(paths(draw(flat))).toEqual(paths(draw(flat, { bandwidth: 0.5 })))
+    // one value per group
+    const single = [
+      { group: 'A', value: 100 },
+      { group: 'B', value: 300 },
+    ]
+    expect(paths(draw(single))).toEqual(paths(draw(single, { bandwidth: 10 })))
+  })
+
+  test('when all the values are equal the x range does not depend on their size', () => {
+    // no spread and no range: the bandwidth is 1, the x domain is value +- 3
+    const domainOf = (value) => {
+      const data = [value, value, value].map((v) => ({ group: 'A', value: v }))
+      const svg = draw(data)
+      const ticks = Array.from(svg.querySelectorAll('#xAxis .tick')).map((t) =>
+        Number(t.textContent.replace('−', '-').replace(',', ''))
+      )
+      return {
+        svg,
+        first: ticks[0] - value,
+        last: ticks[ticks.length - 1] - value,
+      }
+    }
+    const big = domainOf(1000)
+    const zero = domainOf(0)
+    const negative = domainOf(-50000)
+    ;[big, zero, negative].forEach((r) => {
+      expect(r.first).toBe(-3)
+      expect(r.last).toBe(3)
+      expect(paths(r.svg)[0]).not.toMatch(/NaN/)
+    })
+    // and the curves have the same shape (the x coordinates are shifted by rounding only)
+    const bigY = yOf(paths(big.svg)[0])
+    const zeroY = yOf(paths(zero.svg)[0])
+    expect(bigY).toHaveLength(zeroY.length)
+    bigY.forEach((y, i) => expect(y).toBeCloseTo(zeroY[i], 6))
   })
 
   test('draws the group names at the baseline, right aligned, in Arial', () => {
@@ -263,6 +420,17 @@ describe('Ridgeline render', () => {
     expect(
       labelTexts(draw(shuffled, { sortGroupsBy: 'medianDescending' }))
     ).toEqual(['Wide', 'Mild', 'Cold'])
+  })
+
+  test('sorting by name puts 1月, 2月, 10月 and 9, 10, 100 in that order', () => {
+    const rows = (names) =>
+      names.flatMap((group) => [1, 2, 3].map((value) => ({ group, value })))
+    expect(
+      labelTexts(draw(rows(['10月', '2月', '1月']), { sortGroupsBy: 'name' }))
+    ).toEqual(['1月', '2月', '10月'])
+    expect(
+      labelTexts(draw(rows([100, 9, 10]), { sortGroupsBy: 'name' }))
+    ).toEqual(['9', '10', '100'])
   })
 
   test('formats date groups as in the input', () => {

@@ -13,6 +13,9 @@ const curves = {
   linear: d3.curveLinear,
 }
 
+// upper limit of the points a density is computed on
+const MAX_POINTS = 2000
+
 // Returns a function that turns a group value into the text to show.
 function makeLabelFormatter(dimensionMapping) {
   const dataType = dimensionMapping && dimensionMapping.dataType
@@ -101,18 +104,41 @@ export default function render(
   const groupLabel = makeLabelFormatter(mapping.group)
   const groups = sortGroups(buildGroups(data), sortGroupsBy)
 
-  // one bandwidth for every group, so the shapes can be compared
   const allValues = data.map((d) => d.value)
-  const h = bandwidth > 0 ? bandwidth : silvermanBandwidth(allValues)
+  const [minValue, maxValue] = d3.extent(allValues)
+
+  // One bandwidth for every group, so the shapes can be compared.
+  // Automatic bandwidth: Silverman's rule is applied to each group on its own
+  // (the spread of all the values together would include the distance between
+  // the groups), and the median of the positive results is used for all of
+  // them. A group without spread (one value, or all values equal) gives 0 and
+  // is left out. When no group has a spread, 1/20 of the range of all the
+  // values is used, or 1 when that range is 0 too.
+  let h = bandwidth
+  if (!(h > 0)) {
+    const positives = groups
+      .map((g) => silvermanBandwidth(g.values))
+      .filter((b) => b > 0)
+    h = positives.length > 0 ? d3.median(positives) : (maxValue - minValue) / 20
+    if (!(h > 0)) h = 1
+  }
 
   // x scale shared by all groups
-  const [minValue, maxValue] = d3.extent(allValues)
   const x = d3
     .scaleLinear()
     .domain([minValue - 3 * h, maxValue + 3 * h])
     .range([0, chartWidth])
-  const pointCount = Math.floor(samples)
   const [x0, x1] = x.domain()
+
+  // The density is computed on evenly spaced points. At least `samples`
+  // points, and enough for the gap between points to be at most half the
+  // bandwidth (up to MAX_POINTS), so that a narrow peak cannot fall between
+  // two points.
+  const neededPoints = Math.ceil((2 * (x1 - x0)) / h) + 1
+  const pointCount = Math.max(
+    Math.floor(samples),
+    Math.min(MAX_POINTS, neededPoints)
+  )
   const xs = d3
     .range(pointCount)
     .map((i) => x0 + ((x1 - x0) * i) / (pointCount - 1))
