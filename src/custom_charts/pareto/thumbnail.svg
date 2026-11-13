@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_レイヤー_1" data-name="レイヤー_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 320 160">
+  <defs>
+    <style>
+      .st0 {
+        fill: #5b8db8;
+        stroke: #ccc;
+      }
+
+      .st1 {
+        fill: #fff;
+      }
+
+      .st2 {
+        fill: none;
+        stroke: #000;
+      }
+
+      .st3 {
+        fill: none;
+        stroke: #d1605e;
+        stroke-width: 2px;
+      }
+
+      .st4 {
+        fill: #d1605e;
+      }
+
+      .st5 {
+        fill: none;
+        stroke: #d1605e;
+        stroke-dasharray: 4 4;
+      }
+    </style>
+  </defs>
+  <rect class="st1" y="0" width="320" height="160"/>
+  <rect class="st0" x="30" y="60" width="40" height="80"/>
+  <rect class="st0" x="70" y="80" width="40" height="60"/>
+  <rect class="st0" x="110" y="104" width="40" height="36"/>
+  <rect class="st0" x="150" y="118" width="40" height="22"/>
+  <rect class="st0" x="190" y="126" width="40" height="14"/>
+  <rect class="st0" x="230" y="131" width="40" height="9"/>
+  <rect class="st0" x="270" y="135" width="40" height="5"/>
+  <line class="st5" x1="20" y1="44" x2="320" y2="44"/>
+  <polyline class="st3" points="50 60 90 40 130 30 170 25 210 22 250 21 290 20"/>
+  <circle class="st4" cx="50" cy="60" r="3"/>
+  <circle class="st4" cx="90" cy="40" r="3"/>
+  <circle class="st4" cx="130" cy="30" r="3"/>
+  <circle class="st4" cx="170" cy="25" r="3"/>
+  <circle class="st4" cx="210" cy="22" r="3"/>
+  <circle class="st4" cx="250" cy="21" r="3"/>
+  <circle class="st4" cx="290" cy="20" r="3"/>
+  <line class="st2" x1="20" y1="140" x2="320" y2="140"/>
+  <line class="st2" x1="20" y1="140" x2="20" y2="20"/>
+</svg>
