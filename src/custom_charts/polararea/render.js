@@ -1,8 +1,23 @@
 import * as d3 from 'd3'
-import { legend } from '@rawgraphs/rawgraphs-core'
+import { legend, dateFormats } from '@rawgraphs/rawgraphs-core'
 import { prepareItems, radiusScaleFor } from './mapping'
 
 const toRadians = (degrees) => (degrees * Math.PI) / 180
+
+// Returns a function that turns a category value into the text to show: dates
+// are written in the format of the input column, anything else with String().
+function makeLabelFormatter(dimensionMapping) {
+    const dataType = dimensionMapping && dimensionMapping.dataType
+    if (
+        dataType &&
+        dataType.type === 'date' &&
+        dateFormats[dataType.dateFormat]
+    ) {
+        const format = d3.timeFormat(dateFormats[dataType.dateFormat])
+        return (value) => (value instanceof Date ? format(value) : String(value))
+    }
+    return (value) => String(value)
+}
 
 export default function render(
     svgNode,
@@ -75,7 +90,13 @@ export default function render(
         )
     }
 
-    const items = prepareItems(data, sortBy)
+    const categoryLabel = makeLabelFormatter(mapping && mapping.category)
+    const items = prepareItems(data, sortBy, categoryLabel)
+    if (!(d3.sum(items, (d) => d.value) > 0)) {
+        throw new Error(
+            'The total of the values must be greater than 0 to draw a polar area chart.'
+        )
+    }
     const maxValue = d3.max(items, (d) => d.value)
     const radiusOf = radiusScaleFor(maxValue, innerRadius, outerRadius, encoding)
 
@@ -84,6 +105,7 @@ export default function render(
     const firstAngle = toRadians(startAngle)
     const sectors = items.map((d, i) => ({
         category: d.category,
+        label: categoryLabel(d.category),
         value: d.value,
         startAngle: firstAngle + i * sectorAngle,
         endAngle: firstAngle + (i + 1) * sectorAngle,
@@ -138,7 +160,7 @@ export default function render(
         .attr('class', 'sector')
         .attr('d', (d) => arc(d))
         .attr('fill', (d) => colorScale(d.category))
-    sectorPaths.append('title').text((d) => `${d.category}: ${d.value}`)
+    sectorPaths.append('title').text((d) => `${d.label}: ${d.value}`)
 
     // ring values, above the sectors, at the top of the chart
     if (showRings) {
@@ -207,7 +229,7 @@ export default function render(
             .attr('font-family', 'Arial, sans-serif')
             .attr('font-size', labelFontSize)
             .attr('fill', 'black')
-            .text((d) => d.category)
+            .text((d) => d.label)
     }
 
     // legend
@@ -217,8 +239,24 @@ export default function render(
             .attr('id', 'legend')
             .attr('transform', `translate(${width},${marginTop})`)
 
+        // the legend shows the labels, not the raw values of the categories;
+        // two categories can have the same label (a date shown as month)
+        const legendColors = new Map()
+        sectors.forEach((d) => {
+            if (!legendColors.has(d.label)) {
+                legendColors.set(d.label, colorScale(d.category))
+            }
+        })
+        const legendScale = d3
+            .scaleOrdinal()
+            .domain(Array.from(legendColors.keys()))
+            .range(Array.from(legendColors.values()))
+
         const chartLegend = legend().legendWidth(legendWidth)
-        chartLegend.addColor(mapping.category.value, colorScale)
+        chartLegend.addColor(
+            mapping && mapping.category ? mapping.category.value : 'Category',
+            legendScale
+        )
         legendLayer.call(chartLegend)
     }
 }

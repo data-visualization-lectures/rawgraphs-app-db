@@ -1,12 +1,30 @@
 import * as d3 from 'd3'
-import { legend } from '@rawgraphs/rawgraphs-core'
-import { prepareItems, allocateCells } from './mapping'
+import { legend, dateFormats } from '@rawgraphs/rawgraphs-core'
+import { prepareItems, allocateCells, compareCategories } from './mapping'
+
+// the largest number of cells (rows x columns) that is drawn
+const MAX_CELLS = 10000
 
 const sortings = {
     original: null,
     totalDescending: (a, b) => d3.descending(a.value, b.value),
     totalAscending: (a, b) => d3.ascending(a.value, b.value),
-    name: (a, b) => d3.ascending(a.category, b.category),
+    name: (a, b) => compareCategories(a.category, b.category),
+}
+
+// Returns a function that turns a category value into the text to show: dates
+// are written in the format of the input column, anything else with String().
+function makeLabelFormatter(dimensionMapping) {
+    const dataType = dimensionMapping && dimensionMapping.dataType
+    if (
+        dataType &&
+        dataType.type === 'date' &&
+        dateFormats[dataType.dateFormat]
+    ) {
+        const format = d3.timeFormat(dateFormats[dataType.dateFormat])
+        return (value) => (value instanceof Date ? format(value) : String(value))
+    }
+    return (value) => String(value)
 }
 
 // position (column, row) of the i-th cell, counted from the top left corner
@@ -94,6 +112,12 @@ export default function render(
         )
     }
 
+    if (rows * columns > MAX_CELLS) {
+        throw new Error(
+            `Rows x Columns is ${rows * columns}, but at most ${MAX_CELLS} cells can be drawn. Decrease it in the panel "chart" > "Rows" or "Columns"`
+        )
+    }
+
     // cells are squares: the smaller of the two possible sizes fits both axes
     const cellSize = Math.min(chartWidth / columns, chartHeight / rows)
     const padding = Math.max(0, cellPadding)
@@ -109,9 +133,10 @@ export default function render(
     const offsetY = (chartHeight - cellSize * rows) / 2
 
     // sort, then allocate: a tie for the last cells goes to the item shown first
-    const sorted = prepareItems(data)
+    const categoryLabel = makeLabelFormatter(mapping && mapping.category)
+    const sorted = prepareItems(data, categoryLabel)
     if (sortings[sortBy]) sorted.sort(sortings[sortBy])
-    const items = allocateCells(sorted, rows * columns)
+    const items = allocateCells(sorted, rows * columns, categoryLabel)
     const total = d3.sum(items, (d) => d.value)
 
     const percent = d3.format('.1%')
@@ -161,7 +186,7 @@ export default function render(
         .append('title')
         .text(
             (d) =>
-                `${d.category}: ${number(d.value)} (${percent(d.value / total)})`
+                `${categoryLabel(d.category)}: ${number(d.value)} (${percent(d.value / total)})`
         )
 
     // legend
@@ -171,8 +196,25 @@ export default function render(
             .attr('id', 'legend')
             .attr('transform', `translate(${width},${marginTop})`)
 
+        // the legend shows the labels, not the raw values of the categories;
+        // two categories can have the same label (a date shown as month)
+        const legendColors = new Map()
+        items.forEach((d) => {
+            const label = categoryLabel(d.category)
+            if (!legendColors.has(label)) {
+                legendColors.set(label, colorScale(d.category))
+            }
+        })
+        const legendScale = d3
+            .scaleOrdinal()
+            .domain(Array.from(legendColors.keys()))
+            .range(Array.from(legendColors.values()))
+
         const chartLegend = legend().legendWidth(legendWidth)
-        chartLegend.addColor(mapping.category.value, colorScale)
+        chartLegend.addColor(
+            mapping && mapping.category ? mapping.category.value : 'Category',
+            legendScale
+        )
         legendLayer.call(chartLegend)
     }
 }

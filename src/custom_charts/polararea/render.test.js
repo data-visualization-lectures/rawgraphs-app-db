@@ -315,13 +315,23 @@ describe('Polar area chart render', () => {
         expect(svg.querySelectorAll('path.sector')).toHaveLength(1)
     })
 
-    test('draws sectors when every value is 0', () => {
+    test('throws a readable error when every value is 0', () => {
+        expect(() =>
+            draw({}, [
+                { category: 'A', value: 0 },
+                { category: 'B', value: null },
+            ])
+        ).toThrow(
+            'The total of the values must be greater than 0 to draw a polar area chart.'
+        )
+    })
+
+    test('draws sectors when only some values are 0', () => {
         const svg = draw({}, [
             { category: 'A', value: 0 },
-            { category: 'B', value: 0 },
+            { category: 'B', value: 3 },
         ])
         expect(svg.querySelectorAll('path.sector')).toHaveLength(2)
-        expect(svg.querySelectorAll('circle.ring')).toHaveLength(0)
         expect(svg.innerHTML).not.toContain('NaN')
     })
 
@@ -367,5 +377,184 @@ describe('Polar area chart render', () => {
         const svg = draw({ width: 800, padAngle: 0, showRings: false })
         const a = svg.querySelector('path.sector')
         expect(farthestPoint(a)).toBeCloseTo(OUTER, 1)
+    })
+
+    test('sorts by name in natural order', () => {
+        const months = ['10月', '2月', '1月'].map((category) => ({
+            category,
+            value: 1,
+        }))
+        const titles = Array.from(
+            draw({ sortBy: 'name' }, months).querySelectorAll(
+                'path.sector > title'
+            )
+        ).map((t) => t.textContent.split(':')[0])
+        expect(titles).toEqual(['1月', '2月', '10月'])
+        const labels = Array.from(
+            draw({ sortBy: 'name' }, months).querySelectorAll('text.label')
+        ).map((t) => t.textContent)
+        expect(labels).toEqual(['1月', '2月', '10月'])
+    })
+
+    test('works without a category mapping', () => {
+        const svg = draw({ showLegend: true }, data, {})
+        expect(svg.querySelectorAll('path.sector')).toHaveLength(4)
+        expect(svg.querySelector('#legend').textContent).toContain('A')
+    })
+})
+
+describe('Polar area chart render with date categories', () => {
+    const dateMapping = {
+        category: {
+            value: 'day',
+            dataType: { type: 'date', dateFormat: 'YYYY-MM-DD' },
+        },
+        value: { value: 'visitors', config: { aggregation: 'sum' } },
+    }
+    const jan1 = new Date(2024, 0, 1)
+    const jan2 = new Date(2024, 0, 2)
+    const dates = [
+        { category: jan1, value: 10 },
+        { category: jan2, value: 30 },
+    ]
+    // the domain is made of Date objects, as the color scale UI does for a date column
+    const dateScale = scaleOrdinal()
+        .domain([jan1, jan2])
+        .range(['#aa0000', '#00aa00'])
+
+    test('writes titles and labels in the format of the input column', () => {
+        const svg = draw({ colorScale: dateScale }, dates, dateMapping)
+        expect(
+            Array.from(svg.querySelectorAll('path.sector > title')).map(
+                (t) => t.textContent
+            )
+        ).toEqual(['2024-01-01: 10', '2024-01-02: 30'])
+        expect(
+            Array.from(svg.querySelectorAll('text.label')).map(
+                (t) => t.textContent
+            )
+        ).toEqual(['2024-01-01', '2024-01-02'])
+    })
+
+    test('colors the sectors with the result of the color scale for the Date', () => {
+        const svg = draw({ colorScale: dateScale }, dates, dateMapping)
+        const fills = Array.from(svg.querySelectorAll('path.sector')).map((s) =>
+            s.getAttribute('fill')
+        )
+        expect(fills).toEqual([
+            dateScale(new Date(2024, 0, 1)),
+            dateScale(new Date(2024, 0, 2)),
+        ])
+        expect(fills).toEqual(['#aa0000', '#00aa00'])
+    })
+
+    test('passes the Date, not text, to the color scale', () => {
+        const received = []
+        const spy = (value) => {
+            received.push(value)
+            return '#123456'
+        }
+        draw({ colorScale: spy, showValueLabels: true }, dates, dateMapping)
+        expect(received.length).toBeGreaterThan(0)
+        received.forEach((v) => expect(v).toBeInstanceOf(Date))
+    })
+
+    test('shows the formatted labels in the legend', () => {
+        const svg = draw(
+            { colorScale: dateScale, showLegend: true },
+            dates,
+            dateMapping
+        )
+        const text = svg.querySelector('#legend').textContent
+        expect(text).toContain('day')
+        expect(text).toContain('2024-01-01')
+        expect(text).toContain('2024-01-02')
+        expect(text).not.toContain('GMT')
+    })
+
+    test('uses the labels in the error messages', () => {
+        expect(() =>
+            draw({}, [{ category: jan1, value: -1 }], dateMapping)
+        ).toThrow(/for 2024-01-01\)?\./)
+    })
+
+    test('sorts dates by time in the name sorting', () => {
+        const later = [
+            { category: jan2, value: 30 },
+            { category: jan1, value: 10 },
+        ]
+        const fills = Array.from(
+            draw(
+                { colorScale: dateScale, sortBy: 'name' },
+                later,
+                dateMapping
+            ).querySelectorAll('path.sector')
+        ).map((s) => s.getAttribute('fill'))
+        expect(fills).toEqual(['#aa0000', '#00aa00'])
+    })
+})
+
+describe('Polar area chart render with number categories', () => {
+    const numberMapping = {
+        category: { value: 'n', dataType: { type: 'number' } },
+        value: { value: 'visitors', config: { aggregation: 'sum' } },
+    }
+    const numbers = [
+        { category: 10, value: 5 },
+        { category: 9, value: 3 },
+        { category: 100, value: 1 },
+    ]
+    const numberScale = scaleOrdinal()
+        .domain([9, 10, 100])
+        .range(['#090909', '#101010', '#aaaaaa'])
+
+    test('passes numbers, not text, to the color scale', () => {
+        const received = []
+        const spy = (value) => {
+            received.push(value)
+            return '#123456'
+        }
+        draw({ colorScale: spy, showValueLabels: true }, numbers, numberMapping)
+        expect(received.length).toBeGreaterThan(0)
+        received.forEach((v) => expect(typeof v).toBe('number'))
+    })
+
+    test('colors 10 and 9 differently and shows numbers as text', () => {
+        const svg = draw({ colorScale: numberScale }, numbers, numberMapping)
+        expect(
+            Array.from(svg.querySelectorAll('path.sector')).map((s) =>
+                s.getAttribute('fill')
+            )
+        ).toEqual(['#101010', '#090909', '#aaaaaa'])
+        expect(
+            Array.from(svg.querySelectorAll('path.sector > title')).map(
+                (t) => t.textContent
+            )
+        ).toEqual(['10: 5', '9: 3', '100: 1'])
+    })
+
+    test('sorts numbers by value in the name sorting', () => {
+        const svg = draw(
+            { colorScale: numberScale, sortBy: 'name' },
+            numbers,
+            numberMapping
+        )
+        expect(
+            Array.from(svg.querySelectorAll('text.label')).map(
+                (t) => t.textContent
+            )
+        ).toEqual(['9', '10', '100'])
+    })
+
+    test('lists the numbers as text in the legend, in the drawing order', () => {
+        const svg = draw(
+            { colorScale: numberScale, showLegend: true, sortBy: 'name' },
+            numbers,
+            numberMapping
+        )
+        const legendLabels = Array.from(
+            svg.querySelectorAll('#legend .label')
+        ).map((t) => t.textContent)
+        expect(legendLabels).toEqual(['9', '10', '100'])
     })
 })

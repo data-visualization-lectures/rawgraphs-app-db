@@ -30,6 +30,14 @@ const mapping = {
     value: { value: 'count', config: { aggregation: 'sum' } },
 }
 
+const dateMapping = {
+    category: {
+        value: 'day',
+        dataType: { type: 'date', dateFormat: 'YYYY-MM-DD' },
+    },
+    value: { value: 'count', config: { aggregation: 'sum' } },
+}
+
 const data = [
     { category: 'A', value: 20 },
     { category: 'B', value: 50 },
@@ -301,6 +309,16 @@ describe('Waffle chart render', () => {
         expect(() => draw({ cellPadding: 100 })).toThrow(/Cell padding/)
     })
 
+    test('throws when rows x columns is more than 10000', () => {
+        expect(() => draw({ rows: 101, columns: 100 })).toThrow(/10000/)
+        expect(() => draw({ rows: 1, columns: 10001 })).toThrow(
+            /at most 10000 cells/
+        )
+        expect(() =>
+            draw({ rows: 100, columns: 100, cellPadding: 0 })
+        ).not.toThrow()
+    })
+
     test('throws a readable error for invalid values', () => {
         expect(() => draw({}, [{ category: 'A', value: 0 }])).toThrow(
             /greater than 0/
@@ -311,5 +329,219 @@ describe('Waffle chart render', () => {
         expect(() => draw({}, [{ category: 'A', value: 'x' }])).toThrow(
             /only numbers/
         )
+    })
+
+    test('uses the labels in the error messages', () => {
+        const svgData = [{ category: new Date(2024, 0, 1), value: -1 }]
+        expect(() => draw({}, svgData, dateMapping)).toThrow(
+            /for 2024-01-01\)?\./
+        )
+    })
+})
+
+describe('Waffle chart render with date categories', () => {
+    beforeAll(() => {
+        window.SVGElement.prototype.getComputedTextLength = () => 10
+        window.SVGElement.prototype.getBBox = () => ({
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+        })
+    })
+    afterAll(() => {
+        delete window.SVGElement.prototype.getComputedTextLength
+        delete window.SVGElement.prototype.getBBox
+    })
+
+    const jan1 = new Date(2024, 0, 1)
+    const jan2 = new Date(2024, 0, 2)
+    const dates = [
+        { category: jan1, value: 25 },
+        { category: jan2, value: 75 },
+    ]
+    // the domain is made of Date objects, as the color scale UI does for a date column
+    const dateScale = d3
+        .scaleOrdinal()
+        .domain([jan1, jan2])
+        .range(['#aa0000', '#00aa00'])
+
+    test('writes the labels in the format of the input column', () => {
+        const svg = draw(
+            { colorScale: dateScale },
+            dates,
+            dateMapping
+        )
+        const titles = Array.from(svg.querySelectorAll('.cell > title'))
+        expect(titles[0].textContent).toBe('2024-01-01: 25 (25.0%)')
+        expect(titles[99].textContent).toBe('2024-01-02: 75 (75.0%)')
+    })
+
+    test('colors the cells with the result of the color scale for the Date', () => {
+        const svg = draw({ colorScale: dateScale }, dates, dateMapping)
+        const f = fills(svg)
+        expect(f[0]).toBe(dateScale(new Date(2024, 0, 1)))
+        expect(f[0]).toBe('#aa0000')
+        expect(f[99]).toBe(dateScale(new Date(2024, 0, 2)))
+        expect(f[99]).toBe('#00aa00')
+        expect(f.filter((c) => c === '#aa0000')).toHaveLength(25)
+    })
+
+    test('passes the Date, not text, to the color scale', () => {
+        const received = []
+        const spy = (value) => {
+            received.push(value)
+            return '#123456'
+        }
+        draw({ colorScale: spy }, dates, dateMapping)
+        expect(received.length).toBeGreaterThan(0)
+        received.forEach((v) => expect(v).toBeInstanceOf(Date))
+    })
+
+    test('shows the formatted labels in the legend', () => {
+        const svg = draw(
+            { colorScale: dateScale, showLegend: true },
+            dates,
+            dateMapping
+        )
+        const text = svg.querySelector('#legend').textContent
+        expect(text).toContain('day')
+        expect(text).toContain('2024-01-01')
+        expect(text).toContain('2024-01-02')
+        expect(text).not.toContain('GMT')
+    })
+
+    test('sorts dates by time in the name sorting', () => {
+        const later = [
+            { category: jan2, value: 75 },
+            { category: jan1, value: 25 },
+        ]
+        const f = fills(
+            draw({ colorScale: dateScale, sortBy: 'name' }, later, dateMapping)
+        )
+        expect(f[0]).toBe('#aa0000')
+        expect(f[99]).toBe('#00aa00')
+    })
+
+    test('falls back to String() when the mapping has no date type', () => {
+        const svg = draw({ colorScale: dateScale }, dates, {
+            category: { value: 'day' },
+        })
+        const title = svg.querySelector('.cell > title').textContent
+        expect(title).toMatch(/^Mon Jan 01 2024/)
+    })
+
+    test('works without a category mapping', () => {
+        const svg = draw({ showLegend: true }, data, {})
+        expect(svg.querySelectorAll('#viz .cell')).toHaveLength(100)
+        expect(svg.querySelector('#legend').textContent).toContain('A')
+    })
+})
+
+describe('Waffle chart render with number categories', () => {
+    beforeAll(() => {
+        window.SVGElement.prototype.getComputedTextLength = () => 10
+        window.SVGElement.prototype.getBBox = () => ({
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+        })
+    })
+    afterAll(() => {
+        delete window.SVGElement.prototype.getComputedTextLength
+        delete window.SVGElement.prototype.getBBox
+    })
+
+    const numberMapping = {
+        category: { value: 'n', dataType: { type: 'number' } },
+        value: { value: 'count', config: { aggregation: 'sum' } },
+    }
+    const numbers = [
+        { category: 10, value: 50 },
+        { category: 9, value: 30 },
+        { category: 100, value: 20 },
+    ]
+    // a scale that tells the 9 and the 10 apart, as a numeric domain does
+    const numberScale = d3
+        .scaleOrdinal()
+        .domain([9, 10, 100])
+        .range(['#090909', '#101010', '#aaaaaa'])
+
+    test('passes numbers, not text, to the color scale', () => {
+        const received = []
+        const spy = (value) => {
+            received.push(value)
+            return '#123456'
+        }
+        draw({ colorScale: spy }, numbers, numberMapping)
+        expect(received.length).toBeGreaterThan(0)
+        received.forEach((v) => expect(typeof v).toBe('number'))
+    })
+
+    test('colors 10 and 9 differently', () => {
+        const svg = draw({ colorScale: numberScale }, numbers, numberMapping)
+        const f = fills(svg)
+        expect(f[0]).toBe('#101010')
+        expect(f[50]).toBe('#090909')
+        expect(f[80]).toBe('#aaaaaa')
+    })
+
+    test('shows the numbers as text in titles and in the legend', () => {
+        const svg = draw(
+            { colorScale: numberScale, showLegend: true },
+            numbers,
+            numberMapping
+        )
+        expect(svg.querySelector('.cell > title').textContent).toBe(
+            '10: 50 (50.0%)'
+        )
+        const text = svg.querySelector('#legend').textContent
+        expect(text).toContain('100')
+        expect(text).toContain('9')
+    })
+
+    test('lists the numbers as text in the legend, in the drawing order', () => {
+        const svg = draw(
+            { colorScale: numberScale, showLegend: true, sortBy: 'name' },
+            numbers,
+            numberMapping
+        )
+        const legendLabels = Array.from(
+            svg.querySelectorAll('#legend text.label')
+        ).map((t) => t.textContent)
+        expect(legendLabels).toEqual(['9', '10', '100'])
+    })
+
+    test('sorts numbers by value in the name sorting', () => {
+        const f = fills(
+            draw(
+                { colorScale: numberScale, sortBy: 'name' },
+                numbers,
+                numberMapping
+            )
+        )
+        // 9 (30 cells), 10 (50 cells), 100 (20 cells)
+        expect(f[0]).toBe('#090909')
+        expect(f[30]).toBe('#101010')
+        expect(f[99]).toBe('#aaaaaa')
+    })
+
+    test('sorts text with numbers in natural order in the name sorting', () => {
+        const months = ['10月', '2月', '1月'].map((category) => ({
+            category,
+            value: 1,
+        }))
+        const scale = d3
+            .scaleOrdinal()
+            .domain(['1月', '2月', '10月'])
+            .range(['#010101', '#020202', '#101010'])
+        const titles = Array.from(
+            draw(
+                { colorScale: scale, sortBy: 'name', rows: 1, columns: 3 },
+                months
+            ).querySelectorAll('.cell > title')
+        ).map((t) => t.textContent.split(':')[0])
+        expect(titles).toEqual(['1月', '2月', '10月'])
     })
 })

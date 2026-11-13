@@ -1,5 +1,5 @@
 import * as d3 from 'd3'
-import { getDimensionAggregator, dateFormats } from '@rawgraphs/rawgraphs-core'
+import { getDimensionAggregator } from '@rawgraphs/rawgraphs-core'
 
 export const dimensions = [
     {
@@ -42,51 +42,60 @@ export const mapData = function (data, mapping, dataTypes, dimensions) {
     if (!('value' in mapping)) mapping.value = { value: undefined }
 
     const categoryColumn = mapping.category.value
-    const categoryType = dataTypes ? dataTypes[categoryColumn] : undefined
-    const dateFormat =
-        categoryType && categoryType.type === 'date'
-            ? dateFormats[categoryType.dateFormat]
-            : undefined
-    const formatCategory = dateFormat
-        ? (v) => d3.timeFormat(dateFormat)(new Date(v))
-        : (v) => String(v)
+    const valueColumn = mapping.value.value
 
-    // rows without a category are left out
-    const rows = data.filter((d) => !isEmpty(d[categoryColumn]))
+    // The category is returned as it is in the dataset (Date, number or
+    // string), so that the color scale receives the same type as the domain
+    // built by the app. The label is made at render time.
+    // InternMap groups Date objects by value, not by identity, and keeps the
+    // order of first appearance. Rows without a category are left out.
+    const groups = new d3.InternMap()
+    data.forEach((row) => {
+        const category = row[categoryColumn]
+        if (isEmpty(category)) return
+        if (!groups.has(category)) groups.set(category, { category, rows: [] })
+        groups.get(category).rows.push(row)
+    })
 
-    // rollups keeps the order in which the categories first appear;
-    // grouping on the formatted label also enables grouping on dates
-    return d3
-        .rollups(
-            rows,
-            (v) => ({
-                category: formatCategory(v[0][categoryColumn]),
-                // not mapped: count the rows
-                value: mapping.value.value
-                    ? aggregatePresent(
-                          valueAggregator,
-                          v.map((d) => d[mapping.value.value])
-                      )
-                    : v.length,
-            }),
-            (d) => formatCategory(d[categoryColumn])
-        )
-        .map((d) => d[1])
+    return Array.from(groups.values(), ({ category, rows }) => ({
+        category,
+        // not mapped: count the rows
+        value: valueColumn
+            ? aggregatePresent(
+                  valueAggregator,
+                  rows.map((d) => d[valueColumn])
+              )
+            : rows.length,
+    }))
+}
+
+/**
+ * Compares two category values for the sorting by name: numbers by value,
+ * dates by time, anything else as text where digit sequences are compared as
+ * numbers ("2" before "10").
+ */
+export const compareCategories = function (a, b) {
+    if (typeof a === 'number' && typeof b === 'number') return d3.ascending(a, b)
+    if (a instanceof Date && b instanceof Date) {
+        return d3.ascending(a.getTime(), b.getTime())
+    }
+    return String(a).localeCompare(String(b), undefined, { numeric: true })
 }
 
 const sortings = {
     original: null,
     totalDescending: (a, b) => d3.descending(a.value, b.value),
     totalAscending: (a, b) => d3.ascending(a.value, b.value),
-    name: (a, b) => d3.ascending(a.category, b.category),
+    name: (a, b) => compareCategories(a.category, b.category),
 }
 
 /**
  * Checks the values of the items returned by mapData and sorts them.
  * An empty cell is aggregated to null: it counts as 0.
- * The input is not modified.
+ * The input is not modified. `label` turns a category into the text used in
+ * the error messages.
  */
-export const prepareItems = function (items, sortBy) {
+export const prepareItems = function (items, sortBy, label = String) {
     const rows = items.map((d) => ({
         category: d.category,
         value: d.value === null ? 0 : d.value,
@@ -95,12 +104,12 @@ export const prepareItems = function (items, sortBy) {
     rows.forEach((d) => {
         if (typeof d.value !== 'number' || !Number.isFinite(d.value)) {
             throw new Error(
-                `The "Value" dimension must contain only numbers (found "${d.value}" for ${d.category}).`
+                `The "Value" dimension must contain only numbers (found "${d.value}" for ${label(d.category)}).`
             )
         }
         if (d.value < 0) {
             throw new Error(
-                `A polar area chart cannot show negative values (found ${d.value} for ${d.category}).`
+                `A polar area chart cannot show negative values (found ${d.value} for ${label(d.category)}).`
             )
         }
     })

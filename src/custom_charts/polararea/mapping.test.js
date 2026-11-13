@@ -1,6 +1,7 @@
 import {
     mapData,
     prepareItems,
+    compareCategories,
     radiusScaleFor,
     dimensions,
 } from './mapping'
@@ -107,21 +108,23 @@ describe('Polar area chart data mapping', () => {
         ])
     })
 
-    test('keeps a category 0 and turns numbers into text', () => {
+    test('keeps a category 0 and returns numbers as numbers', () => {
         const mapping = { category: { value: 'month' } }
         const result = mapData(
-            [{ month: 0 }, { month: 1 }, { month: 0 }],
+            [{ month: 0 }, { month: 10 }, { month: 0 }, { month: 9 }],
             mapping,
             { month: { type: 'number' } },
             dimensions
         )
         expect(result).toEqual([
-            { category: '0', value: 2 },
-            { category: '1', value: 1 },
+            { category: 0, value: 2 },
+            { category: 10, value: 1 },
+            { category: 9, value: 1 },
         ])
+        result.forEach((d) => expect(typeof d.category).toBe('number'))
     })
 
-    test('formats date categories with the detected date format', () => {
+    test('returns date categories as Date', () => {
         const dates = [
             { day: new Date(2020, 0, 6), n: 10 },
             { day: new Date(2020, 0, 5), n: 1 },
@@ -137,32 +140,28 @@ describe('Polar area chart data mapping', () => {
             { day: { type: 'date', dateFormat: 'YYYY-MM-DD' }, n: 'number' },
             dimensions
         )
-        expect(result).toEqual([
-            { category: '2020-01-06', value: 10 },
-            { category: '2020-01-05', value: 3 },
+        expect(result).toHaveLength(2)
+        result.forEach((d) => expect(d.category).toBeInstanceOf(Date))
+        expect(result.map((d) => d.category.getTime())).toEqual([
+            new Date(2020, 0, 6).getTime(),
+            new Date(2020, 0, 5).getTime(),
         ])
+        expect(result.map((d) => d.value)).toEqual([10, 3])
     })
 
-    test('groups dates that have the same label', () => {
-        const dates = [
-            { day: new Date(2020, 0, 6), n: 10 },
-            { day: new Date(2020, 0, 20), n: 1 },
-            { day: new Date(2020, 1, 2), n: 2 },
-        ]
-        const mapping = {
-            category: { value: 'day' },
-            value: { value: 'n', config: { aggregation: 'sum' } },
-        }
+    test('groups the same date into one category even for different Date objects', () => {
+        const mapping = { category: { value: 'day' } }
         const result = mapData(
-            dates,
+            [
+                { day: new Date('2024-01-01T00:00:00Z') },
+                { day: new Date('2024-01-02T00:00:00Z') },
+                { day: new Date('2024-01-01T00:00:00Z') },
+            ],
             mapping,
-            { day: { type: 'date', dateFormat: 'YYYY-MM' }, n: 'number' },
+            { day: { type: 'date', dateFormat: 'YYYY-MM-DD' } },
             dimensions
         )
-        expect(result).toEqual([
-            { category: '2020-01', value: 11 },
-            { category: '2020-02', value: 2 },
-        ])
+        expect(result.map((d) => d.value)).toEqual([2, 1])
     })
 
     test('returns an empty array for empty data', () => {
@@ -208,6 +207,44 @@ describe('prepareItems', () => {
         expect(names(prepareItems(items, 'name'))).toEqual(['a', 'b', 'c', 'd'])
     })
 
+    test('sorts by name in natural order', () => {
+        const sortedNames = (categories) =>
+            names(
+                prepareItems(
+                    categories.map((category) => ({ category, value: 1 })),
+                    'name'
+                )
+            )
+        expect(sortedNames(['10月', '2月', '1月'])).toEqual([
+            '1月',
+            '2月',
+            '10月',
+        ])
+        expect(sortedNames([100, 9, 10])).toEqual([9, 10, 100])
+    })
+
+    test('sorts dates by time when sorting by name', () => {
+        const later = new Date(2024, 5, 1)
+        const earlier = new Date(2023, 0, 1)
+        const result = prepareItems(
+            [
+                { category: later, value: 1 },
+                { category: earlier, value: 1 },
+            ],
+            'name'
+        )
+        expect(result.map((d) => d.category.getTime())).toEqual([
+            earlier.getTime(),
+            later.getTime(),
+        ])
+    })
+
+    test('uses the label function for the category in the messages', () => {
+        expect(() =>
+            prepareItems([{ category: 1, value: -1 }], 'original', (c) => `L${c}`)
+        ).toThrow(/L1/)
+    })
+
     test('does not modify its input', () => {
         const copy = JSON.parse(JSON.stringify(items))
         prepareItems(items, 'name')
@@ -247,6 +284,18 @@ describe('prepareItems', () => {
         expect(() =>
             prepareItems([{ category: 'A', value: NaN }], 'original')
         ).toThrow(/only numbers/)
+    })
+})
+
+describe('compareCategories', () => {
+    test('compares numbers by value, dates by time and others as natural text', () => {
+        expect(compareCategories(9, 10)).toBeLessThan(0)
+        expect(compareCategories(100, 10)).toBeGreaterThan(0)
+        expect(
+            compareCategories(new Date(2024, 0, 1), new Date(2024, 0, 2))
+        ).toBeLessThan(0)
+        expect(compareCategories('2月', '10月')).toBeLessThan(0)
+        expect(compareCategories('a', 'a')).toBe(0)
     })
 })
 

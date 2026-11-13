@@ -1,4 +1,10 @@
-import { mapData, allocateCells, prepareItems, dimensions } from './mapping'
+import {
+    mapData,
+    allocateCells,
+    prepareItems,
+    compareCategories,
+    dimensions,
+} from './mapping'
 
 describe('Waffle chart data mapping', () => {
     const dataTypes = {
@@ -105,7 +111,7 @@ describe('Waffle chart data mapping', () => {
         ])
     })
 
-    test('converts number categories to strings', () => {
+    test('returns number categories as numbers', () => {
         const mapping = {
             category: { value: 'year' },
             value: { value: 'count', config: { aggregation: 'sum' } },
@@ -115,18 +121,21 @@ describe('Waffle chart data mapping', () => {
                 { year: 2021, count: 1 },
                 { year: 2020, count: 2 },
                 { year: 2021, count: 3 },
+                { year: 0, count: 5 },
             ],
             mapping,
             { year: { type: 'number' }, count: { type: 'number' } },
             dimensions
         )
         expect(result).toEqual([
-            { category: '2021', value: 4 },
-            { category: '2020', value: 2 },
+            { category: 2021, value: 4 },
+            { category: 2020, value: 2 },
+            { category: 0, value: 5 },
         ])
+        result.forEach((d) => expect(typeof d.category).toBe('number'))
     })
 
-    test('formats date categories with the detected date format', () => {
+    test('returns date categories as Date and groups equal dates', () => {
         const dates = [
             { day: new Date(2020, 0, 6), n: 10 },
             { day: new Date(2020, 0, 5), n: 1 },
@@ -142,10 +151,28 @@ describe('Waffle chart data mapping', () => {
             { day: { type: 'date', dateFormat: 'YYYY-MM-DD' }, n: 'number' },
             dimensions
         )
-        expect(result).toEqual([
-            { category: '2020-01-06', value: 10 },
-            { category: '2020-01-05', value: 3 },
+        expect(result).toHaveLength(2)
+        result.forEach((d) => expect(d.category).toBeInstanceOf(Date))
+        expect(result.map((d) => d.category.getTime())).toEqual([
+            new Date(2020, 0, 6).getTime(),
+            new Date(2020, 0, 5).getTime(),
         ])
+        expect(result.map((d) => d.value)).toEqual([10, 3])
+    })
+
+    test('counts rows of a date category when the value is not mapped', () => {
+        const mapping = { category: { value: 'day' } }
+        const result = mapData(
+            [
+                { day: new Date(2024, 0, 1) },
+                { day: new Date(2024, 0, 2) },
+                { day: new Date(2024, 0, 1) },
+            ],
+            mapping,
+            { day: { type: 'date', dateFormat: 'YYYY-MM-DD' } },
+            dimensions
+        )
+        expect(result.map((d) => d.value)).toEqual([2, 1])
     })
 
     test('returns an empty array for empty data', () => {
@@ -203,6 +230,47 @@ describe('prepareItems', () => {
         expect(() => prepareItems([{ category: 'a', value: -1 }])).toThrow(
             /negative/
         )
+    })
+
+    test('uses the label function for the category in the messages', () => {
+        const label = (c) => `label-${c}`
+        expect(() =>
+            prepareItems([{ category: 1, value: -1 }], label)
+        ).toThrow(/label-1/)
+        expect(() =>
+            prepareItems([{ category: 1, value: 'x' }], label)
+        ).toThrow(/label-1/)
+    })
+})
+
+describe('compareCategories', () => {
+    const sortNames = (list) => list.slice().sort(compareCategories)
+
+    test('sorts text with numbers in natural order', () => {
+        expect(sortNames(['10月', '2月', '1月'])).toEqual(['1月', '2月', '10月'])
+    })
+
+    test('sorts numbers by value', () => {
+        expect(sortNames([100, 9, 10])).toEqual([9, 10, 100])
+        expect(sortNames([5, -3, 0])).toEqual([-3, 0, 5])
+    })
+
+    test('sorts dates by time', () => {
+        const dates = [
+            new Date(2024, 2, 1),
+            new Date(2023, 11, 31),
+            new Date(2024, 0, 15),
+        ]
+        expect(sortNames(dates).map((d) => d.getTime())).toEqual([
+            dates[1].getTime(),
+            dates[2].getTime(),
+            dates[0].getTime(),
+        ])
+    })
+
+    test('compares anything else as text', () => {
+        expect(compareCategories('a', 'b')).toBeLessThan(0)
+        expect(compareCategories('9', 10)).toBeLessThan(0)
     })
 })
 
