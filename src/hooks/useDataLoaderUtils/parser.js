@@ -10,16 +10,56 @@ function JsonParser(dataString) {
   return [JSON.parse(trimmedDataString), {}]
 }
 
+// Prepares a delimited text for parsing.
+// White lines are removed (useful when pasting from sheets, ecc).
+// Tabs at the beginning of a line are kept: in tab separated data they are
+// empty cells, and removing them shifts the row one column to the left.
+export function cleanDsvString(dataString) {
+  let lines = dataString
+    .split(/\r\n|\r|\n/)
+    .map((line) => line.replace(/^[^\S\t]+/, '').replace(/\s+$/, ''))
+    .filter((line) => line !== '')
+
+  // a tab shared by every line is indentation, not an empty first column
+  while (lines.length > 0 && lines.every((line) => line.startsWith('\t'))) {
+    lines = lines.map((line) => line.slice(1))
+  }
+
+  return lines.join('\n')
+}
+
+// A column with an empty header gets a name, like the columns of JSON arrays
+function nameEmptyColumns(rows) {
+  if (!rows.columns || !rows.columns.includes('')) {
+    return rows
+  }
+  const emptyIndex = rows.columns.indexOf('')
+  let name = `Column ${emptyIndex + 1}`
+  while (rows.columns.includes(name)) {
+    name = `${name}_`
+  }
+  const named = rows.map((row) => {
+    const out = {}
+    for (const key of rows.columns) {
+      out[key === '' ? name : key] = row[key]
+    }
+    return out
+  })
+  named.columns = rows.columns.map((key) => (key === '' ? name : key))
+  return named
+}
+
+function parseDsv(separator, dataString) {
+  return nameEmptyColumns(dsvFormat(separator).parse(dataString))
+}
+
 function CsvParser(dataString, opts) {
-  //Removing white lines (useful when pasting from sheets, ecc)
-  const trimmedDataString = dataString
-    .trim()
-    .replace(/^(?=\n)$|^\s*|\s*$|\n\n+/gm, '')
+  const trimmedDataString = cleanDsvString(dataString)
 
   // Use the separator the user gives me, if any
   if (opts.separator) {
     return [
-      dsvFormat(opts.separator).parse(trimmedDataString),
+      parseDsv(opts.separator, trimmedDataString),
       {
         separator: opts.separator,
       },
@@ -33,8 +73,7 @@ function CsvParser(dataString, opts) {
       .replace(/\\n/g, '\n')
       .replace(/\\t/g, '\t')
     try {
-      const parser = dsvFormat(separator)
-      const parsed = parser.parse(trimmedDataString)
+      const parsed = parseDsv(separator, trimmedDataString)
       if (
         (parsed.length > 0 && Object.keys(parsed[0]).length > 1) ||
         separator === DefaultSeparator
