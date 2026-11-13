@@ -35,6 +35,10 @@ import { calendarHeatmap } from '@rawgraphs/rawgraphs-calendar-heatmap'
 import histogram from './custom_charts/histogram'
 import mosaic from './custom_charts/mosaic'
 import spiral from './custom_charts/spiral'
+import waterfall from './custom_charts/waterfall'
+import pareto from './custom_charts/pareto'
+import populationpyramid from './custom_charts/populationpyramid'
+import forcenetwork from './custom_charts/forcenetwork'
 
 // New charts, not included into first release.
 // Comment at necessity.
@@ -52,6 +56,10 @@ let charts = [
   histogram,
   mosaic,
   spiral,
+  waterfall,
+  pareto,
+  populationpyramid,
+  forcenetwork,
   chorddiagram,
   circlepacking,
   circularDendrogram,
@@ -113,6 +121,10 @@ const chartDescriptions = {
   'rawgraphs.histogram': 'データの分布（度数分布）を棒グラフで表すチャートです。連続する数値を一定の範囲（ビン）に区切り、各範囲に含まれるデータの個数を棒の高さで示します。データのばらつきや偏り、集中している値の範囲などが一目でわかります。',
   'rawgraphs.mosaic': 'メッコ・チャート（マリメッコ・チャートもしくはモザイク・プロット）は、カテゴリのデータを2次元の面積で可視化するグラフです。列（カラム）の幅はカテゴリ全体の合計値を表し、各セグメントの高さはそのカテゴリ内での割合（構成比）を表します。全体の中での各要素の規模感と構成比を同時に把握するのに適しています。',
   'rawgraphs.spiral': '時系列データを極座標系にプロットするチャートです。中心からの角度が時間（月など）を、中心からの距離（半径）が値の大きさを表します。気温の変化など、周期的なデータの推移や上昇トレンドを視覚的に捉えるのに適しています。',
+  'rawgraphs.waterfall': '最初の値から最後の値までの間に、何がどれだけ増やし、何がどれだけ減らしたかを見せるチャートです。それぞれの棒は一つ前の棒の終わりの高さから始まり、増加は上へ、減少は下へ伸びます。最後に合計の棒を置くことで、売上から利益までの内訳のように、増減の積み重ねの結果が一目でわかります。',
+  'rawgraphs.pareto': '項目を値の大きい順に並べた棒グラフに、累積の割合を表す折れ線を重ねたチャートです。左の軸が棒の値を、右の軸が累積の割合を表します。少数の項目が全体の大部分を占めている様子がわかるので、不良の原因や問い合わせの内容など、どこから手を付けるべきかを決めるときに使われます。',
+  'rawgraphs.populationpyramid': '年齢層などの階級ごとの値を、2つのグループに分けて、中央から左右に伸びる横棒で表すチャートです。男女別の年齢構成を表すのによく使われ、棒の並びが作る形から、若い世代が多いのか、高齢の世代が多いのかといった全体の構成が一目でわかります。',
+  'rawgraphs.forcenetwork': '項目（ノード）を円で、項目同士のつながり（リンク）を線で表すチャートです。つながっている項目同士は近くに、つながりのない項目同士は離れて配置されるので、どの項目がまとまりを作っているか、どの項目がまとまり同士の橋渡しをしているかが見えてきます。円の大きさでつながりの多さを、線の太さでつながりの強さを表します。',
 }
 
 const chartNameOverrides = {
@@ -152,6 +164,10 @@ const chartNameOverrides = {
   'rawgraphs.histogram': 'ヒストグラム',
   'rawgraphs.mosaic': 'メッコ・チャート',
   'rawgraphs.spiral': 'スパイラル・チャート',
+  'rawgraphs.waterfall': 'ウォーターフォール・チャート',
+  'rawgraphs.pareto': 'パレート図',
+  'rawgraphs.populationpyramid': '人口ピラミッド',
+  'rawgraphs.forcenetwork': 'ネットワーク図',
 }
 
 // チャート変数の日本語翻訳定義
@@ -184,6 +200,8 @@ const dimensionTranslations = {
   'sets': 'セット (Sets)',
   'column': '列 (Column)',
   'row': '行 (Row)',
+  'category': '項目 (Category)',
+  'side': '左右のグループ (Side)',
 }
 
 // 日本語環境の場合にチャートメタデータをローカライズする関数
@@ -217,6 +235,9 @@ export function localizeCharts(chartsArray, language) {
         dimensions: newChart.dimensions.map(dim => {
           if (chart.metadata.id === 'rawgraphs.beeswarm' && dim.id === 'series') {
             return { ...dim, name: 'グループ (Groups)' }
+          }
+          if (chart.metadata.id === 'rawgraphs.populationpyramid' && dim.id === 'category') {
+            return { ...dim, name: '階級 (年齢層など)' }
           }
           if (chart.metadata.id === 'rawgraphs.linechart' && dim.id === 'lines') {
             return { ...dim, name: 'ファセット分割 (Facets)' }
