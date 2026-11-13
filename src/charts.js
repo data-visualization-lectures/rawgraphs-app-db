@@ -40,6 +40,14 @@ import pareto from './custom_charts/pareto'
 import populationpyramid from './custom_charts/populationpyramid'
 import forcenetwork from './custom_charts/forcenetwork'
 
+// 公式ライブラリのガント・チャートは metadata に id を持たない。
+// アプリは id で日本語名の差し替え、推奨チャートの選択、プロジェクトの
+// 保存と復元を行うので、ここで補う。
+const ganttChartWithId = {
+  ...ganttChart,
+  metadata: { ...ganttChart.metadata, id: 'rawgraphs.ganttChart' },
+}
+
 // New charts, not included into first release.
 // Comment at necessity.
 let charts = [
@@ -66,7 +74,7 @@ let charts = [
   contourPlot,
   convexHull,
   dendrogram,
-  ganttChart,
+  ganttChartWithId,
   hexagonalBinning,
   horizongraph,
   linechart,
