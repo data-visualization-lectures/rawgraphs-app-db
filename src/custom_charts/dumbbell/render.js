@@ -37,6 +37,7 @@ export default function render(
     sortBy,
     dotDiameter,
     lineWidth,
+    legendTitle,
     startAtZero,
     showGrid,
     showValueLabels,
@@ -79,7 +80,7 @@ export default function render(
   const startName = mapping.startValue.value
   const endName = mapping.endValue.value
   const valueFormat = d3.format(',.2~f')
-  const radius = dotDiameter / 2
+  const radius = Math.max(0, dotDiameter) / 2
 
   // items go from top to bottom in the order of `rows`
   const yScale = d3
@@ -223,6 +224,6 @@ export default function render(
       .append('g')
       .attr('id', 'legend')
       .attr('transform', `translate(${width},${marginTop})`)
-      .call(legend().legendWidth(legendWidth).addColor('Values', colorScale))
+      .call(legend().legendWidth(legendWidth).addColor(legendTitle || ' ', colorScale))
   }
 }

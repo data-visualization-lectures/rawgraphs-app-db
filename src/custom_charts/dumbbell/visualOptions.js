@@ -43,6 +43,15 @@ export const visualOptions = {
       showLegend: true,
     },
   },
+  legendTitle: {
+    type: 'text',
+    label: 'Legend title',
+    default: 'Values',
+    group: 'artboard',
+    disabled: {
+      showLegend: false,
+    },
+  },
 
   sortBy: {
     type: 'text',

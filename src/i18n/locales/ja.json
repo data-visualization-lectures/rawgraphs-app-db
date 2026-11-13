@@ -80,6 +80,7 @@
   "chartOptions.Margin (right)": "余白（右）",
   "chartOptions.Margin (bottom)": "余白（下）",
   "chartOptions.Margin (left)": "余白（左）",
+  "chartOptions.Legend title": "凡例の見出し",
   "chartOptions.Sort by": "並び順",
   "chartOptions.Start value": "始点の値",
   "chartOptions.End value": "終点の値",
