@@ -1,4 +1,5 @@
 import * as d3 from 'd3'
+import { dateFormats } from '@rawgraphs/rawgraphs-core'
 
 /*
 Force-directed network graph.
@@ -82,7 +83,32 @@ export default function render(
     return
   }
 
-  const graph = graphFromEdgesTable(data)
+  if (chartWidth <= 0 || chartHeight <= 0) {
+    throw new Error(
+      'Margins are too large, decrease them in the panel "artboard"'
+    )
+  }
+
+  // an empty cell is aggregated to null: it counts as 0
+  const edges = data.map((d) => ({
+    ...d,
+    value: d.value === null ? 0 : d.value,
+  }))
+  edges.forEach((d) => {
+    if (typeof d.value !== 'number' || !Number.isFinite(d.value)) {
+      throw new Error(
+        `The "Size" dimension must contain only numbers (found "${d.value}").`
+      )
+    }
+    if (d.value < 0) {
+      throw new Error(
+        `The "Size" dimension cannot contain negative values (found ${d.value}).`
+      )
+    }
+  })
+
+  const graph = graphFromEdgesTable(edges)
+  const formatDate = makeDateFormatter(mapping)
 
   if (typeof graph.nodes[0][nodeSize] !== 'number') {
     throw new Error('The selected node diameter option is not available.')
@@ -120,7 +146,7 @@ export default function render(
   simulation.tick(iterations)
 
   // fit the layout in the drawing area, keeping the aspect ratio
-  const labels = graph.nodes.map((d) => labelText(d.id))
+  const labels = graph.nodes.map((d) => labelText(d.id, formatDate))
   const labelWidths = labels.map((text) =>
     showLabels ? LABEL_GAP + textWidth(text, labelFontSize) : 0
   )
@@ -245,9 +271,23 @@ function textWidth(text, fontSize) {
   return em * fontSize
 }
 
-function labelText(id) {
+// dates are shown in the format they were written in the dataset
+function makeDateFormatter(mapping) {
+  const dimension = [mapping.source, mapping.target].find(
+    (d) =>
+      d &&
+      d.dataType &&
+      d.dataType.type === 'date' &&
+      dateFormats[d.dataType.dateFormat]
+  )
+  return dimension
+    ? d3.timeFormat(dateFormats[dimension.dataType.dateFormat])
+    : d3.timeFormat('%Y-%m-%d')
+}
+
+function labelText(id, formatDate) {
   if (id instanceof Date && !isNaN(id)) {
-    return id.toISOString()
+    return formatDate(id)
   }
   return String(id)
 }

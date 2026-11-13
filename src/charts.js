@@ -164,7 +164,7 @@ const chartNameOverrides = {
   'rawgraphs.histogram': 'ヒストグラム',
   'rawgraphs.mosaic': 'メッコ・チャート',
   'rawgraphs.spiral': 'スパイラル・チャート',
-  'rawgraphs.waterfall': 'ウォーターフォール・チャート',
+  'rawgraphs.waterfall': 'ウォーターフォール図',
   'rawgraphs.pareto': 'パレート図',
   'rawgraphs.populationpyramid': '人口ピラミッド',
   'rawgraphs.forcenetwork': 'ネットワーク図',

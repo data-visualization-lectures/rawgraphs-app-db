@@ -63,7 +63,12 @@ export const mapData = function (data, mapping, dataTypes, dimensions) {
 // Turns [{ category, side, value }] into the structure the pyramid is drawn from.
 // sides: the two groups in order of first appearance (left, right).
 // categories: classes in order of first appearance; a missing side counts as 0.
-export const buildPyramid = function (items) {
+export const buildPyramid = function (rawItems) {
+  // an empty cell is aggregated to null: it counts as 0
+  const items = rawItems.map((d) => ({
+    ...d,
+    value: d.value === null ? 0 : d.value,
+  }))
   const sides = Array.from(new d3.InternSet(items.map((d) => d.side)))
   if (sides.length !== 2) {
     throw new Error(

@@ -43,6 +43,9 @@ export const visualOptions = {
         label: 'Label for merged categories',
         default: 'Others',
         group: 'chart',
+        disabled: {
+            maxCategories: 0,
+        },
     },
 
     xAxisLabelRotation: {
@@ -95,6 +98,9 @@ export const visualOptions = {
         label: 'Label font size',
         default: 10,
         group: 'labels',
+        disabled: {
+            showValueLabels: false,
+        },
     },
 
     barColor: {
