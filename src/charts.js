@@ -39,6 +39,10 @@ import waterfall from './custom_charts/waterfall'
 import pareto from './custom_charts/pareto'
 import populationpyramid from './custom_charts/populationpyramid'
 import forcenetwork from './custom_charts/forcenetwork'
+import waffle from './custom_charts/waffle'
+import dumbbell from './custom_charts/dumbbell'
+import polararea from './custom_charts/polararea'
+import ridgeline from './custom_charts/ridgeline'
 
 // 公式ライブラリのガント・チャートは metadata に id を持たない。
 // アプリは id で日本語名の差し替え、推奨チャートの選択、プロジェクトの
@@ -68,6 +72,10 @@ let charts = [
   pareto,
   populationpyramid,
   forcenetwork,
+  waffle,
+  dumbbell,
+  polararea,
+  ridgeline,
   chorddiagram,
   circlepacking,
   circularDendrogram,
@@ -133,6 +141,10 @@ const chartDescriptions = {
   'rawgraphs.pareto': '項目を値の大きい順に並べた棒グラフに、累積の割合を表す折れ線を重ねたチャートです。左の軸が棒の値を、右の軸が累積の割合を表します。少数の項目が全体の大部分を占めている様子がわかるので、不良の原因や問い合わせの内容など、どこから手を付けるべきかを決めるときに使われます。',
   'rawgraphs.populationpyramid': '年齢層などの階級ごとの値を、2つのグループに分けて、中央から左右に伸びる横棒で表すチャートです。男女別の年齢構成を表すのによく使われ、棒の並びが作る形から、若い世代が多いのか、高齢の世代が多いのかといった全体の構成が一目でわかります。',
   'rawgraphs.forcenetwork': '項目（ノード）を円で、項目同士のつながり（リンク）を線で表すチャートです。つながっている項目同士は近くに、つながりのない項目同士は離れて配置されるので、どの項目がまとまりを作っているか、どの項目がまとまり同士の橋渡しをしているかが見えてきます。円の大きさでつながりの多さを、線の太さでつながりの強さを表します。',
+  'rawgraphs.waffle': '全体を同じ大きさのマスの集まりで表し、項目ごとの割合をマスの数で見せるチャートです。たとえば 10 × 10 の格子なら、マス 1 つが全体の 1% にあたります。円グラフと同じく割合を表しますが、マスを数えれば大きさが読み取れるので、「100人のうち何人」という感覚で伝えたいときに向いています。',
+  'rawgraphs.dumbbell': '項目ごとに 2 つの値を点で置き、その間を線でつないだチャートです。線の長さが 2 つの値の差を表すので、去年と今年、男性と女性といった 2 つの時点や 2 つのグループの差が、どの項目で大きいのかを見比べることができます。鉄アレイ（ダンベル）のような形からこの名前がついています。',
+  'rawgraphs.polararea': '項目を同じ角度の扇形に割り当て、値の大きさを扇形の半径で表すチャートです。円グラフが角度で割合を表すのに対し、こちらは外への張り出しで量を表します。ナイチンゲールが戦地の死因を示すために用いたことで知られ、月別のデータのように一周する項目の量を見比べるのに適しています。',
+  'rawgraphs.ridgeline': 'グループごとのデータの分布を、なだらかな山の形（密度曲線）にして、縦に少しずつ重ねて並べたチャートです。山が高いところほど、その値のデータが多いことを表します。山の位置や幅を上から下へ見比べることで、月ごとの気温のように、たくさんのグループの分布がどう移り変わるかを一度に見ることができます。',
 }
 
 const chartNameOverrides = {
@@ -176,6 +188,10 @@ const chartNameOverrides = {
   'rawgraphs.pareto': 'パレート図',
   'rawgraphs.populationpyramid': '人口ピラミッド',
   'rawgraphs.forcenetwork': 'ネットワーク図',
+  'rawgraphs.waffle': 'ワッフル・チャート',
+  'rawgraphs.dumbbell': 'ダンベル・チャート',
+  'rawgraphs.polararea': '鶏頭図',
+  'rawgraphs.ridgeline': 'リッジライン・プロット',
 }
 
 // チャート変数の日本語翻訳定義
@@ -210,6 +226,8 @@ const dimensionTranslations = {
   'row': '行 (Row)',
   'category': '項目 (Category)',
   'side': '左右のグループ (Side)',
+  'startValue': '始点の値 (Start)',
+  'endValue': '終点の値 (End)',
 }
 
 // 日本語環境の場合にチャートメタデータをローカライズする関数
@@ -246,6 +264,9 @@ export function localizeCharts(chartsArray, language) {
           }
           if (chart.metadata.id === 'rawgraphs.populationpyramid' && dim.id === 'category') {
             return { ...dim, name: '階級 (年齢層など)' }
+          }
+          if (chart.metadata.id === 'rawgraphs.ridgeline' && dim.id === 'group') {
+            return { ...dim, name: 'グループ (Group)' }
           }
           if (chart.metadata.id === 'rawgraphs.linechart' && dim.id === 'lines') {
             return { ...dim, name: 'ファセット分割 (Facets)' }
