@@ -20,6 +20,9 @@ export const dimensions = [
   },
 ]
 
+// a cell left empty in the dataset
+const isEmpty = (v) => v === null || v === undefined || v === ''
+
 export const mapData = function (data, mapping, dataTypes, dimensions) {
   const valueAggregator = getDimensionAggregator(
     'value',
@@ -33,9 +36,10 @@ export const mapData = function (data, mapping, dataTypes, dimensions) {
 
   // group by the string form of the category (so that dates group correctly),
   // keeping the order of first appearance in the input
+  // rows without a category are left out
   return d3
     .rollups(
-      data,
+      data.filter((d) => !isEmpty(d[categoryColumn])),
       (v) => ({
         category: v[0][categoryColumn],
         value: valueAggregator(v.map((d) => d[valueColumn])),

@@ -29,6 +29,8 @@ export default function render(
         // labels
         showValueLabels,
         labelFontSize,
+        valueAxisTitle,
+        cumulativeAxisTitle,
         // colors
         barColor,
         lineColor,
@@ -184,12 +186,13 @@ export default function render(
 
     // axis titles
     const valueMapping = mapping && mapping.value
-    const valueTitle =
+    const automaticValueTitle =
         valueMapping && valueMapping.value
             ? valueMapping.config && valueMapping.config.aggregation
                 ? `${valueMapping.value} [${valueMapping.config.aggregation}]`
                 : valueMapping.value
             : 'Count'
+    const valueTitle = valueAxisTitle || automaticValueTitle
     const categoryTitle =
         mapping && mapping.category && mapping.category.value
             ? mapping.category.value
@@ -218,7 +221,7 @@ export default function render(
         .attr('id', 'yAxisRight')
         .attr('transform', `translate(${chartWidth},0)`)
         .call(d3.axisRight(cumulativeScale).tickFormat(percent))
-        .call((g) => axisTitle(g, 'Cumulative %', 0, -8, 'end'))
+        .call((g) => axisTitle(g, cumulativeAxisTitle || '', 0, -8, 'end'))
 
     // bottom axis: categories
     const xAxis = viz

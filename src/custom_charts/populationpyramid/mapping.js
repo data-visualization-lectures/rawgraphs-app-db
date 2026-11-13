@@ -27,6 +27,9 @@ export const dimensions = [
   },
 ]
 
+// a cell left empty in the dataset
+const isEmpty = (v) => v === null || v === undefined || v === ''
+
 export const mapData = function (data, mapping, dataTypes, dimensions) {
   const valueAggregator = getDimensionAggregator(
     'value',
@@ -43,6 +46,8 @@ export const mapData = function (data, mapping, dataTypes, dimensions) {
   data.forEach((row) => {
     const category = row[mapping.category.value]
     const side = row[mapping.side.value]
+    // rows without a category or a side are left out
+    if (isEmpty(category) || isEmpty(side)) return
     if (!groups.has(category)) groups.set(category, new d3.InternMap())
     const bySide = groups.get(category)
     if (!bySide.has(side)) {

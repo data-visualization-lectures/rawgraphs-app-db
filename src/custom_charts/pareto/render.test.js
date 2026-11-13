@@ -19,6 +19,8 @@ const baseOptions = {
     threshold: 80,
     showValueLabels: false,
     labelFontSize: 10,
+    valueAxisTitle: '',
+    cumulativeAxisTitle: 'Cumulative %',
     barColor: '#5b8db8',
     lineColor: '#d1605e',
 }
@@ -166,6 +168,16 @@ describe('Pareto chart render', () => {
             value: { value: undefined },
         })
         expect(svg.querySelector('#yAxis > text').textContent).toBe('Count')
+    })
+
+    test('uses the axis titles given in the options', () => {
+        const svg = draw({ valueAxisTitle: '件数', cumulativeAxisTitle: '累積比率' })
+        const titles = Array.from(svg.querySelectorAll('#viz > g > text'))
+        expect(titles.map((t) => t.textContent)).toEqual([
+            '件数',
+            '累積比率',
+            'cause',
+        ])
     })
 
     test('shows cumulative percentage labels only when asked', () => {

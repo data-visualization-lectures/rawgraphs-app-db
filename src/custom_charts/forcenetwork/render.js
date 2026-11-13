@@ -1,5 +1,6 @@
 import * as d3 from 'd3'
 import { dateFormats } from '@rawgraphs/rawgraphs-core'
+import { isEmpty } from './mapping'
 
 /*
 Force-directed network graph.
@@ -138,6 +139,9 @@ export default function render(
     )
     .force('charge', d3.forceManyBody().strength(chargeStrength))
     .force('center', d3.forceCenter(0, 0))
+    // a weak pull to the center keeps unconnected nodes and groups close
+    .force('x', d3.forceX(0).strength(0.08))
+    .force('y', d3.forceY(0).strength(0.08))
     .force(
       'collide',
       d3.forceCollide().radius((d) => d.radius + 2)
@@ -321,11 +325,16 @@ function graphFromEdgesTable(_edgesTable) {
   }
 
   // links are a copy of the dataset, linked to the nodes objects
-  const links = _edgesTable.map(({ source, target, value }) => ({
-    source: nodeOf(source),
-    target: nodeOf(target),
-    value,
-  }))
+  // a row with an empty source or target adds its node, but no link
+  const links = []
+  _edgesTable.forEach(({ source, target, value }) => {
+    if (isEmpty(source) || isEmpty(target)) {
+      if (!isEmpty(source)) nodeOf(source)
+      if (!isEmpty(target)) nodeOf(target)
+      return
+    }
+    links.push({ source: nodeOf(source), target: nodeOf(target), value })
+  })
   const nodes = Array.from(nodeByKey.values())
 
   for (const link of links) {
