@@ -18,6 +18,7 @@ import {
 } from '@rawgraphs/rawgraphs-core'
 import styles from '../ChartOptions.module.scss'
 import usePrevious from '../../../hooks/usePrevious'
+import { pickInterpolator } from '../../../utils/pickInterpolator'
 
 function getDatePickerValue(userValue) {
   if (userValue.userDomain === 0) {
@@ -65,6 +66,11 @@ const ChartOptionColorScale = ({
   }, [defaultValue, value])
 
   const [locked, setLocked] = useState(get(value, 'locked'))
+
+  // the color scheme set by the chart in its visual options definition.
+  // The definition is spread on this component, so it arrives as "default".
+  const preferredInterpolator =
+    get(defaultValue, 'interpolator') || get(props, 'default.interpolator')
 
   const availableScaleTypes = useMemo(() => {
     const nextTypes = getAvailableScaleTypes(colorDataType, colorDataset)
@@ -229,8 +235,21 @@ const ChartOptionColorScale = ({
         : []
       setInterpolators(nextInterpolators)
 
-      //set first interpolator
-      const nextInterpolator = nextInterpolators[0]
+      //set first interpolator, unless it has fewer colors than the values:
+      //the exceeding values would get the default grey
+      let domainLength = 0
+      try {
+        domainLength = getColorDomain(
+          colorDataset,
+          colorDataType,
+          nextScaleType
+        ).length
+      } catch (e) {}
+      const nextInterpolator = pickInterpolator(
+        colorPresets[nextScaleType],
+        domainLength,
+        preferredInterpolator
+      )
       setInterpolator(nextInterpolator)
 
       //user values
@@ -252,7 +271,7 @@ const ChartOptionColorScale = ({
       onChange(outScaleParams)
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [getDefaultUserValues, getUserValuesForFinalScale, defaultColor, onChange, locked]
+    [getDefaultUserValues, getUserValuesForFinalScale, defaultColor, onChange, locked, colorDataset, colorDataType, preferredInterpolator]
   )
 
   const handleSetInterpolator = useCallback(
