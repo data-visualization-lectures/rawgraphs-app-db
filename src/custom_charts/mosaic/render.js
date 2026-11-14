@@ -48,17 +48,39 @@ export default function render(
     }
 
     // 1. Process Data
-    // Group by Column -> Row
-    // Use d3.groups to get Map structure then iterate
-    const nested = d3.rollups(
-        data,
-        v => ({
-            size: d3.sum(v, d => d.size),
-            color: v[0].color, // Take first color found in group
-        }),
-        d => d.column,
-        d => d.row
-    )
+    // Group by Column -> Row -> Color.
+    // A segment (column x row) can hold several color values, when the color
+    // is mapped to a column that is neither the row nor the column: the
+    // segment is then split into one part for each color value.
+    const nested = d3
+        .rollups(
+            data,
+            v => d3.sum(v, d => d.size),
+            d => d.column,
+            d => d.row,
+            d => d.color
+        )
+        .map(([colKey, rowsMap]) => [
+            colKey,
+            rowsMap.map(([rowKey, parts]) => [
+                rowKey,
+                {
+                    size: d3.sum(parts, d => d[1]),
+                    parts: parts.map(([colorKey, size]) => ({ color: colorKey, size })),
+                },
+            ]),
+        ])
+
+    // The parts of every segment follow the same order: the one of the color
+    // scale when it lists its values, otherwise the order of the names.
+    const scaleDomain = typeof color.domain === 'function' ? color.domain() : []
+    const colorRank = new Map(scaleDomain.map((value, i) => [String(value), i]))
+    const compareColors = (a, b) => {
+        const ra = colorRank.has(String(a.color)) ? colorRank.get(String(a.color)) : Infinity
+        const rb = colorRank.has(String(b.color)) ? colorRank.get(String(b.color)) : Infinity
+        if (ra !== rb) return ra - rb
+        return String(a.color).localeCompare(String(b.color), undefined, { numeric: true })
+    }
 
     // 2. Prepare Layout Data
     const columnSortings = {
@@ -85,7 +107,7 @@ export default function render(
         const rows = rowsMap.map(([rowKey, val]) => ({
             key: rowKey,
             size: val.size,
-            color: val.color,
+            parts: [...val.parts].sort(compareColors),
         }))
 
         return {
@@ -103,6 +125,8 @@ export default function render(
 
     let currentX = 0
     const nodes = []
+    // the segments (column x row), used to mark and name the rows
+    const rowSegments = []
 
     columns.forEach(col => {
         const colWidth = xScale(col.total)
@@ -120,13 +144,29 @@ export default function render(
             // y = chartHeight - currentY - rowHeight
             const y = chartHeight - currentY - rowHeight
 
-            nodes.push({
+            rowSegments.push({
                 x: currentX,
                 y: y,
-                width: Math.max(0, colWidth - padding), // Apply padding to width
+                width: Math.max(0, colWidth - padding),
                 height: rowHeight,
-                fill: color(row.color != null ? row.color : row.key), // Use mapped color or fallback to row key
-                data: { column: col.key, row: row.key, size: row.size, color: row.color }
+                key: row.key,
+                isTop: currentY + rowHeight >= chartHeight - 1e-6,
+            })
+
+            // The parts of the segment are stacked from the bottom, each one
+            // as high as its share of the segment.
+            let partY = y + rowHeight
+            row.parts.forEach(part => {
+                const partHeight = row.size > 0 ? (part.size / row.size) * rowHeight : 0
+                partY -= partHeight
+                nodes.push({
+                    x: currentX,
+                    y: partY,
+                    width: Math.max(0, colWidth - padding), // Apply padding to width
+                    height: partHeight,
+                    fill: color(part.color),
+                    data: { column: col.key, row: row.key, size: part.size, color: part.color }
+                })
             })
 
             currentY += rowHeight
@@ -151,12 +191,64 @@ export default function render(
         .attr('stroke', 'white')
         .attr('stroke-width', 0.5)
         .append('title')
-        .text(d => `${d.data.column} / ${d.data.row}\nSize: ${d.data.size}`)
+        .text(d => {
+            const names = [d.data.column, d.data.row]
+            // the color is named when it is not the row or the column itself
+            if (!names.some(name => String(name) === String(d.data.color))) {
+                names.push(d.data.color)
+            }
+            return `${names.join(' / ')}\nSize: ${d.data.size}`
+        })
 
     // 5. Axes / Labels
     // Y Axis (Percentage)
     const yScale = d3.scaleLinear().domain([0, 1]).range([chartHeight, 0])
     const yAxis = d3.axisLeft(yScale).tickFormat(d3.format('.0%'))
+
+    // When the color does not tell the rows apart (it is mapped to another
+    // column), the rows are marked with a thicker line and named, otherwise
+    // the reader cannot tell where a row ends and which one it is.
+    const colorIsRow = nodes.every(d => String(d.data.color) === String(d.data.row))
+    if (!colorIsRow) {
+        g.append('g')
+            .attr('id', 'row-separators')
+            .selectAll('line')
+            .data(rowSegments.filter(d => !d.isTop && d.height > 0))
+            .join('line')
+            .attr('x1', d => d.x + padding / 2)
+            .attr('x2', d => d.x + padding / 2 + d.width)
+            .attr('y1', d => d.y)
+            .attr('y2', d => d.y)
+            .attr('stroke', 'white')
+            .attr('stroke-width', 3)
+
+        if (showLabels) {
+            g.append('g')
+                .attr('id', 'row-labels')
+                .selectAll('text')
+                .data(rowSegments)
+                .join('text')
+                .attr('class', 'rowlabel')
+                .attr('x', d => d.x + padding / 2 + 4)
+                .attr('y', d => d.y + labelFontSize + 2)
+                .attr('font-family', 'Arial, sans-serif')
+                .attr('font-size', `${labelFontSize}px`)
+                .attr('fill', 'black')
+                .attr('stroke', 'white')
+                .attr('stroke-width', 3)
+                .attr('stroke-linejoin', 'round')
+                .attr('paint-order', 'stroke')
+                .text(d => d.key)
+                // a label is hidden when its segment is too small for it
+                .style('display', d =>
+                    autoHideLabels &&
+                    (d.height < labelFontSize + 6 ||
+                        d.width < String(d.key).length * labelFontSize * 0.6 + 8)
+                        ? 'none'
+                        : null
+                )
+        }
+    }
 
     g.append('g')
         .call(yAxis)
@@ -201,8 +293,11 @@ export default function render(
 
         const chartLegend = legend().legendWidth(legendWidth)
 
-        if (mapping.color.value) {
-            chartLegend.addColor(mapping.color.value, color)
+        // without a column for the color, the segments are colored by row
+        const colorTitle =
+            (mapping.color && mapping.color.value) || (mapping.row && mapping.row.value)
+        if (colorTitle) {
+            chartLegend.addColor(colorTitle, color)
         }
 
         legendLayer.call(chartLegend)
