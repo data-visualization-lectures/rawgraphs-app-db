@@ -212,12 +212,12 @@ describe('prepareRows', () => {
   test('throws a readable error on values that are not finite numbers', () => {
     expect(() =>
       prepareRows([{ category: 'a', start: 'abc', end: 1 }], 'original')
-    ).toThrow(/"Start value" dimension must contain only numbers.*"abc".*a/)
+    ).toThrow(/"Start value" dimension needs one number.*"abc" for a/)
     expect(() =>
       prepareRows([{ category: 'a', start: 1, end: NaN }], 'original')
-    ).toThrow(/"End value" dimension must contain only numbers/)
+    ).toThrow(/"End value" dimension needs one number/)
     expect(() =>
       prepareRows([{ category: 'a', start: 1, end: Infinity }], 'original')
-    ).toThrow(/only numbers/)
+    ).toThrow(/needs one number/)
   })
 })

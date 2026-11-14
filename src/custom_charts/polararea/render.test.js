@@ -350,7 +350,7 @@ describe('Polar area chart render', () => {
 
     test('throws a readable error for values that are not numbers', () => {
         expect(() => draw({}, [{ category: 'A', value: 'x' }])).toThrow(
-            /only numbers/
+            /needs one number/
         )
     })
 

@@ -315,7 +315,7 @@ describe('Dumbbell chart render', () => {
 
   test('throws readable errors for invalid input', () => {
     expect(() => draw([{ category: 'a', start: 'x', end: 1 }])).toThrow(
-      /only numbers/
+      /needs one number/
     )
     expect(() => draw(items, { marginLeft: 400, marginRight: 300 })).toThrow(
       /too small/

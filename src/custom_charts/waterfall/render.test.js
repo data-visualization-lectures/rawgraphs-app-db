@@ -131,7 +131,7 @@ describe('Waterfall render', () => {
 
   test('throws when a value is not a number', () => {
     expect(() => draw({}, [{ category: 'A', value: NaN }])).toThrow(
-      /not numbers/
+      /needs one number/
     )
   })
 })

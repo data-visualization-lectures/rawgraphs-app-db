@@ -37,7 +37,7 @@ describe('Network graph input validation', () => {
 
   test('sizes that are not numbers are rejected', () => {
     expect(() => draw([{ source: 'A', target: 'B', value: undefined }])).toThrow(
-      /only numbers/
+      /needs one number/
     )
   })
 

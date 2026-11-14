@@ -30,9 +30,9 @@ describe('Pareto chart value validation', () => {
   test('values that are not numbers are rejected', () => {
     expect(() =>
       computePareto([{ category: 'A', value: undefined }], options)
-    ).toThrow(/only numbers/)
+    ).toThrow(/needs one number/)
     expect(() =>
       computePareto([{ category: 'A', value: '1,2' }], options)
-    ).toThrow(/only numbers/)
+    ).toThrow(/needs one number/)
   })
 })

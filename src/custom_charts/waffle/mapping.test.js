@@ -216,14 +216,14 @@ describe('prepareItems', () => {
 
     test('throws on a value that is not a number', () => {
         expect(() => prepareItems([{ category: 'a', value: 'x' }])).toThrow(
-            /only numbers/
+            /needs one number/
         )
         expect(() => prepareItems([{ category: 'a', value: NaN }])).toThrow(
-            /only numbers/
+            /needs one number/
         )
         expect(() =>
             prepareItems([{ category: 'a', value: Infinity }])
-        ).toThrow(/only numbers/)
+        ).toThrow(/needs one number/)
     })
 
     test('throws on a negative value', () => {
@@ -401,7 +401,7 @@ describe('allocateCells', () => {
     test('throws on invalid values', () => {
         expect(() =>
             allocateCells([{ category: 'a', value: 'x' }], 10)
-        ).toThrow(/only numbers/)
+        ).toThrow(/needs one number/)
         expect(() =>
             allocateCells([{ category: 'a', value: -2 }], 10)
         ).toThrow(/negative/)

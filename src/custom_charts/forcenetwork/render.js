@@ -1,6 +1,7 @@
 import * as d3 from 'd3'
 import { dateFormats } from '@rawgraphs/rawgraphs-core'
 import { isEmpty } from './mapping'
+import { notANumberMessage } from '../shared/aggregation'
 
 /*
 Force-directed network graph.
@@ -98,7 +99,7 @@ export default function render(
   edges.forEach((d) => {
     if (typeof d.value !== 'number' || !Number.isFinite(d.value)) {
       throw new Error(
-        `The "Size" dimension must contain only numbers (found "${d.value}").`
+        notANumberMessage('Size', d.value, `${d.source} - ${d.target}`)
       )
     }
     if (d.value < 0) {

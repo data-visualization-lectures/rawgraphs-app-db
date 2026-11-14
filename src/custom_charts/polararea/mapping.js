@@ -1,5 +1,6 @@
 import * as d3 from 'd3'
 import { getDimensionAggregator } from '@rawgraphs/rawgraphs-core'
+import { isEmpty, aggregatePresent, notANumberMessage } from '../shared/aggregation'
 
 export const dimensions = [
     {
@@ -19,16 +20,6 @@ export const dimensions = [
         aggregationDefault: 'sum',
     },
 ]
-
-// a cell left empty in the dataset
-const isEmpty = (v) => v === null || v === undefined || v === ''
-
-// Aggregates the cells that have a value. Empty cells are left out, so that
-// they do not count as 0 in a mean; null is returned when all are empty.
-const aggregatePresent = (aggregator, values) => {
-    const present = values.filter((v) => !isEmpty(v))
-    return present.length > 0 ? aggregator(present) : null
-}
 
 export const mapData = function (data, mapping, dataTypes, dimensions) {
     const valueAggregator = getDimensionAggregator(
@@ -104,7 +95,7 @@ export const prepareItems = function (items, sortBy, label = String) {
     rows.forEach((d) => {
         if (typeof d.value !== 'number' || !Number.isFinite(d.value)) {
             throw new Error(
-                `The "Value" dimension must contain only numbers (found "${d.value}" for ${label(d.category)}).`
+                notANumberMessage('Value', d.value, label(d.category))
             )
         }
         if (d.value < 0) {

@@ -1,5 +1,10 @@
 import * as d3 from 'd3'
 import { getDimensionAggregator } from '@rawgraphs/rawgraphs-core'
+import {
+  isEmpty,
+  aggregatePresent,
+  notANumberMessage,
+} from '../shared/aggregation'
 
 export const dimensions = [
   {
@@ -28,16 +33,6 @@ export const dimensions = [
     aggregationDefault: 'sum',
   },
 ]
-
-// a cell left empty in the dataset
-const isEmpty = (v) => v === null || v === undefined || v === ''
-
-// Aggregates the non-empty cells of a group. When every cell is empty the
-// result is null (an aggregator such as sum would return 0 for it).
-const aggregateCells = (aggregator, values) => {
-  const filled = values.filter((v) => !isEmpty(v))
-  return filled.length === 0 ? null : aggregator(filled)
-}
 
 export const mapData = function (data, mapping, dataTypes, dimensions) {
   const startAggregator = getDimensionAggregator(
@@ -74,8 +69,8 @@ export const mapData = function (data, mapping, dataTypes, dimensions) {
 
   return results.map(({ category, starts, ends }) => ({
     category,
-    start: aggregateCells(startAggregator, starts),
-    end: aggregateCells(endAggregator, ends),
+    start: aggregatePresent(startAggregator, starts),
+    end: aggregatePresent(endAggregator, ends),
   }))
 }
 
@@ -106,9 +101,7 @@ export const prepareRows = function (items, sortBy) {
     ].forEach(([label, value]) => {
       if (isEmpty(value)) return
       if (typeof value !== 'number' || !Number.isFinite(value)) {
-        throw new Error(
-          `The "${label}" dimension must contain only numbers (found "${value}" for ${d.category}).`
-        )
+        throw new Error(notANumberMessage(label, value, d.category))
       }
     })
     const start = isEmpty(d.start) ? null : d.start
