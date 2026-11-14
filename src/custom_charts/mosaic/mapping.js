@@ -6,12 +6,18 @@ export const mapData = function (data, mapping, dataTypes, dimensions) {
     const sizeDim = dimensions.find((d) => d.id === 'size')
     const colorDim = dimensions.find((d) => d.id === 'color')
 
+    const colorColumn = mapping[colorDim.id] && mapping[colorDim.id].value
+
     const results = data.map((d) => {
+        const row = d[mapping[rowDim.id].value]
         return {
             column: d[mapping[columnDim.id].value],
-            row: d[mapping[rowDim.id].value],
+            row,
             size: mapping[sizeDim.id].value ? Number(d[mapping[sizeDim.id].value]) : 1, // Default to 1 if not mapped? Actually size is usually required.
-            color: mapping[colorDim.id].value ? d[mapping[colorDim.id].value] : undefined,
+            // Without a column for the color, the segments are colored by row:
+            // the color scale is built from these values, so each row gets
+            // its own color (and its own entry in the options panel).
+            color: colorColumn ? d[colorColumn] : row,
         }
     })
 
