@@ -1,6 +1,19 @@
 import * as d3 from 'd3'
 import { } from '@rawgraphs/rawgraphs-core'
 
+// The date dimension also accepts a column of numbers, read as years
+// (1898, 1899, ...): a whole number becomes January 1st of that year, the
+// same date the "YYYY" date format gives. Other values are returned as they
+// are, for the chart to report.
+export function toDate(value) {
+    if (typeof value === 'number' && Number.isInteger(value)) {
+        const date = new Date(2000, 0, 1)
+        date.setFullYear(value)
+        return date
+    }
+    return value
+}
+
 export const mapData = function (data, mapping, dataTypes, dimensions) {
     // 1. Definition of Aggregators
     // We need to define how to aggregate values if multiple rows fall into the same (Series, Date) bucket.
@@ -46,7 +59,7 @@ export const mapData = function (data, mapping, dataTypes, dimensions) {
             })
 
             const item = {
-                date: firstRow[dateCol],
+                date: toDate(firstRow[dateCol]),
                 series: seriesCol ? firstRow[seriesCol] : undefined,
                 values: values
             }
@@ -64,7 +77,8 @@ export const dimensions = [
     {
         id: 'date',
         name: 'Date (Angle)',
-        validTypes: ['date'],
+        // numbers are read as years
+        validTypes: ['date', 'number'],
         required: true,
         operation: 'get',
     },

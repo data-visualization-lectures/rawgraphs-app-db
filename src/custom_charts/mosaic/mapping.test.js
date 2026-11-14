@@ -33,4 +33,19 @@ describe('Mekko chart mapData', () => {
       'yes',
     ])
   })
+
+  test('the size has no aggregation to choose, and is not required', () => {
+    const size = dimensions.find((d) => d.id === 'size')
+    expect(size.aggregation).toBeUndefined()
+    expect(size.required).toBe(false)
+  })
+
+  test('every row counts as 1 when no column is mapped to the size', () => {
+    for (const mapping of [
+      { column: { value: 'cls' }, row: { value: 'survived' } },
+      { column: { value: 'cls' }, row: { value: 'survived' }, size: { value: undefined } },
+    ]) {
+      expect(mapData(data, mapping, {}, dimensions).map((d) => d.size)).toEqual([1, 1])
+    }
+  })
 })

@@ -1,6 +1,19 @@
 import * as d3 from 'd3'
 import { gridding } from 'd3-gridding'
 
+// The chart needs a date for every item. A column of numbers is accepted when
+// it holds whole years; anything else is reported in plain words.
+function checkDates(data) {
+    const invalid = data.find(
+        (d) => !(d.date instanceof Date) || Number.isNaN(d.date.getTime())
+    )
+    if (invalid) {
+        throw new Error(
+            `The "Date" dimension needs dates or whole years, but it got "${invalid.date}". Map a date column, or a number column that holds years such as 1998.`
+        )
+    }
+}
+
 // Detect whether data is yearly (all dates are Jan 1) or sub-yearly
 function detectTimeUnit(data) {
     if (data.length < 2) return 'month'
@@ -259,6 +272,7 @@ function renderSmallMultiples(svgNode, data, visualOptions, mapping, styles) {
             d.date = parseDate(d.date) || new Date(d.date)
         }
     })
+    checkDates(data)
 
     // Group by series
     const nestedData = d3.groups(data, d => d.series)
@@ -540,6 +554,7 @@ function renderSingleChart(svgNode, data, visualOptions, mapping, styles) {
         }
         d.value = +d.value
     })
+    checkDates(data)
 
     data.sort((a, b) => a.date - b.date)
 

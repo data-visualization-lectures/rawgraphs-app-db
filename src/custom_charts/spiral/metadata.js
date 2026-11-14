@@ -5,7 +5,7 @@ export const metadata = {
     id: 'rawgraphs.spiral',
     name: 'Spiral Chart',
     description:
-        'A Spiral Chart (or Polar Line Chart) visualizes time-series data in a polar coordinate system, useful for showing cyclical patterns over time.',
+        'A Spiral Chart (or Polar Line Chart) visualizes time-series data in a polar coordinate system, useful for showing cyclical patterns over time. The time can be a date column or a number column that holds years.',
     categories: ['time series'],
     thumbnail,
     icon,

@@ -49,3 +49,56 @@ describe('Spiral Chart data mapping', () => {
     expect(result[1].date).toBe('2020-02-01')
   })
 })
+
+describe('Spiral Chart: years given as numbers', () => {
+  const { toDate, dimensions: spiralDimensions } = require('./mapping')
+
+  test('the date dimension accepts dates and numbers', () => {
+    const date = spiralDimensions.find((d) => d.id === 'date')
+    expect(date.validTypes).toEqual(['date', 'number'])
+  })
+
+  test('a whole number becomes January 1st of that year', () => {
+    const date = toDate(1898)
+    expect(date).toBeInstanceOf(Date)
+    expect([date.getFullYear(), date.getMonth(), date.getDate()]).toEqual([
+      1898, 0, 1,
+    ])
+    expect([date.getHours(), date.getMinutes(), date.getSeconds()]).toEqual([
+      0, 0, 0,
+    ])
+  })
+
+  test('years below 100 are not shifted to the 1900s', () => {
+    expect(toDate(50).getFullYear()).toBe(50)
+  })
+
+  test('gives the same date as the "YYYY" date format', () => {
+    const d3 = require('d3')
+    const parsed = d3.timeParse('%Y')('1898')
+    expect(toDate(1898).getTime()).toBe(parsed.getTime())
+  })
+
+  test('other values are left unchanged', () => {
+    const date = new Date(2020, 5, 1)
+    expect(toDate(date)).toBe(date)
+    expect(toDate('2020-01-01')).toBe('2020-01-01')
+    expect(toDate(2020.5)).toBe(2020.5)
+    expect(toDate(null)).toBe(null)
+  })
+
+  test('mapData converts a column of years', () => {
+    const rows = [
+      { year: 1898, anomaly: -1.03 },
+      { year: 1899, anomaly: -1.11 },
+    ]
+    const mapping = {
+      date: { value: 'year' },
+      value: { value: ['anomaly'] },
+      series: { value: undefined },
+    }
+    const result = mapData(rows, mapping, {}, spiralDimensions)
+    expect(result.map((d) => d.date.getFullYear())).toEqual([1898, 1899])
+    expect(result.map((d) => d.values.anomaly)).toEqual([-1.03, -1.11])
+  })
+})
