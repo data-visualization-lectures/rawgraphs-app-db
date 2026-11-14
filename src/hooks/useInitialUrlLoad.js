@@ -1,7 +1,17 @@
 import { useEffect } from 'react'
 
+// Removes the parameters that have been handled from the address.
+// `auth_debug` is kept: the shared auth client reads it to skip the redirect
+// of unauthenticated users on local and preview builds, so removing it would
+// send them away right after the data or the project is loaded.
 function clearQueryString() {
-  window.history.replaceState({}, document.title, window.location.pathname)
+  const params = new URLSearchParams(window.location.search)
+  const query = params.has('auth_debug') ? '?auth_debug' : ''
+  window.history.replaceState(
+    {},
+    document.title,
+    window.location.pathname + query
+  )
 }
 
 function getToolHeader() {

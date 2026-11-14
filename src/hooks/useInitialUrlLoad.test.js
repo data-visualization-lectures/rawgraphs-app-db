@@ -139,3 +139,33 @@ test('keeps data_url loading behavior ahead of projectId loading', async () => {
   expect(loadProject).not.toHaveBeenCalled()
   expect(window.location.search).toBe('')
 })
+
+test('keeps auth_debug in the address after loading from data_url', async () => {
+  global.fetch = jest.fn(() =>
+    Promise.resolve({ text: () => Promise.resolve('a,b\n1,2') })
+  )
+  window.history.pushState(
+    {},
+    '',
+    '/?auth_debug&lang=ja&data_url=https%3A%2F%2Fexample.com%2Fdata.csv'
+  )
+
+  render(<TestComponent {...createProps()} />)
+  await act(async () => {
+    await flushAsyncWork()
+  })
+
+  expect(window.location.search).toBe('?auth_debug')
+})
+
+test('keeps auth_debug in the address after loading a project', async () => {
+  appendHeader(jest.fn(() => Promise.resolve({ version: '1.2' })))
+  window.history.pushState({}, '', '/?projectId=project-123&auth_debug')
+
+  render(<TestComponent {...createProps()} />)
+  await act(async () => {
+    await flushAsyncWork()
+  })
+
+  expect(window.location.search).toBe('?auth_debug')
+})
