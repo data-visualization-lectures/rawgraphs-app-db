@@ -327,7 +327,7 @@ describe('Waffle chart render', () => {
             /negative/
         )
         expect(() => draw({}, [{ category: 'A', value: 'x' }])).toThrow(
-            /only numbers/
+            /needs one number/
         )
     })
 

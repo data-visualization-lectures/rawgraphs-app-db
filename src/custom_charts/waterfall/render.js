@@ -1,6 +1,7 @@
 import * as d3 from 'd3'
 import { dateFormats } from '@rawgraphs/rawgraphs-core'
 import { computeSteps } from './mapping'
+import { notANumberMessage } from '../shared/aggregation'
 
 export default function render(
   svgNode,
@@ -56,10 +57,9 @@ export default function render(
     return
   }
 
-  if (data.some((d) => !Number.isFinite(Number(d.value)))) {
-    throw new Error(
-      'The Value dimension contains values that are not numbers, check the mapped column'
-    )
+  const invalid = data.find((d) => !Number.isFinite(Number(d.value)))
+  if (invalid) {
+    throw new Error(notANumberMessage('Value', invalid.value, invalid.category))
   }
 
   const chartWidth = width - margin.left - margin.right

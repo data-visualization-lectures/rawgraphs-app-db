@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { unstable_batchedUpdates } from 'react-dom'
 import {
   getOptionsConfig,
   getDefaultOptionsValues,
@@ -46,12 +47,19 @@ export default function useChartWorkflow({ charts, data }) {
 
   const handleChartChange = useCallback(
     (nextChart) => {
-      setMapping({})
-      clearLocalMapping()
-      setCurrentChart(nextChart)
-      const options = getOptionsConfig(nextChart?.visualOptions)
-      setVisualOptions(getDefaultOptionsValues(options))
-      setRawViz(null)
+      // The chart, its mapping and its options must change in one update.
+      // This function is also called outside React event handlers (when a
+      // sample is picked in the tool header), where each state change would
+      // otherwise render on its own: the new chart would be drawn once with
+      // the mapping and the options of the previous one.
+      unstable_batchedUpdates(() => {
+        setMapping({})
+        clearLocalMapping()
+        setCurrentChart(nextChart)
+        const options = getOptionsConfig(nextChart?.visualOptions)
+        setVisualOptions(getDefaultOptionsValues(options))
+        setRawViz(null)
+      })
     },
     [clearLocalMapping]
   )

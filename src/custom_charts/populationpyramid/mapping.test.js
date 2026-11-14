@@ -112,6 +112,6 @@ describe('buildPyramid', () => {
         { category: 'a', side: 'L', value: NaN },
         { category: 'a', side: 'R', value: 1 },
       ])
-    ).toThrow(/only numbers/)
+    ).toThrow(/needs one number/)
   })
 })

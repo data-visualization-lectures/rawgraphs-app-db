@@ -277,13 +277,13 @@ describe('prepareItems', () => {
     test('values that are not numbers are rejected', () => {
         expect(() =>
             prepareItems([{ category: 'A', value: undefined }], 'original')
-        ).toThrow(/only numbers/)
+        ).toThrow(/needs one number/)
         expect(() =>
             prepareItems([{ category: 'A', value: '1,2' }], 'original')
-        ).toThrow(/only numbers/)
+        ).toThrow(/needs one number/)
         expect(() =>
             prepareItems([{ category: 'A', value: NaN }], 'original')
-        ).toThrow(/only numbers/)
+        ).toThrow(/needs one number/)
     })
 })
 

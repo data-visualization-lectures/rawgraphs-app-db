@@ -35,8 +35,10 @@ function getDatePickerValue(userValue) {
   return userValue.userDomain
 }
 
+const emptyValue = {}
+
 const ChartOptionColorScale = ({
-  value,
+  value: valueProp,
   error,
   onChange,
   defaultValue,
@@ -55,6 +57,8 @@ const ChartOptionColorScale = ({
 }) => {
 
   const { t } = useTranslation()
+  // the options of the chart may not hold a value for this scale yet
+  const value = valueProp || emptyValue
   // here we leverage injection of the __loaded prop in the color scale, see App.js
   const initialValue = useRef(!!value.__loaded)
   
