@@ -7,13 +7,16 @@ export const mapData = function (data, mapping, dataTypes, dimensions) {
     const colorDim = dimensions.find((d) => d.id === 'color')
 
     const colorColumn = mapping[colorDim.id] && mapping[colorDim.id].value
+    const sizeColumn = mapping[sizeDim.id] && mapping[sizeDim.id].value
 
     const results = data.map((d) => {
         const row = d[mapping[rowDim.id].value]
         return {
             column: d[mapping[columnDim.id].value],
             row,
-            size: mapping[sizeDim.id].value ? Number(d[mapping[sizeDim.id].value]) : 1, // Default to 1 if not mapped? Actually size is usually required.
+            // The sizes of the rows of a segment are summed by the chart.
+            // Without a column for the size, every row counts as 1.
+            size: sizeColumn ? Number(d[sizeColumn]) : 1,
             // Without a column for the color, the segments are colored by row:
             // the color scale is built from these values, so each row gets
             // its own color (and its own entry in the options panel).
@@ -43,12 +46,12 @@ export const dimensions = [
         id: 'size',
         name: 'Size (Value)',
         validTypes: ['number'],
-        required: true,
+        // Not required: without it the chart counts the rows.
+        // The dimension is not marked as aggregated on purpose: the chart
+        // always sums the sizes, so the mapping panel must not offer a choice
+        // of aggregation that would have no effect.
+        required: false,
         operation: 'get',
-        aggregation: true, // Should we aggregate? Yes usually sum. But mapData handles raw rows mostly.
-        // If the chart engine aggregates, we might need a different `mapData`.
-        // For Custom Charts in v2, chart implementation usually handles raw data or simple mapping.
-        // Let's assume input is raw data and we aggregate in render.js or here.
     },
     {
         id: 'color',
