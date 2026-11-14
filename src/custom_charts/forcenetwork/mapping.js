@@ -29,6 +29,13 @@ export const dimensions = [
 // a cell left empty in the dataset
 export const isEmpty = (v) => v === null || v === undefined || v === ''
 
+// Aggregates the cells that have a value. Empty cells are left out, so that
+// they do not count as 0 in a mean; null is returned when all are empty.
+const aggregatePresent = (aggregator, values) => {
+  const present = values.filter((v) => !isEmpty(v))
+  return present.length > 0 ? aggregator(present) : null
+}
+
 export const mapData = function (data, mapping, dataTypes, dimensions) {
   if (!('size' in mapping)) {
     mapping.size = { value: undefined }
@@ -61,7 +68,10 @@ export const mapData = function (data, mapping, dataTypes, dimensions) {
     source,
     target,
     value: mapping.size.value
-      ? sizeAggregator(rows.map((d) => d[mapping.size.value]))
+      ? aggregatePresent(
+          sizeAggregator,
+          rows.map((d) => d[mapping.size.value])
+        )
       : 1,
   }))
 }

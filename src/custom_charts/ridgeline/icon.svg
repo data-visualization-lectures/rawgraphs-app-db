@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="rawgraphs-icons" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 56 56">
+  <defs>
+    <style>
+      .st0 {
+        fill: #06c26c;
+      }
+    </style>
+  </defs>
+  <rect class="st0" x="7" y="50" width="42" height="1"/>
+  <path class="st0" d="M7 18C16 18 12 9 22 9S40 18 49 18Z"/>
+  <path class="st0" d="M7 28C16 28 20 20 30 20S40 28 49 28Z"/>
+  <path class="st0" d="M7 38C16 38 27 29 37 29S40 38 49 38Z"/>
+  <path class="st0" d="M7 48C16 48 17 40 27 40S40 48 49 48Z"/>
+</svg>

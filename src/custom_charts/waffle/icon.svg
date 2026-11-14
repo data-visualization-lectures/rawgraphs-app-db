@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="rawgraphs-icons" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 56 56">
+  <defs>
+    <style>
+      .st0 {
+        fill: #06c26c;
+      }
+
+      .st1 {
+        fill: none;
+        stroke: #06c26c;
+        stroke-width: 1.5px;
+      }
+    </style>
+  </defs>
+  <rect class="st1" x="4.75" y="4.75" width="6.5" height="6.5"/>
+  <rect class="st1" x="14.75" y="4.75" width="6.5" height="6.5"/>
+  <rect class="st1" x="24.75" y="4.75" width="6.5" height="6.5"/>
+  <rect class="st1" x="34.75" y="4.75" width="6.5" height="6.5"/>
+  <rect class="st1" x="44.75" y="4.75" width="6.5" height="6.5"/>
+  <rect class="st1" x="4.75" y="14.75" width="6.5" height="6.5"/>
+  <rect class="st1" x="14.75" y="14.75" width="6.5" height="6.5"/>
+  <rect class="st1" x="24.75" y="14.75" width="6.5" height="6.5"/>
+  <rect class="st1" x="34.75" y="14.75" width="6.5" height="6.5"/>
+  <rect class="st1" x="44.75" y="14.75" width="6.5" height="6.5"/>
+  <rect class="st0" x="4" y="24" width="8" height="8"/>
+  <rect class="st0" x="14" y="24" width="8" height="8"/>
+  <rect class="st0" x="24" y="24" width="8" height="8"/>
+  <rect class="st0" x="34" y="24" width="8" height="8"/>
+  <rect class="st0" x="44" y="24" width="8" height="8"/>
+  <rect class="st0" x="4" y="34" width="8" height="8"/>
+  <rect class="st0" x="14" y="34" width="8" height="8"/>
+  <rect class="st0" x="24" y="34" width="8" height="8"/>
+  <rect class="st0" x="34" y="34" width="8" height="8"/>
+  <rect class="st0" x="44" y="34" width="8" height="8"/>
+  <rect class="st0" x="4" y="44" width="8" height="8"/>
+  <rect class="st0" x="14" y="44" width="8" height="8"/>
+  <rect class="st0" x="24" y="44" width="8" height="8"/>
+  <rect class="st0" x="34" y="44" width="8" height="8"/>
+  <rect class="st0" x="44" y="44" width="8" height="8"/>
+</svg>

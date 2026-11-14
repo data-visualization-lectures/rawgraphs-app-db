@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="rawgraphs-icons" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 56 56">
+  <defs>
+    <style>
+      .st0 {
+        fill: #06c26c;
+      }
+    </style>
+  </defs>
+  <polygon class="st0" points="46.31 46.81 44.87 46.81 46.06 48 7.5 48 7.5 49 46.06 49 44.87 50.19 46.31 50.19 48 48.5 46.31 46.81"/>
+  <g>
+    <rect class="st0" x="14" y="10.25" width="22" height="1.5"/>
+    <circle class="st0" cx="14" cy="11" r="3"/>
+    <circle class="st0" cx="36" cy="11" r="3"/>
+    <rect class="st0" x="22" y="19.25" width="20" height="1.5"/>
+    <circle class="st0" cx="22" cy="20" r="3"/>
+    <circle class="st0" cx="42" cy="20" r="3"/>
+    <rect class="st0" x="12" y="28.25" width="14" height="1.5"/>
+    <circle class="st0" cx="12" cy="29" r="3"/>
+    <circle class="st0" cx="26" cy="29" r="3"/>
+    <rect class="st0" x="28" y="37.25" width="16" height="1.5"/>
+    <circle class="st0" cx="28" cy="38" r="3"/>
+    <circle class="st0" cx="44" cy="38" r="3"/>
+  </g>
+</svg>
