@@ -20,7 +20,13 @@ import {
 import ChartDimensionItem from './ChartDimensionItem'
 
 import styles from './DataMapping.module.scss'
-const aggregators = getAggregatorNames()
+// ドロップダウンでは CSV 系を先頭に表示する（core の登録順では末尾）
+const leadingAggregators = ['csv', 'csvDistinct']
+const registeredAggregators = getAggregatorNames()
+const aggregators = [
+  ...leadingAggregators.filter((name) => registeredAggregators.includes(name)),
+  ...registeredAggregators.filter((name) => !leadingAggregators.includes(name)),
+]
 const emptyList = []
 
 function isValidColumnType(dimension, columnDataType) {
